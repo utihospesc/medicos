@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="theme-color" content="#7a1020">
+<title>UTI Médica – Hospital dos Pescadores</title>
+
+<!-- Ícone do app / aba / PWA -->
+<link rel="icon" type="image/png" href="icone.png">
+<link rel="apple-touch-icon" href="icone.png">
+<link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="UTI Médica">
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+
+<!-- jsPDF + html2canvas -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<!-- Chart.js (gráficos dos exames laboratoriais) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<link rel="stylesheet" href="styles.css?v=20260526a">
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     CONFIGURAÇÃO FIREBASE
+     ─ Substitua os valores abaixo pelos do seu projeto Firebase
+       (Configurações do projeto → Seus apps → App da Web).
+     ─ Pode ser o MESMO projeto do sistema de enfermagem (compartilha
+       leitos/pacientes) ou um projeto novo e separado.
+     ══════════════════════════════════════════ -->
+<script>
+  // ⬇️ COLE AQUI A CONFIG DO SEU FIREBASE ⬇️
+  window.FIREBASE_CONFIG = {
+    apiKey: "",
+    authDomain: "",
+    projectId: "",
+    storageBucket: "",
+    messagingSenderId: "",
+    appId: ""
+  };
+
+  // URL do Apps Script (culturas + IA + gestão de usuários). Opcional.
+  window.APPS_SCRIPT_URL = "";
+  // ID da planilha de culturas (CCIH). Opcional.
+  window.CULTURAS_SHEET_ID = "";
+</script>
+
+<!-- ══════════════ TELA LOGIN ══════════════ -->
+<div id="t-login">
+  <div class="login-card">
+    <div class="login-logo">
+      <div id="logo-login" style="margin-bottom:1rem;"></div>
+      <span class="login-badge">EVOLUÇÃO MÉDICA</span>
+      <h1>PREFEITURA MUNICIPAL DO NATAL<br>HOSPITAL DOS PESCADORES – UTI</h1>
+      <p>Acesso do Médico</p>
+    </div>
+    <div class="login-field">
+      <label>E-mail institucional</label>
+      <input type="email" id="li-email" placeholder="medico@pescadores.natal.br" autocomplete="email">
+    </div>
+    <div class="login-field">
+      <label>Senha</label>
+      <input type="password" id="li-senha" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter') fazerLogin()">
+    </div>
+    <button class="btn-login" id="btn-entrar" onclick="fazerLogin()">Entrar</button>
+    <div class="login-err" id="login-err"></div>
+    <p class="login-msg">Primeiro acesso? Peça ao administrador para cadastrar seu e-mail.</p>
+  </div>
+</div>
+
+<!-- ══════════════ TELA CONFIGURAÇÃO ══════════════ -->
+<div id="t-config" class="tela" style="display:none;padding:2rem;min-height:100vh;align-items:center;justify-content:center;">
+  <div class="config-banner">
+    <h3>⚙️ Configure o Firebase para ativar a nuvem</h3>
+    <p>Para salvar os dados na nuvem e compartilhar entre todos os médicos, configure um projeto Firebase gratuito.</p>
+    <p><strong>Passo a passo:</strong></p>
+    <p>1. Acesse <strong>console.firebase.google.com</strong> e crie um projeto (ou use o mesmo do sistema de enfermagem)</p>
+    <p>2. Ative <strong>Firestore Database</strong> (modo de produção)</p>
+    <p>3. Ative <strong>Authentication → E-mail/senha</strong></p>
+    <p>4. Vá em <strong>Configurações do projeto → Seus apps → App da Web</strong></p>
+    <p>5. Copie as configurações e cole no início do <code>index.html</code> em <code>FIREBASE_CONFIG</code></p>
+    <p>6. Cadastre os médicos em <strong>Authentication → Usuários</strong></p>
+    <button class="btn btn-pri" onclick="usarOffline()">Continuar sem nuvem (local)</button>
+  </div>
+</div>
+
+<!-- ══════════════ TELA TURNO ══════════════ -->
+<div id="t-turno" style="display:none;">
+  <div class="logo-h">
+    <div id="logo-turno" style="margin-bottom:.8rem;"></div>
+    <h1>PREFEITURA MUNICIPAL DO NATAL<br>HOSPITAL DOS PESCADORES – UTI</h1>
+    <p>Sistema de Evolução Médica</p>
+  </div>
+  <div class="turno-cards">
+    <button class="turno-btn" onclick="escolherTurno('DIURNO')"><span class="turno-icon">☀️</span><span class="turno-label">Plantão<br>Diurno</span></button>
+    <button class="turno-btn" onclick="escolherTurno('NOTURNO')"><span class="turno-icon">🌙</span><span class="turno-label">Plantão<br>Noturno</span></button>
+  </div>
+  <div class="sync-status" id="sync-status">
+    <span class="sync-dot" id="sync-dot"></span>
+    <span id="sync-txt">verificando conexão...</span>
+  </div>
+  <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:1rem;">
+    <button class="btn btn-sec btn-sm" onclick="abrirTrocaSenhaVoluntaria()">🔑 Trocar minha senha</button>
+    <button class="btn btn-sec btn-sm" id="btn-gerenciar-usuarios" style="display:none;" onclick="abrirGerenciarUsuarios()">👥 Gerenciar usuários</button>
+    <button class="btn btn-sec btn-sm" onclick="fazerLogout()">🚪 Sair</button>
+  </div>
+</div>
+
+<!-- ══════════════ TELA TROCA DE SENHA ══════════════ -->
+<div id="t-trocasenha" class="tela" style="display:none;padding:2rem;min-height:100vh;align-items:center;justify-content:center;">
+  <div class="login-card">
+    <div class="login-logo">
+      <span class="login-badge">SEGURANÇA</span>
+      <h1 id="ts-titulo">Defina sua senha</h1>
+      <p id="ts-sub">Crie uma senha pessoal para continuar.</p>
+    </div>
+    <div class="login-field"><label>Nova senha</label><input type="password" id="ts-nova" placeholder="mínimo 6 caracteres"></div>
+    <div class="login-field"><label>Confirmar senha</label><input type="password" id="ts-conf" placeholder="repita a senha" onkeydown="if(event.key==='Enter') salvarNovaSenha()"></div>
+    <button class="btn-login" onclick="salvarNovaSenha()">Salvar senha</button>
+    <div class="login-err" id="ts-err"></div>
+    <p class="login-msg"><a href="#" onclick="voltarTurno();return false;" style="color:var(--vinho);">Voltar</a></p>
+  </div>
+</div>
+
+<!-- ══════════════ TELA LEITOS ══════════════ -->
+<div id="t-leitos" class="tela" style="display:none;">
+  <div class="app-header">
+    <div><h2>UTI Geral – Mapa de Leitos</h2><small>Hospital dos Pescadores · Evolução Médica</small></div>
+    <div class="header-right">
+      <span class="badge" id="badge-turno-leitos"></span>
+      <button class="btn btn-sm" onclick="irIndicadores()">📊 Indicadores</button>
+      <button class="btn btn-sm" onclick="voltarTurno()">↩ Trocar plantão</button>
+    </div>
+  </div>
+  <div class="leitos-grid" id="leitos-grid"></div>
+</div>
+
+<!-- ══════════════ TELA INDICADORES ══════════════ -->
+<div id="t-indicadores" class="tela" style="display:none;">
+  <div class="app-header">
+    <div><h2>Indicadores – UTI Médica</h2><small id="ind-sub">Painel gerencial e clínico</small></div>
+    <div class="header-right">
+      <button class="btn btn-sm" onclick="voltarLeitos()">↩ Leitos</button>
+    </div>
+  </div>
+  <div class="ind-toolbar">
+    <div class="ind-cats" id="ind-cats"></div>
+    <div class="ind-periodo">
+      <label>Período</label>
+      <select id="ind-periodo-sel" onchange="renderIndicadores()">
+        <option value="hoje">Hoje</option>
+        <option value="7d">Últimos 7 dias</option>
+        <option value="30d" selected>Últimos 30 dias</option>
+        <option value="mesatual">Mês atual</option>
+        <option value="tudo">Todo o histórico</option>
+      </select>
+      <button class="btn btn-sm" onclick="exportarIndicadoresPDF()">⬇ PDF</button>
+    </div>
+  </div>
+  <div class="card" id="ind-card">
+    <div id="ind-conteudo">
+      <div style="text-align:center;padding:2rem;color:var(--muted);font-size:.85rem;">Selecione uma categoria.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ TELA FORMULÁRIO ══════════════ -->
+<div id="t-form" class="tela" style="display:none;">
+  <div class="app-header">
+    <div><h2 id="form-titulo">Evolução Médica – Leito 01</h2><small id="form-sub">Hospital dos Pescadores · UTI</small></div>
+    <div class="header-right">
+      <button class="btn" id="btn-editar-admissao" style="font-size:.72rem;padding:4px 10px;" onclick="abrirModalAdmissao()">✏ Editar Admissão</button>
+      <span class="badge" id="badge-form"></span>
+    </div>
+  </div>
+
+  <div class="card">
+
+    <!-- IDENTIFICAÇÃO -->
+    <div class="secao">
+      <div class="secao-t">Identificação do Paciente
+        <span class="herd-tag" id="herd-tag" style="display:none;">↻ dados herdados</span>
+        <span class="cloud-tag" id="cloud-tag" style="display:none;">☁ nuvem</span>
+      </div>
+      <div class="secao-c">
+        <div class="fl"><label>Paciente</label><input type="text" id="f-pac" placeholder="Nome completo" data-adm-field></div>
+        <div class="dc">
+          <div class="fl"><label>Data da evolução</label><input type="date" id="f-data"></div>
+          <div class="fl"><label>Leito</label><input type="text" id="f-leito" readonly style="background:#eee;"></div>
+        </div>
+        <div class="dc">
+          <div class="fl"><label>DN</label>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <input type="date" id="f-dn" onchange="_calcIdadeDisplay('f-dn','f-idade');_recalcSAPS()" data-adm-field>
+              <span id="f-idade" style="font-size:.78rem;font-weight:700;color:var(--vinho);white-space:nowrap;min-width:48px;"></span>
+            </div>
+          </div>
+          <div class="fl"><label>Sexo</label>
+            <select id="f-sexo" data-adm-field><option value="">—</option><option>FEMININO</option><option>MASCULINO</option></select>
+          </div>
+        </div>
+        <div class="dc">
+          <div class="fl"><label>CNS</label><input type="text" id="f-cns" placeholder="Cartão SUS" data-adm-field></div>
+          <div class="fl"><label>Adm. UTI</label><input type="date" id="f-adm" data-adm-field></div>
+        </div>
+        <div class="fl"><label>Adm. Hospitalar</label><input type="date" id="f-adm-hosp" data-adm-field></div>
+        <div class="fl"><label>Hipóteses Diagnósticas</label>
+          <div style="display:flex;gap:6px;align-items:flex-start;">
+            <input type="text" id="f-diag" placeholder="Diagnóstico principal" style="flex:1;" onblur="_sugerirCID('f-diag','f-cid')" data-adm-field>
+            <div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0;min-width:110px;">
+              <input type="text" id="f-cid" placeholder="CID-10" style="width:100%;font-family:monospace;font-weight:600;" maxlength="8" data-adm-field>
+              <span id="f-cid-status" style="font-size:.6rem;color:var(--muted);text-align:center;min-height:12px;"></span>
+            </div>
+          </div>
+        </div>
+        <div class="fl"><label>Comorbidades</label><input type="text" id="f-comor" placeholder="Ex: HAS, FA permanente, DM..." data-adm-field></div>
+        <div class="dc">
+          <div class="fl"><label>Alergias</label><input type="text" id="f-alergia" placeholder="NEGA / especificar" data-adm-field></div>
+          <div class="fl"><label>Medicamentos de uso contínuo</label><input type="text" id="f-medcont" placeholder="Ex: furosemida, metoprolol..." data-adm-field></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HDA / ADMISSÃO (fixo, herdado) -->
+    <div class="secao">
+      <div class="secao-t">História da Doença Atual & Admissão na UTI
+        <span class="fixo-tag">📌 fixo nas evoluções</span>
+      </div>
+      <div class="secao-c">
+        <div class="tip i" style="margin-bottom:8px;">Estes campos são preenchidos na <strong>admissão</strong> e ficam <strong>visíveis em todas as evoluções</strong> seguintes. Edite-os pelo botão "Editar Admissão" se necessário.</div>
+        <div class="fl"><label>HDA (História da Doença Atual)</label><textarea id="f-hda" rows="5" placeholder="Relato da história clínica..." data-adm-field></textarea></div>
+        <div class="fl"><label>Admissão na UTI (descrição do médico que recebeu)</label><textarea id="f-adm-desc" rows="4" placeholder="Recebo paciente..." data-adm-field></textarea></div>
+      </div>
+    </div>
+
+    <!-- EVOLUÇÃO DO DIA -->
+    <div class="secao">
+      <div class="secao-t">Evolução do Plantão</div>
+      <div class="secao-c">
+        <div class="fl"><label>Estado geral / evolução narrativa</label><textarea id="f-evol" rows="5" placeholder="Paciente em regular estado geral, evolui hemodinamicamente..."></textarea></div>
+        <div class="dc">
+          <div class="fl"><label>Em uso de ATB</label><input type="text" id="f-atb" placeholder="SEM ATB / especificar esquema"></div>
+          <div class="fl"><label>ATB já utilizados</label><input type="text" id="f-atb-prev" placeholder="esquemas anteriores"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTROLES / SINAIS VITAIS 24H -->
+    <div class="secao">
+      <div class="secao-t">Controles / Sinais Vitais (24h)</div>
+      <div class="secao-c grid2">
+        <div class="fl"><label>PAM (mmHg)</label><input type="text" id="f-pam" placeholder="ex: 71-90"></div>
+        <div class="fl"><label>PAS (mmHg) <span class="saps-flag">SAPS3</span></label><input type="number" id="f-pas" placeholder="sistólica (pior)" oninput="_recalcSAPS()"></div>
+        <div class="fl"><label>FC (bpm) <span class="saps-flag">SAPS3</span></label><input type="number" id="f-fc" placeholder="maior FC" oninput="_recalcSAPS()"></div>
+        <div class="fl"><label>FR (irpm)</label><input type="text" id="f-fr" placeholder="ex: 13-19"></div>
+        <div class="fl"><label>Tmáx (°C) <span class="saps-flag">SAPS3</span></label><input type="number" step="0.1" id="f-tmax" placeholder="ex: 36.8" oninput="_recalcSAPS()"></div>
+        <div class="fl"><label>SpO₂ (%)</label><input type="text" id="f-spo2" placeholder="ex: 92-98"></div>
+        <div class="fl"><label>Diurese</label><input type="text" id="f-diurese" placeholder="espontânea / SVD"></div>
+        <div class="fl"><label>Balanço Hídrico 24h</label><input type="text" id="f-bh" placeholder="ex: (+) 1.200 ml"></div>
+        <div class="fl"><label>Evacuações</label><input type="text" id="f-evac" placeholder="ex: 2x"></div>
+        <div class="fl"><label>HGT (mg/dL)</label><input type="text" id="f-hgt" placeholder="ex: 139-184-149"></div>
+      </div>
+    </div>
+
+    <!-- EXAME FÍSICO -->
+    <div class="secao">
+      <div class="secao-t">Exame Físico</div>
+      <div class="secao-c grid2">
+        <div class="fl"><label>Ectoscopia</label><input type="text" id="f-ef-ecto" placeholder="EGG, consciente, orientada..."></div>
+        <div class="fl"><label>Neurológico</label><input type="text" id="f-ef-neuro" placeholder="ex: Glasgow 14"></div>
+        <div class="fl"><label>Glasgow <span class="saps-flag">SAPS3</span></label><input type="number" id="f-glasgow" min="3" max="15" placeholder="3–15" oninput="_recalcSAPS()"></div>
+        <div class="fl"><label>Pupilas</label><input type="text" id="f-ef-pupilas" placeholder="ISO / FR"></div>
+        <div class="fl"><label>ACV (cardiovascular)</label><input type="text" id="f-ef-acv" placeholder="RCI, 2T, BNF, sopro..."></div>
+        <div class="fl"><label>AR (respiratório)</label><input type="text" id="f-ef-ar" placeholder="MV+, AHT, crepitos..."></div>
+        <div class="fl"><label>ABD (abdome)</label><input type="text" id="f-ef-abd" placeholder="plano, flácido, indolor..."></div>
+        <div class="fl"><label>EXT (extremidades)</label><input type="text" id="f-ef-ext" placeholder="edema 2/4+, cianose..."></div>
+        <div class="fl"><label>Pele</label><input type="text" id="f-ef-pele" placeholder="íntegra / lesões"></div>
+        <div class="fl"><label>Genitália</label><input type="text" id="f-ef-genital" placeholder=""></div>
+      </div>
+    </div>
+
+    <!-- DISPOSITIVOS / SUPORTE -->
+    <div class="secao">
+      <div class="secao-t">Dispositivos & Suporte</div>
+      <div class="secao-c grid2">
+        <div class="fl"><label>Acessos</label><input type="text" id="f-acessos" placeholder="periférico / central"></div>
+        <div class="fl"><label>Dispositivos</label><input type="text" id="f-dispositivos" placeholder="SVD (21/05), SNE..."></div>
+        <div class="fl"><label>Dieta</label>
+          <select id="f-dieta"><option value="">—</option><option>ORAL</option><option>ENTERAL (SNE/SNG)</option><option>PARENTERAL</option><option>JEJUM</option><option>ZERO</option></select>
+        </div>
+        <div class="fl"><label>Droga vasoativa (DVA) <span class="saps-flag">SAPS3</span></label>
+          <select id="f-dva" onchange="_recalcSAPS()"><option value="NAO">NÃO</option><option value="SIM">SIM</option></select>
+        </div>
+        <div class="fl"><label>Sedação</label><input type="text" id="f-sedacao" placeholder="sem / esquema"></div>
+        <div class="fl"><label>Transfusão sanguínea</label><input type="text" id="f-transfusao" placeholder="não / hemocomp."></div>
+      </div>
+    </div>
+
+    <!-- VENTILAÇÃO / GASOMETRIA -->
+    <div class="secao">
+      <div class="secao-t">Ventilação & Gasometria</div>
+      <div class="secao-c grid2">
+        <div class="fl"><label>Suporte ventilatório</label>
+          <select id="f-vent" onchange="_recalcSAPS()">
+            <option value="AA">Ar ambiente (AA)</option>
+            <option value="CN">Cateter nasal O₂</option>
+            <option value="CTNO2">Cateter de alto fluxo / CTNO2</option>
+            <option value="VM">Máscara de O₂ / VM (venturi)</option>
+            <option value="VNI">VNI (BiPAP/CPAP)</option>
+            <option value="VMI">Ventilação mecânica invasiva (TOT/TQT)</option>
+          </select>
+        </div>
+        <div class="fl"><label>Parâmetros ventilatórios</label><input type="text" id="f-vent-param" placeholder="modo, FiO2, PEEP..."></div>
+        <div class="fl"><label>PaO₂ (mmHg) <span class="saps-flag">SAPS3</span></label><input type="number" id="f-pao2" placeholder="da gasometria" oninput="_recalcSAPS()"></div>
+        <div class="fl"><label>FiO₂ (fração, ex: 0.4) <span class="saps-flag">SAPS3</span></label><input type="number" step="0.01" id="f-fio2" placeholder="0.21–1.0" oninput="_recalcSAPS()"></div>
+        <div class="fl"><label>pH arterial <span class="saps-flag">SAPS3</span></label><input type="number" step="0.01" id="f-ph" placeholder="ex: 7.35" oninput="_recalcSAPS()"></div>
+        <div class="fl"><label>Gasometria (texto livre)</label><input type="text" id="f-gaso" placeholder="resumo da gaso"></div>
+      </div>
+    </div>
+
+    <!-- CULTURAS -->
+    <div class="secao">
+      <div class="secao-t">Culturas
+        <button class="btn btn-sm" style="margin-left:8px;font-size:.66rem;padding:3px 8px;" onclick="buscarCulturas()">🔬 Buscar na planilha</button>
+        <button class="btn btn-sm" style="font-size:.66rem;padding:3px 8px;" onclick="abrirAddCulturaManual()">✏️ Adicionar manual</button>
+      </div>
+      <div class="secao-c">
+        <div id="culturas-auto" style="display:none;margin-bottom:6px;"></div>
+        <div id="culturas-chips" class="culturas-chips"></div>
+        <div id="add-cultura-inline" style="display:none;margin-top:8px;padding:10px;border:1px dashed var(--borda);border-radius:8px;background:var(--bg2);">
+          <div class="grid2" style="gap:6px;">
+            <div class="fl"><label>Sítio/Cultura</label><input type="text" id="ac-sitio" placeholder="Hemocultura, Urocultura..."></div>
+            <div class="fl"><label>Microrganismo</label><input type="text" id="ac-micro" placeholder="ex: K. pneumoniae"></div>
+            <div class="fl"><label>Sensibilidade/Perfil</label><input type="text" id="ac-sens" placeholder="ex: ESBL, KPC..."></div>
+            <div class="fl"><label>Data</label><input type="date" id="ac-data"></div>
+          </div>
+          <div style="display:flex;gap:6px;margin-top:6px;">
+            <button class="btn btn-pri btn-sm" onclick="confirmarAddCulturaManual()">Adicionar</button>
+            <button class="btn btn-sec btn-sm" onclick="document.getElementById('add-cultura-inline').style.display='none'">Cancelar</button>
+          </div>
+        </div>
+        <input type="hidden" id="f-microorg">
+      </div>
+    </div>
+
+    <!-- EXAMES LABORATORIAIS -->
+    <div class="secao">
+      <div class="secao-t">Exames Laboratoriais
+        <button class="btn btn-sm" style="margin-left:8px;font-size:.66rem;padding:3px 8px;" onclick="abrirGraficoLab()">📈 Visualizar gráfico</button>
+      </div>
+      <div class="secao-c">
+        <div class="tip i" style="margin-bottom:8px;">Registre os exames por data. Eles são acumulados ao longo da internação e podem ser visualizados em gráfico de tendência.</div>
+        <div id="lab-linhas"></div>
+        <button class="btn btn-sec btn-sm" style="margin-top:6px;" onclick="addLinhaLab()">+ Adicionar data de exames</button>
+      </div>
+    </div>
+
+    <!-- EXAMES DE IMAGEM -->
+    <div class="secao">
+      <div class="secao-t">Exames de Imagem</div>
+      <div class="secao-c">
+        <div class="fl"><label>Achados (ECO, RX, TC...)</label><textarea id="f-imagem" rows="3" placeholder="ECO (21/05): hipertrofia concêntrica do VE..."></textarea></div>
+      </div>
+    </div>
+
+    <!-- SAPS 3 -->
+    <div class="secao" id="secao-saps">
+      <div class="secao-t">SAPS 3 – Escore de Gravidade
+        <button class="btn btn-sm" style="margin-left:8px;font-size:.66rem;padding:3px 8px;" onclick="abrirModalSAPS()">⚙ Itens de admissão</button>
+      </div>
+      <div class="secao-c">
+        <div class="tip i" style="margin-bottom:10px;">
+          O SAPS 3 é calculado na <strong>admissão</strong>. Os itens fisiológicos vêm da evolução; os itens de admissão (motivo, cirurgia, infecção, comorbidades) preenchem-se em <strong>"Itens de admissão"</strong>. Calibração: <strong>América do Sul</strong> (AMIB).
+        </div>
+        <div class="saps-box" id="saps-box">
+          <div class="saps-score-wrap">
+            <div class="saps-num" id="saps-num">—</div>
+            <div class="saps-lbl">pontos SAPS 3</div>
+          </div>
+          <div class="saps-mort-wrap">
+            <div class="saps-mort" id="saps-mort">—</div>
+            <div class="saps-lbl">mortalidade prevista (Am. do Sul)</div>
+            <div class="saps-mort-glob" id="saps-mort-glob"></div>
+          </div>
+        </div>
+        <details id="saps-detalhe" style="margin-top:10px;">
+          <summary style="cursor:pointer;font-size:.74rem;color:var(--vinho);font-weight:600;">Ver decomposição dos pontos</summary>
+          <div id="saps-breakdown" style="margin-top:8px;"></div>
+        </details>
+      </div>
+    </div>
+
+    <!-- CONDUTAS -->
+    <div class="secao">
+      <div class="secao-t">Condutas</div>
+      <div class="secao-c">
+        <div class="fl"><label>Plano terapêutico / condutas</label><textarea id="f-condutas" rows="4" placeholder="Suporte intensivo, diureticoterapia mantida..."></textarea></div>
+      </div>
+    </div>
+
+    <!-- AÇÕES -->
+    <div class="form-actions">
+      <button class="btn btn-pri" onclick="salvarEvolucao()">💾 Salvar evolução</button>
+      <button class="btn btn-sec" onclick="abrirPreview()">👁 Preview / Imprimir</button>
+      <button class="btn btn-sec" onclick="voltarLeitos()">↩ Voltar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ TELA USUÁRIOS ══════════════ -->
+<div id="t-usuarios" class="tela" style="display:none;">
+  <div class="app-header">
+    <div><h2>Gerenciar Médicos</h2><small>Cadastro e acesso</small></div>
+    <div class="header-right"><button class="btn btn-sm" onclick="voltarTurno()">↩ Voltar</button></div>
+  </div>
+  <div class="card">
+    <div class="secao">
+      <div class="secao-t">Adicionar médico</div>
+      <div class="secao-c grid2">
+        <div class="fl"><label>Nome</label><input type="text" id="add-nome"></div>
+        <div class="fl"><label>E-mail</label><input type="email" id="add-email"></div>
+        <div class="fl"><label>CRM</label><input type="text" id="add-crm"></div>
+        <div class="fl"><label>Senha provisória</label><input type="text" id="add-senha" placeholder="mín. 6 caracteres"></div>
+      </div>
+      <button class="btn btn-pri" id="btn-add-user" onclick="adicionarUsuario()" style="margin-top:8px;">+ Criar usuário</button>
+      <div class="login-err" id="add-err"></div>
+    </div>
+    <div class="secao">
+      <div class="secao-t">Médicos cadastrados</div>
+      <div id="usuarios-lista"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ MODAL ADMISSÃO ══════════════ -->
+<div class="modal" id="modal-adm">
+  <div class="modal-box">
+    <div class="modal-head"><h3 id="modal-adm-titulo">Admissão – Leito 01</h3><button class="modal-x" onclick="fecharModal()">×</button></div>
+    <div class="modal-body" id="modal-adm-body"></div>
+    <div class="modal-foot">
+      <button class="btn btn-sec" onclick="darAlta()" id="btn-alta-modal" style="display:none;">🚪 Alta / Desocupar</button>
+      <button class="btn btn-pri" onclick="salvarAdmissao()">Salvar admissão</button>
+      <button class="btn btn-sec" onclick="fecharModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ MODAL ALTA ══════════════ -->
+<div class="modal" id="modal-alta">
+  <div class="modal-box" style="max-width:440px;">
+    <div class="modal-head"><h3>Alta / Desocupar leito</h3><button class="modal-x" onclick="document.getElementById('modal-alta').classList.remove('show')">×</button></div>
+    <div class="modal-body">
+      <div class="tip d">⚠️ Isto libera o leito e arquiva o histórico do paciente. Os indicadores são preservados.</div>
+      <div class="dc">
+        <div class="fl"><label>Tipo</label>
+          <select id="alta-tipo"><option>ALTA UTI (transferência enfermaria)</option><option>TRANSFERÊNCIA EXTERNA</option><option>ÓBITO</option><option>OUTRO</option></select>
+        </div>
+        <div class="fl"><label>Data</label><input type="date" id="alta-data"></div>
+      </div>
+      <div class="fl"><label>Observação</label><textarea id="alta-obs" rows="3"></textarea></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-danger" onclick="confirmarAltaFinal()">Confirmar alta</button>
+      <button class="btn btn-sec" onclick="document.getElementById('modal-alta').classList.remove('show')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ MODAL CULTURAS ══════════════ -->
+<div class="modal" id="modal-culturas">
+  <div class="modal-box"><div class="modal-head"><h3>🔬 Culturas</h3><button class="modal-x" onclick="document.getElementById('modal-culturas').classList.remove('show')">×</button></div>
+  <div class="modal-body" id="culturas-conteudo"></div></div>
+</div>
+
+<!-- ══════════════ MODAL SAPS ADMISSÃO ══════════════ -->
+<div class="modal" id="modal-saps">
+  <div class="modal-box"><div class="modal-head"><h3>⚙ SAPS 3 – Itens da admissão</h3><button class="modal-x" onclick="document.getElementById('modal-saps').classList.remove('show')">×</button></div>
+  <div class="modal-body" id="saps-modal-body"></div>
+  <div class="modal-foot"><button class="btn btn-pri" onclick="salvarItensSAPS()">Aplicar</button><button class="btn btn-sec" onclick="document.getElementById('modal-saps').classList.remove('show')">Fechar</button></div></div>
+</div>
+
+<!-- ══════════════ MODAL GRÁFICO LAB ══════════════ -->
+<div class="modal" id="modal-grafico">
+  <div class="modal-box" style="max-width:760px;"><div class="modal-head"><h3>📈 Tendência dos Exames Laboratoriais</h3><button class="modal-x" onclick="document.getElementById('modal-grafico').classList.remove('show')">×</button></div>
+  <div class="modal-body">
+    <div id="grafico-seletor" class="grafico-seletor"></div>
+    <div style="position:relative;height:340px;margin-top:10px;"><canvas id="lab-chart"></canvas></div>
+    <div id="grafico-vazio" style="display:none;text-align:center;color:var(--muted);padding:2rem;font-size:.85rem;">Sem dados laboratoriais registrados ainda.</div>
+  </div></div>
+</div>
+
+<!-- ══════════════ MODAL PREVIEW ══════════════ -->
+<div class="modal" id="modal-preview">
+  <div class="modal-box" style="max-width:820px;"><div class="modal-head"><h3>👁 Preview da Evolução</h3><button class="modal-x" onclick="document.getElementById('modal-preview').classList.remove('show')">×</button></div>
+  <div class="modal-body"><div id="preview-conteudo" class="preview-doc"></div></div>
+  <div class="modal-foot"><button class="btn btn-pri" onclick="imprimirEvolucao()">🖨 Imprimir / PDF</button><button class="btn btn-sec" onclick="document.getElementById('modal-preview').classList.remove('show')">Fechar</button></div></div>
+</div>
+
+<!-- LOADING + TOAST -->
+<div class="loading-overlay" id="loading-overlay"><div class="loading-spin"></div><div id="loading-txt">Carregando...</div></div>
+<div class="toast" id="toast"></div>
+
+<script src="app.js?v=20260526a"></script>
+</body>
+</html>
