@@ -49,7 +49,11 @@ function dataDoTurno(turno){
   if(turno==='NOTURNO' && h>=0 && h<7) return ontem();
   return hoje();
 }
-function _normalizarNome(s){ return (s||'').toUpperCase().replace(/\s+/g,' ').trim(); }
+function _normalizarNome(s){
+  if(!s) return '';
+  // Remove acentos/diacríticos antes de normalizar (João ↔ Joao, etc.)
+  return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/\s+/g,' ').trim();
+}
 function _isAdmin(){ return usuarioEmail && ADMIN_EMAILS.includes(usuarioEmail.toLowerCase()); }
 
 function mostrarTela(id){
@@ -878,94 +882,205 @@ function _plotLab(k){
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
-   CULTURAS
+   CULTURAS — busca completa idêntica ao sistema de enfermagem
+   ─ action:'culturas'         → por paciente (com antibiograma dos PDFs)
+   ─ action:'culturas_agregado'→ panorama CCIH institucional
+   ─ Classificação MDR/XDR/PDR (Magiorakos simplificado)
    ════════════════════════════════════════════════════════════════════════════ */
+
+// Helper genérico para o Apps Script
+async function _apsFetch(payload){
+  if(!APPS_SCRIPT_URL) throw new Error('APPS_SCRIPT_URL não configurada.');
+  const resp=await fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
+  const txt=await resp.text();
+  try{ return JSON.parse(txt); }catch(e){ throw new Error('Resposta inválida do Apps Script: '+txt.slice(0,200)); }
+}
+
+// ── Chips de cultura no formulário ──────────────────────────────────────────
 function _renderCulturasChips(){
   const wrap=$('culturas-chips'); if(!wrap) return;
   if(!_culturasForm.length){ wrap.innerHTML='<span style="font-size:.76rem;color:var(--muted);">Nenhuma cultura registrada.</span>'; _sincronizarMicroorg(); return; }
   wrap.innerHTML=_culturasForm.map((c,i)=>{
-    const pos = c.micro && !/negativ|contaminad|pendente|aus[êe]ncia/i.test(c.resultado||c.sens||'');
-    const txt = `${c.micro||c.resultado||'?'}${c.sitio?' · '+c.sitio:''}${c.sens?' · '+c.sens:''}${c.data?' · '+_fmtDataCurta(c.data):''}`;
-    return `<span class="cult-chip ${pos?'pos':''}">🦠 ${txt}<span class="x" onclick="_removerCultura(${i})">×</span></span>`;
+    const pos=c.micro&&!/negativ|contaminad|pendente|ausencia/i.test(c.resultado||c.sens||'');
+    const cls=_cultChipCor(c.micro||'');
+    const mdr=c.antibiograma?` · ${_cultClassificar(c.antibiograma)}`:'';
+    const txt=`${c.micro||c.resultado||'?'}${c.sitio?' · '+c.sitio:''}${c.sens?' · '+c.sens.slice(0,40):''}${mdr}${c.data?' · '+_fmtDataCurta(c.data):''}`;
+    return `<span class="cult-chip ${pos?'pos':''}" style="${cls}">🦠 ${txt}<span class="x" onclick="_removerCultura(${i})" title="Remover">×</span></span>`;
   }).join('');
   _sincronizarMicroorg();
 }
 function _removerCultura(i){ _culturasForm.splice(i,1); _renderCulturasChips(); }
-function _adicionarCultura(sitio,micro,sens,data,fonte){
-  // evita duplicar
-  if(_culturasForm.some(c=>c.micro===micro && c.sitio===sitio && c.data===data)) return;
-  _culturasForm.push({sitio,micro,sens,data,fonte:fonte||'manual'});
+function _adicionarCultura(sitio,micro,sens,data,fonte,antibiograma){
+  if(_culturasForm.some(c=>c.micro===micro&&c.sitio===sitio&&c.data===data)) return;
+  _culturasForm.push({sitio,micro,sens,data,fonte:fonte||'manual',antibiograma:antibiograma||null});
   _renderCulturasChips();
 }
 function _sincronizarMicroorg(){
   const s=_culturasForm.filter(c=>c.micro).map(c=>`${c.micro}${c.sitio?' ('+c.sitio+')':''}`).join('; ');
-  sf('f-microorg',s);
+  const el=$('f-microorg'); if(el) el.value=s;
 }
+function _cultChipCor(nome){
+  const n=(nome||'').toUpperCase();
+  if(n.includes('KPC')||n.includes('NDM')) return 'border-color:#b71c1c;background:#fde8e6;color:#b71c1c;';
+  if(n.includes('MRSA')||n.includes('VRE')||n.includes('ESBL')||n.includes('BAUMANNII')) return 'border-color:#e65100;background:#fff3e0;color:#e65100;';
+  if(n.includes('KLEBSIELLA')||n.includes('PSEUDOMONAS')) return 'border-color:#1565c0;background:#e3f0ff;color:#1565c0;';
+  if(n.includes('CANDIDA')||n.includes('ASPERGILLUS')) return 'border-color:#6a1b9a;background:#f3e5f5;color:#6a1b9a;';
+  return '';
+}
+
+// ── Adição manual ────────────────────────────────────────────────────────────
 function abrirAddCulturaManual(){ $('add-cultura-inline').style.display='block'; sf('ac-data',hoje()); }
 function confirmarAddCulturaManual(){
   const micro=gf('ac-micro').trim();
   if(!micro){ toast('Informe o microrganismo.',true); return; }
-  _adicionarCultura(gf('ac-sitio').trim(), micro, gf('ac-sens').trim(), gf('ac-data'),'manual');
+  _adicionarCultura(gf('ac-sitio').trim(),micro,gf('ac-sens').trim(),gf('ac-data'),'manual',null);
   ['ac-sitio','ac-micro','ac-sens'].forEach(id=>sf(id,''));
   $('add-cultura-inline').style.display='none';
 }
 
-// Busca automática (silenciosa) ao abrir o formulário
-async function _buscarCulturasAuto(paciente, leito){
+// ── Busca automática ao abrir o formulário (silenciosa) ──────────────────────
+async function _buscarCulturasAuto(paciente,leito){
   const el=$('culturas-auto');
-  if(!el||!paciente||!APPS_SCRIPT_URL||!CULTURAS_SHEET_ID){ return; }
+  if(!el||!paciente||!APPS_SCRIPT_URL||!CULTURAS_SHEET_ID) return;
   el.style.display='block';
   el.innerHTML='<span style="font-size:.72rem;color:var(--muted);">🔬 Buscando culturas...</span>';
   try{
-    const resp=await fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({action:'culturas',paciente:_normalizarNome(paciente),leito,sheetId:CULTURAS_SHEET_ID})});
-    const data=JSON.parse(await resp.text());
+    const data=await _apsFetch({action:'culturas',paciente:_normalizarNome(paciente),leito,sheetId:CULTURAS_SHEET_ID});
     const positivos=(data.resultados||[]).filter(r=>r.microorg&&!/negativ|contaminad|pendente/i.test(r.resultado||''));
     if(!positivos.length){ el.innerHTML=''; el.style.display='none'; return; }
-    positivos.forEach(r=>_adicionarCultura(r.cultura||'',r.microorg||'',r.sensibilidade||'',r.dataResultado||r.dataRecebimento||'','planilha'));
-    el.innerHTML=`<span style="font-size:.72rem;color:var(--verde);font-weight:600;">✓ ${positivos.length} cultura(s) da planilha</span>`;
-    setTimeout(()=>{el.style.display='none';},4000);
-  }catch(e){ el.innerHTML=''; el.style.display='none'; }
+    positivos.forEach(r=>_adicionarCultura(r.cultura||'',r.microorg||'',r.sensibilidade||'',
+      r.dataResultado||r.dataRecebimento||'','planilha',r.antibiograma||null));
+    el.innerHTML=`<span style="font-size:.72rem;color:var(--verde);font-weight:600;">✓ ${positivos.length} cultura(s) positiva(s) importada(s) da planilha</span>`;
+    setTimeout(()=>{ el.style.display='none'; },4000);
+  }catch(e){ el.innerHTML=''; el.style.display='none'; console.warn('[Culturas auto]',e); }
 }
 
-// Modal completo de busca
+// ── Modal completo de busca por paciente ─────────────────────────────────────
 async function buscarCulturas(){
   if(!leitoAtual){ toast('Abra uma evolução primeiro.',true); return; }
   const pac=gf('f-pac').trim();
-  if(!pac){ toast('Informe o paciente primeiro.',true); return; }
+  if(!pac){ toast('Preencha o nome do paciente primeiro.',true); return; }
   if(!APPS_SCRIPT_URL||!CULTURAS_SHEET_ID){
-    $('culturas-conteudo').innerHTML='<div class="tip w">Busca automática indisponível: configure <code>APPS_SCRIPT_URL</code> e <code>CULTURAS_SHEET_ID</code> no index.html. Use "Adicionar manual" no formulário.</div>';
+    $('culturas-conteudo').innerHTML='<div class="tip w">Configure <code>APPS_SCRIPT_URL</code> e <code>CULTURAS_SHEET_ID</code> no index.html. Use "✏️ Adicionar manual" enquanto isso.</div>';
     $('modal-culturas').classList.add('show'); return;
   }
-  const modal=$('modal-culturas'), cont=$('culturas-conteudo');
-  cont.innerHTML='<div class="sae-loading"><div class="sae-spinner"></div><p>Buscando culturas de <strong>'+pac+'</strong>…</p></div>';
-  modal.classList.add('show');
+  const cont=$('culturas-conteudo');
+  cont.innerHTML=`<div class="sae-loading"><div class="sae-spinner"></div><p>Buscando culturas de <strong>${pac}</strong>…<br><span style="font-size:.72rem;color:var(--muted);">Pode levar 30–60 s (extração de PDFs).</span></p></div>`;
+  $('modal-culturas').classList.add('show');
   try{
-    const resp=await fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({action:'culturas',paciente:_normalizarNome(pac),leito:leitoAtual,sheetId:CULTURAS_SHEET_ID})});
-    const data=JSON.parse(await resp.text());
+    const data=await _apsFetch({action:'culturas',paciente:_normalizarNome(pac),leito:leitoAtual,sheetId:CULTURAS_SHEET_ID});
     if(data.error) throw new Error(data.error);
-    cont.innerHTML=_renderCulturasModal(data.resultados||[]);
-  }catch(e){ cont.innerHTML='<div class="tip d">Erro ao buscar: '+(e.message||e)+'</div>'; }
+    cont.innerHTML=_renderCulturasModal(data.resultados||[],data.pacienteEncontrado||'');
+  }catch(e){ cont.innerHTML=`<div class="tip d">Erro ao buscar: ${e.message||e}</div>`; }
 }
-function _renderCulturasModal(res){
+
+function _renderCulturasModal(res,nomePlanilha){
   const pos=res.filter(r=>r.microorg&&!/negativ|contaminad|pendente/i.test(r.resultado||''));
   const neg=res.filter(r=>!pos.includes(r));
   let h='';
+  if(nomePlanilha) h+=`<div style="font-size:.72rem;color:var(--muted);margin-bottom:8px;">Paciente na planilha: <strong>${nomePlanilha}</strong></div>`;
+  if(!res.length){ h+='<div class="tip i">Nenhum resultado para este paciente na planilha.</div>'; return h; }
   if(pos.length){
     h+='<div class="ind-sec-titulo">Positivas</div>';
-    h+=pos.map(r=>`<div style="border:1px solid #f3c2bd;background:#fde8e6;border-radius:9px;padding:8px;margin-bottom:6px;">
-      <strong style="color:var(--vermelho);">🦠 ${r.microorg}</strong> · ${r.cultura||'?'} ${r.dataResultado?'· '+_fmtDataCurta(r.dataResultado):''}<br>
-      <span style="font-size:.74rem;color:var(--muted);">${r.sensibilidade||''}</span><br>
-      <button class="btn btn-pri btn-sm" style="margin-top:5px;" onclick="_adicionarCultura('${(r.cultura||'').replace(/'/g,'')}','${(r.microorg||'').replace(/'/g,'')}','${(r.sensibilidade||'').replace(/'/g,'')}','${r.dataResultado||r.dataRecebimento||''}','planilha');toast('Cultura registrada.');">+ Registrar</button>
-    </div>`).join('');
-  } else { h+='<div class="tip i">Nenhuma cultura positiva encontrada.</div>'; }
-  if(neg.length){
-    h+=`<details style="margin-top:8px;"><summary style="cursor:pointer;font-size:.76rem;color:var(--muted);">Negativas/pendentes (${neg.length})</summary>`;
-    h+=neg.map(r=>`<div style="font-size:.74rem;padding:4px 0;border-bottom:1px solid var(--borda);">${r.cultura||'?'} — ${r.resultado||r.microorg||'pendente'}</div>`).join('')+'</details>';
-  }
+    h+=pos.map(r=>{
+      const cls=_cultClassificar(r.antibiograma);
+      const corBg=cls==='XDR'||cls==='PDR'?'#b71c1c':cls==='MDR'?'#e65100':'#555';
+      let atbHtml='';
+      if(r.antibiograma&&r.antibiograma.length){
+        const R_=r.antibiograma.filter(a=>a.resultado==='RESISTENTE').slice(0,4);
+        const S_=r.antibiograma.filter(a=>a.resultado==='SENSÍVEL').slice(0,4);
+        if(R_.length||S_.length) atbHtml=`<div style="font-size:.7rem;margin-top:5px;display:flex;gap:6px;flex-wrap:wrap;">
+          ${R_.map(a=>`<span style="background:#fde8e6;color:#b71c1c;padding:1px 6px;border-radius:6px;font-weight:600;">R: ${a.atb}</span>`).join('')}
+          ${S_.map(a=>`<span style="background:#e6f4ec;color:var(--verde);padding:1px 6px;border-radius:6px;font-weight:600;">S: ${a.atb}</span>`).join('')}
+        </div>`;
+      }
+      const antibjson=r.antibiograma?JSON.stringify(r.antibiograma):'null';
+      return `<div style="border:1px solid #f3c2bd;background:#fde8e6;border-radius:9px;padding:8px 10px;margin-bottom:6px;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px;">
+          <strong style="color:var(--vermelho);">🦠 ${r.microorg}</strong>
+          ${cls?`<span style="font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:8px;background:${corBg};color:white;">${cls}</span>`:''}
+        </div>
+        <div style="font-size:.74rem;color:var(--muted);margin-top:2px;">${r.cultura||'?'}${r.dataResultado?' · '+r.dataResultado:''}</div>
+        ${r.sensibilidade?`<div style="font-size:.72rem;margin-top:3px;">${r.sensibilidade.slice(0,120)}</div>`:''}
+        ${atbHtml}
+        <button class="btn btn-pri btn-sm" style="margin-top:6px;"
+          onclick='_adicionarCulturaModal(${JSON.stringify(r.cultura||"")},${JSON.stringify(r.microorg||"")},${JSON.stringify(r.sensibilidade||"")},${JSON.stringify(r.dataResultado||r.dataRecebimento||"")},${antibjson})'>
+          + Registrar na evolução
+        </button>
+      </div>`;
+    }).join('');
+  } else { h+='<div class="tip i">Nenhuma cultura positiva encontrada para este paciente.</div>'; }
+  if(neg.length) h+=`<details style="margin-top:8px;"><summary style="cursor:pointer;font-size:.76rem;color:var(--muted);">Negativas/pendentes (${neg.length})</summary>`+
+    neg.map(r=>`<div style="font-size:.74rem;padding:4px 0;border-bottom:1px solid var(--borda);">${r.cultura||'?'} · ${r.dataResultado||'—'} — ${r.resultado||'pendente'}</div>`).join('')+'</details>';
   return h;
 }
+function _adicionarCulturaModal(sitio,micro,sens,data,antibiograma){
+  _adicionarCultura(sitio,micro,sens,data,'planilha',antibiograma);
+  toast('Cultura registrada.');
+}
+
+// ── Classificação MDR/XDR/PDR (Magiorakos simplificado) ─────────────────────
+const _CLASSES_ATB={
+  'amoxicilina':'Penicilinas','ampicilina':'Penicilinas','oxacilina':'Penicilinas',
+  'piperacilina-tazobactam':'Penicilinas+Inh','ampicilina-sulbactam':'Penicilinas+Inh','amoxicilina-clavulanato':'Penicilinas+Inh',
+  'cefazolina':'Cefalosporinas1G','cefoxitina':'Cefalosporinas2G',
+  'ceftriaxona':'Cefalosporinas3G','cefotaxima':'Cefalosporinas3G','ceftazidima':'Cefalosporinas3G',
+  'cefepima':'Cefalosporinas4G','ceftazidima-avibactam':'Cefalosporinas+Inh','ceftolozana-tazobactam':'Cefalosporinas+Inh',
+  'ertapenem':'Carbapenêmicos','imipenem':'Carbapenêmicos','meropenem':'Carbapenêmicos','doripenem':'Carbapenêmicos',
+  'aztreonam':'Monobactâmicos',
+  'ciprofloxacino':'Fluoroquinolonas','levofloxacino':'Fluoroquinolonas','moxifloxacino':'Fluoroquinolonas',
+  'gentamicina':'Aminoglicosídeos','amicacina':'Aminoglicosídeos','tobramicina':'Aminoglicosídeos',
+  'vancomicina':'Glicopeptídeos','teicoplanina':'Glicopeptídeos',
+  'linezolida':'Oxazolidinona','daptomicina':'Lipopeptídeos',
+  'tigeciclina':'Tetraciclinas','doxiciclina':'Tetraciclinas',
+  'colistina':'Polimixinas','polimixina b':'Polimixinas',
+  'sulfametoxazol-trimetoprima':'Sulfonamidas',
+  'fluconazol':'Azóis','voriconazol':'Azóis','itraconazol':'Azóis',
+  'anfotericina b':'Poliênicos','micafungina':'Equinocandinas','caspofungina':'Equinocandinas',
+};
+function _classeAtb(nome){
+  const k=(nome||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+  if(_CLASSES_ATB[k]) return _CLASSES_ATB[k];
+  for(const ch in _CLASSES_ATB){ if(k.includes(ch)||ch.includes(k)) return _CLASSES_ATB[ch]; }
+  return 'Outros';
+}
+function _cultClassificar(antibiograma){
+  if(!antibiograma||!antibiograma.length) return '';
+  const R=new Set(),T=new Set();
+  antibiograma.forEach(a=>{ const c=_classeAtb(a.atb); T.add(c); if(a.resultado==='RESISTENTE') R.add(c); });
+  const nR=R.size,nT=T.size;
+  if(nR===0) return 'Sensível';
+  if(nR>=nT&&nT>=3) return 'PDR';
+  if(nR>=5) return 'XDR';
+  if(nR>=3) return 'MDR';
+  return 'Resistente';
+}
+
+// ── Panorama CCIH agregado (indicadores) ─────────────────────────────────────
+let _culturasAgregadoCache=null;
+async function _ccihCarregarAgregado(forcar,maxAbas){
+  if(_culturasAgregadoCache&&!forcar){ renderIndicadores(); return; }
+  if(!APPS_SCRIPT_URL||!CULTURAS_SHEET_ID){ toast('Configure APPS_SCRIPT_URL e CULTURAS_SHEET_ID para o panorama CCIH.',true); return; }
+  const nAbas=maxAbas||3, nPDFs=nAbas<=3?20:nAbas<=6?35:50;
+  const c=$('ind-conteudo');
+  c.innerHTML=`<div style="text-align:center;padding:60px 20px;">
+    <div class="sae-spinner" style="border-top-color:var(--vinho);margin:0 auto 16px;"></div>
+    <div style="font-weight:700;color:var(--vinho);">🏥 Buscando panorama institucional CCIH...</div>
+    <div style="font-size:.74rem;color:var(--muted);margin-top:6px;">${nAbas} meses · até ${nPDFs} antibiogramas. Aguarde ${nAbas<=3?'30–60':'60–120'} s.</div>
+  </div>`;
+  try{
+    const data=await _apsFetch({action:'culturas_agregado',sheetId:CULTURAS_SHEET_ID,maxAbas:nAbas,maxPDFs:nPDFs});
+    if(data.error) throw new Error(data.error);
+    data._maxAbas=nAbas; _culturasAgregadoCache=data;
+    renderIndicadores();
+    toast(`✓ ${data.totalCulturas} culturas · ${data.pdfsExtraidos} antibiogramas`);
+  }catch(e){
+    console.error('[CCIH agregado]',e);
+    c.innerHTML=`<div class="tip d">❌ Erro: ${e.message}. <button onclick="_ccihCarregarAgregado(true)" class="btn btn-sm">Tentar novamente</button></div>`;
+  }
+}
+function _ccihLimparAgregado(){ _culturasAgregadoCache=null; renderIndicadores(); }
+
 
 
 /* ════════════════════════════════════════════════════════════════════════════
@@ -1329,19 +1444,107 @@ function _indDispositivos(per){
 }
 
 function _indCulturas(per){
+  // Prefere o panorama agregado da planilha quando disponível
+  if(_culturasAgregadoCache&&_culturasAgregadoCache.culturas) return _renderCCIHAgregado(_culturasAgregadoCache);
+  return _renderCCIHLocal(per);
+}
+
+// ── Panorama CCIH local (a partir das evoluções salvas) ──────────────────────
+function _renderCCIHLocal(per){
   const evPer=_indCache.evolucoes.filter(e=>_dentroPeriodo(e.data,per));
   const todas=[]; evPer.forEach(e=>(e.culturas||[]).forEach(c=>{ if(c.micro) todas.push(c); }));
-  if(!todas.length) return '<div class="ind-hint">Nenhuma cultura positiva registrada nas evoluções do período.</div>';
+  const btn=APPS_SCRIPT_URL&&CULTURAS_SHEET_ID
+    ? `<div style="margin-bottom:10px;display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="btn btn-pri btn-sm" onclick="_ccihCarregarAgregado(false,3)">🏥 Panorama institucional (3 meses)</button>
+        <button class="btn btn-sm" onclick="_ccihCarregarAgregado(false,6)">6 meses</button>
+        <button class="btn btn-sm" onclick="_ccihCarregarAgregado(false,99)">Todas</button>
+      </div>` : '<div class="tip i" style="margin-bottom:8px;">Configure <code>APPS_SCRIPT_URL</code> e <code>CULTURAS_SHEET_ID</code> para o panorama institucional completo com antibiogramas.</div>';
+  if(!todas.length) return btn+'<div class="ind-hint">Nenhuma cultura positiva registrada nas evoluções do período.</div>';
   const freq={}; todas.forEach(c=>{ const m=(c.micro||'').toUpperCase().trim(); if(m) freq[m]=(freq[m]||0)+1; });
   const ord=Object.entries(freq).sort((a,b)=>b[1]-a[1]);
-  let h='<div class="ind-cards">';
+  const nMDR=todas.filter(c=>{ const cl=_cultClassificar(c.antibiograma); return cl==='MDR'||cl==='XDR'||cl==='PDR'; }).length;
+  let h=btn+'<div class="ind-cards">';
   h+=_card('Culturas positivas',todas.length,'no período','vermelho');
   h+=_card('Microrganismos distintos',ord.length,'espécies','vinho');
+  h+=_card('MDR/XDR/PDR',nMDR,`${todas.length>0?Math.round(nMDR/todas.length*100):0}% dos isolados`,nMDR>0?'vermelho':'verde');
   h+='</div>';
-  h+='<div class="ind-sec-titulo">Microrganismos mais frequentes</div><table class="ind-tabela"><tr><th>Microrganismo</th><th>Ocorrências</th></tr>';
-  ord.forEach(([m,n])=>{ h+=`<tr><td>${m}</td><td>${n}</td></tr>`; });
+  h+='<div class="ind-sec-titulo">Microrganismos mais frequentes</div>';
+  h+='<table class="ind-tabela"><tr><th>Microrganismo</th><th>Ocorrências</th><th>Classificação</th></tr>';
+  todas.forEach(c=>{
+    const cl=_cultClassificar(c.antibiograma);
+    const cor=cl==='PDR'||cl==='XDR'?'color:#b71c1c;font-weight:700;':cl==='MDR'?'color:#e65100;font-weight:700;':'';
+  });
+  ord.forEach(([m,n])=>{
+    const cls=todas.filter(c=>c.micro===m&&c.antibiograma).map(c=>_cultClassificar(c.antibiograma)).filter(Boolean);
+    const pior=cls.includes('PDR')?'PDR':cls.includes('XDR')?'XDR':cls.includes('MDR')?'MDR':cls[0]||'';
+    const cor=pior==='PDR'||pior==='XDR'?'color:#b71c1c;font-weight:700;':pior==='MDR'?'color:#e65100;font-weight:700;':'';
+    h+=`<tr><td>${m}</td><td>${n}</td><td style="${cor}">${pior||'—'}</td></tr>`;
+  });
   h+='</table>';
-  h+='<div class="ind-hint">📌 Baseado nas culturas positivas registradas manualmente ou importadas nas evoluções. Não substitui a vigilância oficial da CCIH.</div>';
+  h+='<div class="ind-hint">📌 Baseado nas culturas registradas nas evoluções. Para o panorama completo com antibiograma de todos os pacientes da planilha CCIH, use o botão "Panorama institucional" acima.</div>';
+  return h;
+}
+
+// ── Panorama CCIH agregado (dados da planilha via Apps Script) ───────────────
+function _renderCCIHAgregado(dados){
+  const culturas=dados.culturas||[];
+  const positivas=culturas.filter(c=>!c.negativa&&c.microorg);
+  const cls=positivas.map(c=>_cultClassificar(c.antibiograma));
+  const nXDR=cls.filter(x=>x==='XDR').length, nMDR=cls.filter(x=>x==='MDR').length;
+  const nPDR=cls.filter(x=>x==='PDR').length, nSusc=cls.filter(x=>x==='Sensível').length;
+  const abas=dados._maxAbas||3;
+  let h=`<div style="background:var(--vinho);color:white;padding:10px 14px;border-radius:8px;margin-bottom:10px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+      <div>
+        <div style="font-weight:700;font-size:.86rem;">🏥 Panorama institucional CCIH</div>
+        <div style="font-size:.72rem;opacity:.9;">${dados.totalCulturas||0} culturas · ${dados.pacientesAnalisados||0} pacientes · ${dados.pdfsExtraidos||0} antibiogramas · ${abas===99?'todas as abas':abas+(abas===1?' mês':' meses')}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <select onchange="_ccihCarregarAgregado(true,+this.value)" style="background:rgba(255,255,255,.15);color:white;border:1px solid rgba(255,255,255,.3);border-radius:6px;padding:4px 8px;font-size:.72rem;cursor:pointer;">
+          <option value="1" ${abas===1?'selected':''}>1 mês</option><option value="3" ${abas===3?'selected':''}>3 meses</option>
+          <option value="6" ${abas===6?'selected':''}>6 meses</option><option value="99" ${abas===99?'selected':''}>Todas</option>
+        </select>
+        <button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:white;border-color:rgba(255,255,255,.3);" onclick="_ccihLimparAgregado()">← Local</button>
+      </div>
+    </div>
+  </div>`;
+  h+='<div class="ind-cards">';
+  h+=_card('Pacientes analisados',dados.pacientesAnalisados||0,'','vinho');
+  h+=_card('Isolados positivos',positivas.length,dados.totalCulturas+' total','vermelho');
+  h+=_card('MDR',nMDR,`${positivas.length?Math.round(nMDR/positivas.length*100):0}%`,nMDR>0?'laranja':'verde');
+  h+=_card('XDR/PDR',nXDR+nPDR,`${positivas.length?Math.round((nXDR+nPDR)/positivas.length*100):0}%`,nXDR+nPDR>0?'vermelho':'verde');
+  h+='</div>';
+  // Alerta antibiogramas
+  const comAtb=positivas.filter(c=>c.antibiograma&&c.antibiograma.length).length;
+  if(positivas.length>0&&comAtb===0)
+    h+=`<div class="tip d" style="margin-top:8px;">⚠️ Nenhum antibiograma extraído dos PDFs. Verifique se a conta do Apps Script tem acesso aos arquivos no Drive. Rode <code>_testarColunaL</code> no editor do Apps Script.</div>`;
+  else if(positivas.length>0&&comAtb<positivas.length)
+    h+=`<div class="tip i" style="margin-top:8px;">ℹ️ ${comAtb} de ${positivas.length} isolados têm antibiograma extraído. Os demais não têm laudo PDF vinculado.</div>`;
+  // Classificação
+  if(cls.length){
+    h+='<div class="ind-sec-titulo">Classificação de Resistência (Magiorakos simplificado)</div><div class="ind-cards">';
+    h+=_card('PDR',nPDR,`${positivas.length?Math.round(nPDR/positivas.length*100):0}%`,nPDR>0?'vermelho':'verde');
+    h+=_card('XDR',nXDR,`${positivas.length?Math.round(nXDR/positivas.length*100):0}%`,nXDR>0?'vermelho':'verde');
+    h+=_card('MDR',nMDR,`${positivas.length?Math.round(nMDR/positivas.length*100):0}%`,nMDR>0?'laranja':'verde');
+    h+=_card('Sensível',nSusc,`${positivas.length?Math.round(nSusc/positivas.length*100):0}%`,'verde');
+    h+='</div>';
+  }
+  // Top microrganismos
+  const freq={}; positivas.forEach(c=>{ const m=(c.microorg||'').toUpperCase().trim(); if(m) freq[m]=(freq[m]||0)+1; });
+  const ord=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,12);
+  if(ord.length){
+    h+='<div class="ind-sec-titulo">Microrganismos mais frequentes</div>';
+    h+='<table class="ind-tabela"><tr><th>Microrganismo</th><th>Isolados</th><th>Classificação</th></tr>';
+    ord.forEach(([m,n])=>{
+      const isols=positivas.filter(c=>(c.microorg||'').toUpperCase().trim()===m&&c.antibiograma);
+      const clss=isols.map(c=>_cultClassificar(c.antibiograma));
+      const pior=clss.includes('PDR')?'PDR':clss.includes('XDR')?'XDR':clss.includes('MDR')?'MDR':clss[0]||'';
+      const cor=pior==='PDR'||pior==='XDR'?'color:#b71c1c;font-weight:700;':pior==='MDR'?'color:#e65100;font-weight:700;':'';
+      h+=`<tr><td>${m}</td><td>${n}</td><td style="${cor}">${pior||'—'}</td></tr>`;
+    });
+    h+='</table>';
+  }
+  h+='<div class="ind-hint" style="margin-top:8px;">📌 PDR = Pan-resistente · XDR = Extensivamente resistente · MDR = Multirresistente (Magiorakos et al. 2012). Versão simplificada: conta classes de antibióticos com resistência.</div>';
   return h;
 }
 
