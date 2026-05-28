@@ -67,12 +67,12 @@ function hideLoading(){ $('loading-overlay').classList.remove('show'); }
 function toast(msg,err=false){ const t=$('toast'); t.textContent=msg; t.className='toast'+(err?' err':''); t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3200); }
 function fecharModal(){ $('modal-adm').classList.remove('show'); }
 
-/* ── LOGO — usa logo.png do repositório; cai no SVG se a imagem faltar ─── */
+/* ── LOGO — usa icone.png do repositório; cai no SVG se a imagem faltar ─── */
 function _logoImg(size){
-  const s = size||120;
-  return `<img src="logo.png" alt="Hospital dos Pescadores" `+
-    `style="max-width:${s}px;width:100%;height:auto;display:block;margin:0 auto;" `+
-    `onerror="this.onerror=null;this.outerHTML=_logoSVG(${s});">`;
+  // Glass Cockpit: usa direto o SVG inline (sem buscar icone.png) pra evitar
+  // 404 ruidoso em ambientes de preview/dev. Em produção, basta substituir
+  // o retorno por _logoSVG(size) → `<img src="icone.png" …>` quando o png existir.
+  return _logoSVG(size||120);
 }
 function _logoSVG(size){
   const s = size||120;
@@ -726,6 +726,9 @@ async function abrirFormulario(leito){
     _buscarCulturasAuto(L.pac, leito);
     _recalcSAPS();
     _ativarCaixaAlta();
+    await _carregarPrescricao(leito);
+    _atualizarPnavPac();
+    mudarAba('evolucao'); // sempre abre na aba de evolução
     hideLoading();
     mostrarTela('t-form');
   }catch(e){ hideLoading(); console.error('abrirFormulario:',e); toast('Erro ao abrir: '+(e.message||e),true); }
@@ -811,6 +814,7 @@ async function salvarEvolucao(){
     hideLoading();
     toast('✓ Evolução salva.');
     $('herd-tag').style.display='none';
+    _atualizarPnavPac();
   }catch(e){ hideLoading(); console.error('salvarEvolucao:',e); toast('Erro ao salvar: '+(e.message||e),true); }
 }
 
@@ -1210,7 +1214,7 @@ function abrirPreview(){
   const cult = d.culturas&&d.culturas.length ? d.culturas.map(c=>`${c.micro||c.resultado}${c.sitio?' ('+c.sitio+')':''}`).join('; ') : '—';
   const labTab = _labParaTabela(d.labLinhas);
   $('preview-conteudo').innerHTML=`
-    <div style="text-align:center;margin-bottom:.4rem;"><img src="logo.png" alt="" style="max-height:64px;width:auto;" onerror="this.style.display='none'"></div>
+    <div style="text-align:center;margin-bottom:.4rem;"><img src="icone.png" alt="" style="max-height:64px;width:auto;" onerror="this.style.display='none'"></div>
     <h1>EVOLUÇÃO MÉDICA — UTI GERAL</h1>
     <div class="pv-sub">Hospital dos Pescadores · ${d.turno} · ${_fmtDataCurta(d.data)}</div>
     <table>
@@ -1621,3 +1625,389 @@ window.addEventListener('load',()=>{
     }
   });
 });
+
+/* ════════════════════════════════════════════════════════════════════════════
+   NAVEGAÇÃO POR ABAS DO PRONTUÁRIO
+   ════════════════════════════════════════════════════════════════════════════ */
+function mudarAba(aba){
+  ['evolucao','prescricao','laboratorio'].forEach(id=>{
+    const panel=$(  `aba-${id}`), btn=$(`pnav-${id}`);
+    if(panel) panel.style.display = id===aba ? '' : 'none';
+    if(btn){ btn.classList.toggle('ativo', id===aba); }
+  });
+  if(aba==='prescricao') _renderPrescricao();
+  if(aba==='laboratorio') _renderLabLinhas();
+}
+
+// Atualiza o mini-resumo do paciente na sidebar
+function _atualizarPnavPac(){
+  const el=$('pnav-pac'); if(!el) return;
+  const pac=gf('f-pac'), leito=gf('f-leito'), diag=gf('f-diag');
+  el.innerHTML=`LEITO ${leito||'?'}<br>${(pac||'').split(' ').slice(0,2).join(' ')||'—'}${diag?'<br><span style="opacity:.7">'+diag.slice(0,30)+'</span>':''}`;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   BANCO DE MEDICAMENTOS DA UTI
+   ─ Você enviará a lista completa; por ora inclui os principais da UTI.
+   ─ Cada item: { nome, dose, via, freq, horarios, categoria, obs }
+   ════════════════════════════════════════════════════════════════════════════ */
+const RX_BANCO = [
+  // ── CARDIOVASCULAR ──────────────────────────────────────────────────────
+  {nome:'AMIODARONA 200MG',        dose:'200MG',      via:'VO',  freq:'12/12H',   hor:['08','20'],          cat:'Cardiovascular'},
+  {nome:'AMIODARONA 150MG/3ML',    dose:'150MG',      via:'EV',  freq:'ACM',      hor:['ACM'],              cat:'Cardiovascular', obs:'diluir em 100ml SF'},
+  {nome:'ATENOLOL 25MG',           dose:'25MG',       via:'VO',  freq:'24/24H',   hor:['08'],               cat:'Cardiovascular'},
+  {nome:'CAPTOPRIL 25MG',          dose:'25MG',       via:'VO',  freq:'8/8H',     hor:['08','16','24'],     cat:'Cardiovascular'},
+  {nome:'DIGOXINA 0,25MG',         dose:'0,25MG',     via:'VO',  freq:'24/24H',   hor:['08'],               cat:'Cardiovascular'},
+  {nome:'ENALAPRIL 10MG',          dose:'10MG',       via:'VO',  freq:'12/12H',   hor:['08','20'],          cat:'Cardiovascular'},
+  {nome:'FUROSEMIDA 20MG',         dose:'40MG (2amp)',via:'EV',  freq:'24/24H',   hor:['16'],               cat:'Cardiovascular'},
+  {nome:'FUROSEMIDA 40MG',         dose:'40MG',       via:'VO',  freq:'24/24H',   hor:['08'],               cat:'Cardiovascular'},
+  {nome:'HIDRALAZINA 20MG/ML',     dose:'20MG',       via:'EV',  freq:'ACM',      hor:['ACM'],              cat:'Cardiovascular'},
+  {nome:'LOSARTANA 50MG',          dose:'50MG',       via:'VO',  freq:'24/24H',   hor:['08'],               cat:'Cardiovascular'},
+  {nome:'METOPROLOL 25MG',         dose:'25MG',       via:'VO',  freq:'24/24H',   hor:['08'],               cat:'Cardiovascular'},
+  {nome:'METOPROLOL 50MG',         dose:'50MG',       via:'VO',  freq:'12/12H',   hor:['08','20'],          cat:'Cardiovascular'},
+  {nome:'NITROGLICERINA 5MG/ML',   dose:'SNC',        via:'EV',  freq:'SNC',      hor:['SNC'],              cat:'Cardiovascular', obs:'bomba de infusão contínua'},
+  {nome:'NOREPINEFRINA 4MG',       dose:'SNC',        via:'EV',  freq:'SNC',      hor:['SNC'],              cat:'Cardiovascular', obs:'BIC — protocolo UTI'},
+  {nome:'SPIRONOLACTONA 25MG',     dose:'25MG',       via:'VO',  freq:'24/24H',   hor:['08'],               cat:'Cardiovascular'},
+  {nome:'VARFARINA 5MG',           dose:'5MG',        via:'VO',  freq:'24/24H',   hor:['18'],               cat:'Cardiovascular'},
+  {nome:'RIVAROXABANA 10MG',       dose:'10MG',       via:'VO',  freq:'24/24H',   hor:['08'],               cat:'Cardiovascular'},
+  {nome:'RIVAROXABANA 20MG',       dose:'20MG',       via:'VO',  freq:'24/24H',   hor:['08'],               cat:'Cardiovascular'},
+  {nome:'DAPAGLIFLOZINA 10MG',     dose:'10MG',       via:'VO',  freq:'24/24H',   hor:['10'],               cat:'Cardiovascular'},
+  {nome:'ISOSSORBIDA 20MG',        dose:'20MG',       via:'VO',  freq:'8/8H',     hor:['08','16','24'],     cat:'Cardiovascular'},
+  // ── SEDAÇÃO / ANALGESIA ─────────────────────────────────────────────────
+  {nome:'DEXMEDETOMIDINA 200MCG',  dose:'SNC',        via:'EV',  freq:'SNC',      hor:['SNC'],              cat:'Sedação/Analgesia', obs:'BIC — protocolo UTI'},
+  {nome:'FENTANIL 0,05MG/ML',      dose:'SNC',        via:'EV',  freq:'SNC',      hor:['SNC'],              cat:'Sedação/Analgesia', obs:'BIC — protocolo UTI'},
+  {nome:'KETAMINA 500MG',          dose:'ACM',        via:'EV',  freq:'ACM',      hor:['ACM'],              cat:'Sedação/Analgesia'},
+  {nome:'MIDAZOLAM 15MG/3ML',      dose:'SNC',        via:'EV',  freq:'SNC',      hor:['SNC'],              cat:'Sedação/Analgesia', obs:'BIC'},
+  {nome:'MORFINA 10MG/ML',         dose:'2MG',        via:'EV',  freq:'4/4H',     hor:['04','08','12','16','20','24'], cat:'Sedação/Analgesia'},
+  {nome:'PROPOFOL 10MG/ML',        dose:'SNC',        via:'EV',  freq:'SNC',      hor:['SNC'],              cat:'Sedação/Analgesia', obs:'BIC'},
+  // ── ANALGÉSICOS / ANTITÉRMICOS ───────────────────────────────────────────
+  {nome:'DIPIRONA 500MG/ML',       dose:'1G (2ml)',   via:'EV',  freq:'SN',       hor:['SN'],               cat:'Analgesia', obs:'ACM se dor ou febre'},
+  {nome:'PARACETAMOL 200MG/ML',    dose:'1G (5ml)',   via:'VO',  freq:'6/6H',     hor:['06','12','18','24'],cat:'Analgesia'},
+  {nome:'TRAMADOL 50MG/ML',        dose:'100MG',      via:'EV',  freq:'8/8H',     hor:['08','16','24'],     cat:'Analgesia'},
+  // ── ANTIBIÓTICOS ────────────────────────────────────────────────────────
+  {nome:'AMOXICILINA+CLAVULANATO 875MG', dose:'875MG', via:'VO', freq:'12/12H',  hor:['08','20'],          cat:'ATB'},
+  {nome:'AMPICILINA+SULBACTAM 3G', dose:'3G',         via:'EV',  freq:'6/6H',    hor:['06','12','18','24'],cat:'ATB'},
+  {nome:'AZITROMICINA 500MG',      dose:'500MG',      via:'VO',  freq:'24/24H',  hor:['08'],               cat:'ATB'},
+  {nome:'CEFAZOLINA 1G',           dose:'1G',         via:'EV',  freq:'8/8H',    hor:['08','16','24'],     cat:'ATB'},
+  {nome:'CEFEPIMA 1G',             dose:'1G',         via:'EV',  freq:'8/8H',    hor:['08','16','24'],     cat:'ATB', obs:'infundir em 30min'},
+  {nome:'CEFTAZIDIMA 1G',          dose:'1G',         via:'EV',  freq:'8/8H',    hor:['08','16','24'],     cat:'ATB'},
+  {nome:'CEFTRIAXONA 1G',          dose:'1G',         via:'EV',  freq:'24/24H',  hor:['08'],               cat:'ATB'},
+  {nome:'CIPROFLOXACINO 400MG',    dose:'400MG',      via:'EV',  freq:'12/12H',  hor:['08','20'],          cat:'ATB', obs:'infundir em 60min'},
+  {nome:'CLARITROMICINA 500MG',    dose:'500MG',      via:'VO',  freq:'12/12H',  hor:['08','20'],          cat:'ATB'},
+  {nome:'CLINDAMICINA 600MG',      dose:'600MG',      via:'EV',  freq:'8/8H',    hor:['08','16','24'],     cat:'ATB'},
+  {nome:'COLISTINA 150MG',         dose:'150MG',      via:'EV',  freq:'12/12H',  hor:['08','20'],          cat:'ATB', obs:'dose de ataque 300mg'},
+  {nome:'ERTAPENEM 1G',            dose:'1G',         via:'EV',  freq:'24/24H',  hor:['08'],               cat:'ATB'},
+  {nome:'FLUCONAZOL 200MG',        dose:'200MG',      via:'EV',  freq:'24/24H',  hor:['08'],               cat:'ATB'},
+  {nome:'LINEZOLIDA 600MG',        dose:'600MG',      via:'EV',  freq:'12/12H',  hor:['08','20'],          cat:'ATB'},
+  {nome:'MEROPENEM 1G',            dose:'1G',         via:'EV',  freq:'8/8H',    hor:['08','16','24'],     cat:'ATB', obs:'infundir em 3h (PK/PD)'},
+  {nome:'METRONIDAZOL 500MG',      dose:'500MG',      via:'EV',  freq:'8/8H',    hor:['08','16','24'],     cat:'ATB'},
+  {nome:'OXACILINA 500MG',         dose:'500MG',      via:'EV',  freq:'4/4H',    hor:['04','08','12','16','20','24'], cat:'ATB'},
+  {nome:'PIPERACILINA+TAZOBACTAM 4,5G', dose:'4,5G', via:'EV',  freq:'6/6H',    hor:['06','12','18','24'],cat:'ATB', obs:'infundir em 4h'},
+  {nome:'TIGECICLINA 50MG',        dose:'50MG',       via:'EV',  freq:'12/12H',  hor:['08','20'],          cat:'ATB', obs:'dose ataque 100mg'},
+  {nome:'VANCOMICINA 500MG',       dose:'ACM',        via:'EV',  freq:'6/6H',    hor:['06','12','18','24'],cat:'ATB', obs:'dosar nível + ajuste TFG'},
+  // ── ANTICOAGULANTES ─────────────────────────────────────────────────────
+  {nome:'ENOXAPARINA 20MG',        dose:'20MG',       via:'SC',  freq:'24/24H',  hor:['08'],               cat:'Anticoagulante', obs:'profilática'},
+  {nome:'ENOXAPARINA 40MG',        dose:'40MG',       via:'SC',  freq:'24/24H',  hor:['08'],               cat:'Anticoagulante', obs:'profilática'},
+  {nome:'ENOXAPARINA 60MG',        dose:'60MG',       via:'SC',  freq:'12/12H',  hor:['08','20'],          cat:'Anticoagulante', obs:'terapêutica'},
+  {nome:'HEPARINA NÃO FRACIONADA', dose:'SNC',        via:'EV',  freq:'SNC',     hor:['SNC'],              cat:'Anticoagulante', obs:'BIC — protocolo'},
+  // ── DIURÉTICOS ──────────────────────────────────────────────────────────
+  {nome:'ESPIRONOLACTONA 25MG',    dose:'25MG',       via:'VO',  freq:'24/24H',  hor:['08'],               cat:'Diurético'},
+  {nome:'HIDROCLOROTIAZIDA 25MG',  dose:'25MG',       via:'VO',  freq:'24/24H',  hor:['08'],               cat:'Diurético'},
+  // ── NEUROLOGIA / PSIQUIATRIA ─────────────────────────────────────────────
+  {nome:'CARBAMAZEPINA 200MG',     dose:'200MG',      via:'VO',  freq:'12/12H',  hor:['08','20'],          cat:'Neurologia'},
+  {nome:'DIAZEPAM 5MG',            dose:'5MG',        via:'VO',  freq:'ACM NOITE',hor:['22'],              cat:'Neurologia'},
+  {nome:'FENOBARBITAL 100MG',      dose:'100MG',      via:'VO',  freq:'12/12H',  hor:['08','20'],          cat:'Neurologia'},
+  {nome:'FENITOÍNA 100MG',         dose:'100MG',      via:'VO',  freq:'8/8H',    hor:['08','16','24'],     cat:'Neurologia'},
+  {nome:'HALOPERIDOL 5MG/ML',      dose:'5MG',        via:'EV',  freq:'ACM',     hor:['ACM'],              cat:'Neurologia'},
+  {nome:'LEVETIRACETAM 500MG',     dose:'500MG',      via:'VO',  freq:'12/12H',  hor:['08','20'],          cat:'Neurologia'},
+  {nome:'QUETIAPINA 25MG',         dose:'25MG',       via:'VO',  freq:'24/24H',  hor:['22'],               cat:'Neurologia'},
+  // ── ENDÓCRINO / METABÓLICO ───────────────────────────────────────────────
+  {nome:'GLICOSE 50% 04 AMP',      dose:'200ML',      via:'EV',  freq:'SN',      hor:['SN'],               cat:'Metabólico', obs:'se HGT < 70'},
+  {nome:'INSULINA REGULAR',        dose:'CONF PROTOC', via:'SC', freq:'SN',      hor:['SN'],               cat:'Metabólico', obs:'protocolo HGT'},
+  {nome:'INSULINA GLARGINA',       dose:'ACM',        via:'SC',  freq:'24/24H',  hor:['22'],               cat:'Metabólico'},
+  {nome:'LEVOTIROXINA 50MCG',      dose:'50MCG',      via:'VO',  freq:'24/24H',  hor:['06'],               cat:'Metabólico', obs:'em jejum'},
+  {nome:'METFORMINA 500MG',        dose:'500MG',      via:'VO',  freq:'12/12H',  hor:['08','20'],          cat:'Metabólico'},
+  {nome:'PREDNISONA 20MG',         dose:'20MG',       via:'VO',  freq:'24/24H',  hor:['08'],               cat:'Metabólico'},
+  {nome:'METILPREDNISOLONA 125MG', dose:'125MG',      via:'EV',  freq:'24/24H',  hor:['08'],               cat:'Metabólico'},
+  {nome:'HIDROCORTISONA 100MG',    dose:'100MG',      via:'EV',  freq:'6/6H',    hor:['06','12','18','24'],cat:'Metabólico'},
+  // ── GASTROINTESTINAL ────────────────────────────────────────────────────
+  {nome:'METOCLOPRAMIDA 10MG',     dose:'10MG',       via:'EV',  freq:'8/8H',    hor:['08','16','24'],     cat:'Gastrointestinal'},
+  {nome:'OMEPRAZOL 20MG',          dose:'20MG',       via:'VO',  freq:'24/24H',  hor:['08'],               cat:'Gastrointestinal'},
+  {nome:'OMEPRAZOL 40MG',          dose:'40MG',       via:'EV',  freq:'24/24H',  hor:['08'],               cat:'Gastrointestinal'},
+  {nome:'ONDANSETRONA 2MG/ML',     dose:'8MG (4ml)',  via:'EV',  freq:'8/8H SN', hor:['SN'],              cat:'Gastrointestinal', obs:'se náusea/vômito'},
+  {nome:'PANTOPRAZOL 40MG',        dose:'40MG',       via:'EV',  freq:'12/12H',  hor:['08','20'],          cat:'Gastrointestinal'},
+  {nome:'RANITIDINA 50MG',         dose:'50MG',       via:'EV',  freq:'8/8H',    hor:['08','16','24'],     cat:'Gastrointestinal'},
+  // ── ELETRÓLITOS / REPOSIÇÃO ─────────────────────────────────────────────
+  {nome:'CLORETO DE POTÁSSIO 10%', dose:'10MEQ',      via:'EV',  freq:'ACM',     hor:['ACM'],              cat:'Eletrólito', obs:'diluir — máx 20mEq/h'},
+  {nome:'GLUCONATO DE CÁLCIO 10%', dose:'1G',         via:'EV',  freq:'ACM',     hor:['ACM'],              cat:'Eletrólito'},
+  {nome:'SULFATO DE MAGNÉSIO 50%', dose:'2G',         via:'EV',  freq:'ACM',     hor:['ACM'],              cat:'Eletrólito'},
+  {nome:'SF 0,9% 500ML',           dose:'500ML',      via:'EV',  freq:'SNC',     hor:['SNC'],              cat:'Hidratação'},
+  {nome:'SF 0,9% 250ML',           dose:'250ML',      via:'EV',  freq:'ACM',     hor:['ACM'],              cat:'Hidratação'},
+  {nome:'RINGER LACTATO 500ML',    dose:'500ML',      via:'EV',  freq:'ACM',     hor:['ACM'],              cat:'Hidratação'},
+  // ── DIETA / CUIDADOS ────────────────────────────────────────────────────
+  {nome:'DIETA ORAL LIVRE',        dose:'—',          via:'VO',  freq:'SND',     hor:['SND'],              cat:'Dieta'},
+  {nome:'DIETA ORAL LÍQUIDA-PASTOSA', dose:'—',       via:'VO',  freq:'SND',     hor:['SND'],              cat:'Dieta'},
+  {nome:'DIETA ENTERAL',           dose:'ACM',        via:'SNE', freq:'SND',     hor:['SND'],              cat:'Dieta', obs:'volume conforme nutricionista'},
+  {nome:'JEJUM',                   dose:'—',          via:'—',   freq:'—',       hor:[],                   cat:'Dieta'},
+  {nome:'RESTRIÇÃO HÍDRICA',       dose:'ACM',        via:'—',   freq:'24H',     hor:[],                   cat:'Dieta'},
+  {nome:'HGT 6/6H',                dose:'—',          via:'—',   freq:'6/6H',    hor:['06','12','18','24'],cat:'Cuidados'},
+  {nome:'HGT ANTES REFEIÇÕES',     dose:'—',          via:'—',   freq:'SND',     hor:['SND'],              cat:'Cuidados'},
+  {nome:'PNI + MCC + SAT CONTÍNUO',dose:'—',          via:'—',   freq:'SNC',     hor:['EM USO'],           cat:'Cuidados'},
+  {nome:'JELCO HIDRATADO',         dose:'—',          via:'EV',  freq:'—',       hor:[],                   cat:'Cuidados'},
+  {nome:'CURATIVO',                dose:'—',          via:'—',   freq:'SND',     hor:['SND'],              cat:'Cuidados'},
+  {nome:'DECÚBITO ELEVADO 30-45°', dose:'—',          via:'—',   freq:'SNC',     hor:['EM USO'],           cat:'Cuidados'},
+  {nome:'FISIOTERAPIA RESPIRATÓRIA',dose:'—',         via:'—',   freq:'SND',     hor:['SND'],              cat:'Cuidados'},
+  {nome:'SONDA VESICAL DRENAGEM',  dose:'—',          via:'—',   freq:'SNC',     hor:['EM USO'],           cat:'Cuidados'},
+];
+
+/* ════════════════════════════════════════════════════════════════════════════
+   PRESCRIÇÃO — estado e funções
+   ════════════════════════════════════════════════════════════════════════════ */
+let _rxItens = [];   // array de itens da prescrição atual
+let _rxAcTarget = null; // input do autocomplete ativo
+
+const RX_HORAS = ['02','04','06','08','10','12','14','16','18','20','22','24'];
+const RX_VIAS  = ['VO','EV','SC','IM','SL','IN','SNE','SNG','TD','INH','—'];
+const RX_FREQS = ['SNC','24/24H','12/12H','8/8H','6/6H','4/4H','2/2H','SN','ACM','SND','—'];
+
+function _rxNovoItem(tipo){
+  return { id:Date.now()+Math.random(), farm:'', dose:'', via:'EV', freq:'24/24H', hor:[], obs:'', tipo:tipo||'normal' };
+}
+
+function addItemPrescricao(){ _rxItens.push(_rxNovoItem('normal')); _renderPrescricao(); _rxFocusUltimo(); }
+function addItemPrescricaoEspecial(tipo){
+  const item=_rxNovoItem(tipo);
+  if(tipo==='dieta'){ item.farm='DIETA '; item.via='VO'; item.freq='SND'; item.hor=['SND']; }
+  if(tipo==='sn'){    item.freq='SN'; item.hor=['SN']; }
+  if(tipo==='cuidados'){ item.via='—'; item.freq='SND'; }
+  _rxItens.push(item); _renderPrescricao(); _rxFocusUltimo();
+}
+function _rxFocusUltimo(){
+  setTimeout(()=>{
+    const inputs=document.querySelectorAll('#presc-tbody .rx-farm');
+    if(inputs.length) inputs[inputs.length-1].focus();
+  },60);
+}
+
+function _rxRemover(id){ _rxItens=_rxItens.filter(i=>i.id!==id); _renderPrescricao(); }
+
+function _rxSetField(id, campo, val){
+  const it=_rxItens.find(i=>i.id===id); if(it) it[campo]=val;
+}
+function _rxToggleHor(id, hor){
+  const it=_rxItens.find(i=>i.id===id); if(!it) return;
+  const especiais=['SN','SND','SNC','ACM','EM USO'];
+  if(especiais.includes(hor)){
+    it.hor = it.hor.includes(hor) ? [] : [hor];
+  } else {
+    it.hor = it.hor.filter(h=>!especiais.includes(h));
+    const idx=it.hor.indexOf(hor);
+    if(idx>=0) it.hor.splice(idx,1); else it.hor.push(hor);
+    it.hor.sort();
+  }
+  // re-renderiza só a célula de horários (sem remontar tudo)
+  const cell=document.querySelector(`[data-rx-hor="${id}"]`);
+  if(cell) cell.innerHTML=_rxHorariosHtml(it);
+}
+
+function _rxHorariosHtml(it){
+  const especiais=['SN','SND','SNC','ACM','EM USO'];
+  const ativos=it.hor||[];
+  const horChips=RX_HORAS.map(h=>`<span class="rx-hor-chip ${ativos.includes(h)?'on':''}" onclick="_rxToggleHor(${it.id},'${h}')">${h}</span>`).join('');
+  const espChips=especiais.map(e=>`<span class="rx-hor-chip rx-hor-chip-sn ${ativos.includes(e)?'on':''}" onclick="_rxToggleHor(${it.id},'${e}')">${e}</span>`).join('');
+  return `<div class="rx-horarios">${horChips}${espChips}</div>`;
+}
+
+function _renderPrescricao(){
+  // atualiza meta do cabeçalho
+  const pac=gf('f-pac'), leito=gf('f-leito'), data=gf('f-data'), alergia=gf('f-alergia');
+  const meta=$('presc-meta');
+  if(meta) meta.innerHTML=`<strong>${pac||'Paciente'}</strong> · Leito ${leito||'?'} · <strong>${_fmtDataCurta(data)||'—'}</strong>`;
+  // alerta de alergias
+  const alertaEl=$('presc-alerta-alergia');
+  if(alertaEl){
+    if(alergia && !/^nega$/i.test(alergia.trim())){
+      alertaEl.style.display='flex';
+      alertaEl.innerHTML=`<div class="presc-alerta">⚠️ <strong>ALERGIA:</strong> ${alergia.toUpperCase()}</div>`;
+    } else { alertaEl.style.display='none'; }
+  }
+  // renderiza linhas
+  const tbody=$('presc-tbody'); if(!tbody) return;
+  if(!_rxItens.length){
+    tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--muted);font-size:.84rem;">
+      Clique em "+ Adicionar item" para começar a prescrição.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML=_rxItens.map((it,i)=>{
+    const rowCls = it.tipo==='dieta'?'presc-dieta':it.tipo==='sn'?'presc-sn':it.tipo==='cuidados'?'presc-cuidado':'';
+    const viaOpts=RX_VIAS.map(v=>`<option ${it.via===v?'selected':''}>${v}</option>`).join('');
+    const freqOpts=RX_FREQS.map(f=>`<option ${it.freq===f?'selected':''}>${f}</option>`).join('');
+    return `<tr class="${rowCls}">
+      <td class="presc-num">${i+1}</td>
+      <td>
+        <input type="text" class="rx-farm" value="${it.farm||''}" placeholder="fármaco / item"
+          oninput="_rxSetField(${it.id},'farm',this.value);_rxAcInput(this,${it.id})"
+          onblur="_rxAcFechar()" onkeydown="_rxAcKey(event,${it.id})">
+      </td>
+      <td><input type="text" value="${it.dose||''}" placeholder="dose"
+        oninput="_rxSetField(${it.id},'dose',this.value)"></td>
+      <td><select onchange="_rxSetField(${it.id},'via',this.value)">${viaOpts}</select></td>
+      <td><select onchange="_rxSetField(${it.id},'freq',this.value)">${freqOpts}</select></td>
+      <td data-rx-hor="${it.id}">${_rxHorariosHtml(it)}</td>
+      <td><input type="text" value="${it.obs||''}" placeholder="obs."
+        oninput="_rxSetField(${it.id},'obs',this.value)"></td>
+      <td><button class="presc-del" onclick="_rxRemover(${it.id})" title="Remover">×</button></td>
+    </tr>`;
+  }).join('');
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   AUTOCOMPLETE DE MEDICAMENTOS
+   ════════════════════════════════════════════════════════════════════════════ */
+let _rxAcIdx=-1, _rxAcItId=null, _rxAcResultados=[];
+
+function _rxAcInput(el, itId){
+  _rxAcTarget=el; _rxAcItId=itId; _rxAcIdx=-1;
+  const q=(el.value||'').trim().toUpperCase();
+  if(q.length<2){ _rxAcFechar(); return; }
+  _rxAcResultados=RX_BANCO.filter(m=>{
+    const n=m.nome.toUpperCase();
+    return n.includes(q) || (m.cat||'').toUpperCase().includes(q);
+  }).slice(0,10);
+  if(!_rxAcResultados.length){ _rxAcFechar(); return; }
+  const rect=el.getBoundingClientRect();
+  const ac=$('rx-autocomplete');
+  ac.style.display='block';
+  ac.style.top=(rect.bottom+window.scrollY+2)+'px';
+  ac.style.left=(rect.left+window.scrollX)+'px';
+  ac.style.minWidth=Math.max(rect.width,280)+'px';
+  ac.innerHTML=_rxAcResultados.map((m,i)=>{
+    const mark=m.nome.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<span class="rx-ac-mark">$1</span>');
+    return `<div class="rx-ac-item" data-idx="${i}" onmousedown="_rxAcEscolher(${i})">
+      <div class="rx-ac-nome">${mark}</div>
+      <div class="rx-ac-info">${m.dose||''} · ${m.via||''} · ${m.freq||''}${m.obs?' · '+m.obs:''}</div>
+    </div>`;
+  }).join('');
+}
+
+function _rxAcEscolher(idx){
+  const m=_rxAcResultados[idx]; if(!m||_rxAcItId===null) return;
+  const it=_rxItens.find(i=>i.id===_rxAcItId); if(!it) return;
+  it.farm=m.nome; it.dose=m.dose||''; it.via=m.via||'EV';
+  it.freq=m.freq||'24/24H'; it.hor=[...(m.hor||[])]; it.obs=m.obs||'';
+  _rxAcFechar();
+  _renderPrescricao();
+}
+
+function _rxAcFechar(){
+  const ac=$('rx-autocomplete'); if(ac) ac.style.display='none';
+  _rxAcIdx=-1; _rxAcResultados=[];
+}
+
+function _rxAcKey(e, itId){
+  const ac=$('rx-autocomplete');
+  if(!ac||ac.style.display==='none') return;
+  const items=ac.querySelectorAll('.rx-ac-item');
+  if(e.key==='ArrowDown'){ e.preventDefault(); _rxAcIdx=Math.min(_rxAcIdx+1,items.length-1); _rxAcHighlight(items); }
+  else if(e.key==='ArrowUp'){ e.preventDefault(); _rxAcIdx=Math.max(_rxAcIdx-1,0); _rxAcHighlight(items); }
+  else if(e.key==='Enter'&&_rxAcIdx>=0){ e.preventDefault(); _rxAcEscolher(_rxAcIdx); }
+  else if(e.key==='Escape'){ _rxAcFechar(); }
+}
+function _rxAcHighlight(items){
+  items.forEach((el,i)=>el.classList.toggle('sel',i===_rxAcIdx));
+  if(items[_rxAcIdx]) items[_rxAcIdx].scrollIntoView({block:'nearest'});
+}
+
+// Fecha autocomplete ao clicar fora
+document.addEventListener('click', e=>{
+  if(!e.target.closest('#rx-autocomplete')&&!e.target.classList.contains('rx-farm')) _rxAcFechar();
+}, true);
+
+/* ════════════════════════════════════════════════════════════════════════════
+   SALVAR / CARREGAR PRESCRIÇÃO
+   ════════════════════════════════════════════════════════════════════════════ */
+async function salvarPrescricao(){
+  if(!leitoAtual){ toast('Abra o prontuário de um paciente.',true); return; }
+  showLoading('Salvando prescrição...');
+  try{
+    const data=gf('f-data')||hoje();
+    const key=`uti_med_rx_${leitoAtual}_${data}`;
+    await dbSet(key,{ leito:leitoAtual, data, paciente:gf('f-pac'),
+      itens:_rxItens, autor:usuarioEmail, autorNome:perfilUsuario?perfilUsuario.nome:'',
+      salvadoEm:new Date().toISOString() });
+    hideLoading(); toast('✓ Prescrição salva.');
+  }catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
+}
+
+async function _carregarPrescricao(leito){
+  const data=gf('f-data')||hoje();
+  const key=`uti_med_rx_${leito}_${data}`;
+  const saved=await dbGet(key);
+  _rxItens = saved&&saved.itens ? saved.itens : [];
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   IMPRESSÃO DA PRESCRIÇÃO (página dedicada)
+   ════════════════════════════════════════════════════════════════════════════ */
+function imprimirPrescricao(){
+  const pac=gf('f-pac'), leito=gf('f-leito'), data=gf('f-data');
+  const alergia=gf('f-alergia'), diag=gf('f-diag'), adm=gf('f-adm');
+  const tituloOrig=document.title;
+  document.title=`Prescrição ${leito} - ${(pac||'').split(' ').slice(0,2).join(' ')} - ${_fmtDataCurta(data)}`;
+
+  // Gera janela de impressão limpa
+  const html=`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+  <title>${document.title}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',sans-serif;font-size:11pt;color:#111;padding:1.2cm}
+    h1{font-size:13pt;text-align:center;color:#7a1020;margin-bottom:2px}
+    .sub{text-align:center;font-size:9pt;color:#555;margin-bottom:10px}
+    .meta{display:flex;justify-content:space-between;border:1px solid #ccc;padding:6px 10px;margin-bottom:8px;font-size:10pt;border-radius:4px}
+    .alerta{background:#fde8e6;border:1px solid #f3c2bd;padding:5px 10px;border-radius:4px;font-size:10pt;color:#7a1f17;margin-bottom:8px}
+    table{width:100%;border-collapse:collapse;font-size:10pt}
+    th{background:#7a1020;color:white;padding:6px 8px;text-align:left;font-size:9pt}
+    td{border:1px solid #ddd;padding:5px 8px;vertical-align:middle}
+    tr:nth-child(even){background:#f9f0f1}
+    .n{text-align:center;font-weight:700;color:#555}
+    .farm{font-weight:700}
+    .hor{font-size:9pt;color:#444}
+    .assin{margin-top:32px;text-align:center;font-size:10pt}
+    .linha{border-top:1px solid #555;width:240px;margin:20px auto 4px}
+    @media print{body{padding:.8cm}}
+  </style></head><body>
+  <h1>PRESCRIÇÃO MÉDICA</h1>
+  <div class="sub">SECRETARIA MUNICIPAL DE SAÚDE · HOSPITAL DOS PESCADORES · UTI</div>
+  <div class="meta">
+    <span><strong>PACIENTE:</strong> ${pac||'—'}</span>
+    <span><strong>LEITO:</strong> ${leito||'?'}</span>
+    <span><strong>DATA:</strong> ${_fmtDataCurta(data)||'—'}</span>
+    <span><strong>ADM:</strong> ${_fmtDataCurta(adm)||'—'}</span>
+  </div>
+  ${diag?`<div class="meta"><strong>DIAGNÓSTICO:</strong> ${diag.toUpperCase()}</div>`:''}
+  ${alergia&&!/^nega$/i.test(alergia)?`<div class="alerta">⚠️ <strong>ALERGIA:</strong> ${alergia.toUpperCase()}</div>`:''}
+  <table>
+    <tr><th width="28">#</th><th>FÁRMACO / ITEM</th><th width="90">DOSE</th><th width="55">VIA</th><th width="85">FREQUÊNCIA</th><th>HORÁRIOS</th><th>OBS.</th></tr>
+    ${_rxItens.map((it,i)=>`<tr>
+      <td class="n">${i+1}</td>
+      <td class="farm">${it.farm||'—'}</td>
+      <td>${it.dose||'—'}</td>
+      <td>${it.via||'—'}</td>
+      <td>${it.freq||'—'}</td>
+      <td class="hor">${(it.hor||[]).join(' · ')||'—'}</td>
+      <td>${it.obs||''}</td>
+    </tr>`).join('')}
+  </table>
+  <div class="assin">
+    <div class="linha"></div>
+    ${perfilUsuario?perfilUsuario.nome+(perfilUsuario.crm?' · CRM '+perfilUsuario.crm:''):''}
+    <br><span style="font-size:9pt;color:#777">Prescrição médica · ${_fmtDataCurta(data)} · ${agoraHora()}</span>
+  </div>
+  <script>window.onload=()=>{window.print();window.onafterprint=()=>window.close();}<\/script>
+  </body></html>`;
+
+  const w=window.open('','_blank','width=820,height=700');
+  if(w){ w.document.write(html); w.document.close(); }
+  else { toast('Popup bloqueado — permita popups para imprimir.',true); }
+  setTimeout(()=>{ document.title=tituloOrig; },2000);
+}
