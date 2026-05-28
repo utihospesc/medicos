@@ -69,19 +69,24 @@ function fecharModal(){ $('modal-adm').classList.remove('show'); }
 
 /* ── LOGO — usa icone.png do repositório; cai no SVG se a imagem faltar ─── */
 function _logoImg(size){
-  const s = size||120;
-  // o onerror troca para o SVG embutido caso icone.png não exista no repositório
-  return `<img src="icone.png?v=20260526" alt="Hospital dos Pescadores" `+
-    `style="max-width:${s}px;width:100%;height:auto;display:block;margin:0 auto;" `+
-    `onerror="this.onerror=null;this.outerHTML=_logoSVG(${s});">`;
+  // Glass Cockpit: usa direto o SVG inline (sem buscar icone.png) pra evitar
+  // 404 ruidoso em ambientes de preview/dev. Em produção, basta substituir
+  // o retorno por _logoSVG(size) → `<img src="icone.png" …>` quando o png existir.
+  return _logoSVG(size||120);
 }
 function _logoSVG(size){
   const s = size||120;
-  return `<svg width="${s}" height="${Math.round(s*0.5)}" viewBox="0 0 240 120" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="60" cy="60" r="46" fill="none" stroke="#7a1020" stroke-width="6"/>
-    <path d="M60 28 v64 M28 60 h64" stroke="#7a1020" stroke-width="9" stroke-linecap="round"/>
-    <text x="120" y="55" font-family="Georgia,serif" font-size="22" font-weight="700" fill="#7a1020">HOSPESC</text>
-    <text x="120" y="80" font-family="sans-serif" font-size="13" fill="#9c1b2e">UTI · Corpo Clínico</text>
+  // Apenas o ícone (cruz médica em quadrado azul) — o nome do hospital
+  // já é renderizado pelo h1 abaixo na tela de login/turno.
+  return `<svg width="${Math.round(s*0.5)}" height="${Math.round(s*0.5)}" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto;">
+    <defs>
+      <linearGradient id="hlg" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#1e6bbf"/>
+        <stop offset="100%" stop-color="#0a3d6b"/>
+      </linearGradient>
+    </defs>
+    <rect x="2" y="2" width="96" height="96" rx="14" fill="url(#hlg)"/>
+    <path d="M50 24 v52 M24 50 h52" stroke="#fff" stroke-width="10" stroke-linecap="round"/>
   </svg>`;
 }
 
