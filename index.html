@@ -10,8 +10,8 @@
 <title>UTI Médica – Hospital dos Pescadores · Glass Cockpit</title>
 
 <!-- Ícone do app / aba / PWA -->
-<link rel="icon" type="image/png" href="logo.png">
-<link rel="apple-touch-icon" href="logo.png">
+<link rel="icon" type="image/png" href="icone.png">
+<link rel="apple-touch-icon" href="icone.png">
 <link rel="manifest" href="manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -45,8 +45,8 @@
     messagingSenderId: "113839432711",
     appId: "1:113839432711:web:d439ffe7e89c4a3798f6a2"
   };
-  window.APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwNVXDPkFT6C2Ub59e4tnIrmMNnOFpAJ77bEho5Y0HvORx-x0ENhsBa5BN3yl3PzAtQ/exec";
-  window.CULTURAS_SHEET_ID = "1yQHmd84BSlbAs7jb4ztN6fsy6eyZHY4wb6IcqOp0j7U";
+  window.APPS_SCRIPT_URL = "";
+  window.CULTURAS_SHEET_ID = "";
 </script>
 
 <!-- ══════════════ TELA LOGIN ══════════════ -->
@@ -169,247 +169,332 @@
 </div>
 
 <!-- ══════════════ TELA FORMULÁRIO ══════════════ -->
+<!-- ══════════════ TELA PRONTUÁRIO (sidebar + abas) ══════════════ -->
 <div id="t-form" class="tela" style="display:none;">
+
+  <!-- HEADER FIXO -->
   <div class="app-header">
-    <div><h2 id="form-titulo">Evolução Médica — Leito 01</h2><small id="form-sub">Hospital dos Pescadores · UTI</small></div>
+    <div><h2 id="form-titulo">Leito 01</h2><small id="form-sub">Hospital dos Pescadores · UTI</small></div>
     <div class="header-right">
       <button class="btn" id="btn-editar-admissao" style="font-size:.72rem;padding:4px 10px;" onclick="abrirModalAdmissao()">✎ Editar Admissão</button>
       <span class="badge" id="badge-form"></span>
     </div>
   </div>
 
-  <div class="card">
+  <!-- LAYOUT: sidebar + conteúdo -->
+  <div class="prontuario-layout">
 
-    <!-- IDENTIFICAÇÃO -->
-    <div class="secao">
-      <div class="secao-t">Identificação do Paciente
-        <span class="herd-tag" id="herd-tag" style="display:none;">↻ dados herdados</span>
-        <span class="cloud-tag" id="cloud-tag" style="display:none;">☁ nuvem</span>
-      </div>
-      <div class="secao-c">
-        <div class="fl"><label>Paciente</label><input type="text" id="f-pac" placeholder="Nome completo" data-adm-field></div>
-        <div class="dc">
-          <div class="fl"><label>Data da evolução</label><input type="date" id="f-data"></div>
-          <div class="fl"><label>Leito</label><input type="text" id="f-leito" readonly></div>
-        </div>
-        <div class="dc">
-          <div class="fl"><label>DN</label>
-            <div style="display:flex;gap:6px;align-items:center;">
-              <input type="date" id="f-dn" onchange="_calcIdadeDisplay('f-dn','f-idade');_recalcSAPS()" data-adm-field>
-              <span id="f-idade" style="font-family:var(--font-mono);font-size:.74rem;font-weight:600;color:var(--vinho);white-space:nowrap;min-width:48px;"></span>
+    <!-- SIDEBAR DE NAVEGAÇÃO -->
+    <nav class="prontuario-nav">
+      <div class="pnav-pac" id="pnav-pac"></div>
+      <button class="pnav-btn ativo" id="pnav-evolucao"   onclick="mudarAba('evolucao')">
+        <span class="pnav-icon">📋</span><span class="pnav-lbl">Evolução</span>
+      </button>
+      <button class="pnav-btn" id="pnav-prescricao" onclick="mudarAba('prescricao')">
+        <span class="pnav-icon">💊</span><span class="pnav-lbl">Prescrição</span>
+      </button>
+      <button class="pnav-btn" id="pnav-laboratorio" onclick="mudarAba('laboratorio')">
+        <span class="pnav-icon">🧪</span><span class="pnav-lbl">Exames Lab.</span>
+      </button>
+      <div class="pnav-sep"></div>
+      <button class="pnav-btn pnav-sec" onclick="voltarLeitos()">
+        <span class="pnav-icon">↩</span><span class="pnav-lbl">Leitos</span>
+      </button>
+    </nav>
+
+    <!-- CONTEÚDO DAS ABAS -->
+    <div class="prontuario-content">
+
+      <!-- ══ ABA: EVOLUÇÃO ══ -->
+      <div class="aba-panel" id="aba-evolucao">
+        <div class="card">
+
+          <!-- IDENTIFICAÇÃO -->
+          <div class="secao">
+            <div class="secao-t">Identificação do Paciente
+              <span class="herd-tag" id="herd-tag" style="display:none;">↻ dados herdados</span>
+              <span class="cloud-tag" id="cloud-tag" style="display:none;">☁ nuvem</span>
+            </div>
+            <div class="secao-c">
+              <div class="fl"><label>Paciente</label><input type="text" id="f-pac" placeholder="Nome completo" data-adm-field></div>
+              <div class="dc">
+                <div class="fl"><label>Data da evolução</label><input type="date" id="f-data"></div>
+                <div class="fl"><label>Leito</label><input type="text" id="f-leito" readonly></div>
+              </div>
+              <div class="dc">
+                <div class="fl"><label>DN</label>
+                  <div style="display:flex;gap:6px;align-items:center;">
+                    <input type="date" id="f-dn" onchange="_calcIdadeDisplay('f-dn','f-idade');_recalcSAPS()" data-adm-field>
+                    <span id="f-idade" style="font-family:var(--font-mono);font-size:.74rem;font-weight:600;color:var(--vinho);white-space:nowrap;min-width:48px;"></span>
+                  </div>
+                </div>
+                <div class="fl"><label>Sexo</label>
+                  <select id="f-sexo" data-adm-field><option value="">—</option><option>FEMININO</option><option>MASCULINO</option></select>
+                </div>
+              </div>
+              <div class="dc">
+                <div class="fl"><label>CNS</label><input type="text" id="f-cns" placeholder="Cartão SUS" data-adm-field></div>
+                <div class="fl"><label>Adm. UTI</label><input type="date" id="f-adm" data-adm-field></div>
+              </div>
+              <div class="fl"><label>Adm. Hospitalar</label><input type="date" id="f-adm-hosp" data-adm-field></div>
+              <div class="fl"><label>Hipóteses Diagnósticas</label>
+                <div style="display:flex;gap:6px;align-items:flex-start;">
+                  <input type="text" id="f-diag" placeholder="Diagnóstico principal" style="flex:1;" onblur="_sugerirCID('f-diag','f-cid')" data-adm-field>
+                  <div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0;min-width:110px;">
+                    <input type="text" id="f-cid" placeholder="CID-10" style="width:100%;font-family:var(--font-mono);font-weight:600;" maxlength="8" data-adm-field>
+                    <span id="f-cid-status" style="font-family:var(--font-mono);font-size:.58rem;color:var(--muted);text-align:center;min-height:12px;letter-spacing:.04em;"></span>
+                  </div>
+                </div>
+              </div>
+              <div class="fl"><label>Comorbidades</label><input type="text" id="f-comor" placeholder="Ex: HAS, FA permanente, DM..." data-adm-field></div>
+              <div class="dc">
+                <div class="fl"><label>Alergias</label><input type="text" id="f-alergia" placeholder="NEGA / especificar" data-adm-field></div>
+                <div class="fl"><label>Medicamentos de uso contínuo</label><input type="text" id="f-medcont" placeholder="Ex: furosemida, metoprolol..." data-adm-field></div>
+              </div>
             </div>
           </div>
-          <div class="fl"><label>Sexo</label>
-            <select id="f-sexo" data-adm-field><option value="">—</option><option>FEMININO</option><option>MASCULINO</option></select>
-          </div>
-        </div>
-        <div class="dc">
-          <div class="fl"><label>CNS</label><input type="text" id="f-cns" placeholder="Cartão SUS" data-adm-field></div>
-          <div class="fl"><label>Adm. UTI</label><input type="date" id="f-adm" data-adm-field></div>
-        </div>
-        <div class="fl"><label>Adm. Hospitalar</label><input type="date" id="f-adm-hosp" data-adm-field></div>
-        <div class="fl"><label>Hipóteses Diagnósticas</label>
-          <div style="display:flex;gap:6px;align-items:flex-start;">
-            <input type="text" id="f-diag" placeholder="Diagnóstico principal" style="flex:1;" onblur="_sugerirCID('f-diag','f-cid')" data-adm-field>
-            <div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0;min-width:110px;">
-              <input type="text" id="f-cid" placeholder="CID-10" style="width:100%;font-family:var(--font-mono);font-weight:600;" maxlength="8" data-adm-field>
-              <span id="f-cid-status" style="font-family:var(--font-mono);font-size:.58rem;color:var(--muted);text-align:center;min-height:12px;letter-spacing:.04em;"></span>
+
+          <!-- HDA / ADMISSÃO -->
+          <div class="secao">
+            <div class="secao-t">História da Doença Atual & Admissão na UTI
+              <span class="fixo-tag">FIXO NAS EVOLUÇÕES</span>
+            </div>
+            <div class="secao-c">
+              <div class="tip i" style="margin-bottom:8px;">Estes campos são preenchidos na <strong>admissão</strong> e ficam <strong>visíveis em todas as evoluções</strong> seguintes.</div>
+              <div class="fl"><label>HDA (História da Doença Atual)</label><textarea id="f-hda" rows="5" placeholder="Relato da história clínica..." data-adm-field></textarea></div>
+              <div class="fl"><label>Admissão na UTI (descrição do médico que recebeu)</label><textarea id="f-adm-desc" rows="4" placeholder="Recebo paciente..." data-adm-field></textarea></div>
             </div>
           </div>
-        </div>
-        <div class="fl"><label>Comorbidades</label><input type="text" id="f-comor" placeholder="Ex: HAS, FA permanente, DM..." data-adm-field></div>
-        <div class="dc">
-          <div class="fl"><label>Alergias</label><input type="text" id="f-alergia" placeholder="NEGA / especificar" data-adm-field></div>
-          <div class="fl"><label>Medicamentos de uso contínuo</label><input type="text" id="f-medcont" placeholder="Ex: furosemida, metoprolol..." data-adm-field></div>
-        </div>
-      </div>
-    </div>
 
-    <!-- HDA / ADMISSÃO -->
-    <div class="secao">
-      <div class="secao-t">História da Doença Atual & Admissão na UTI
-        <span class="fixo-tag">FIXO NAS EVOLUÇÕES</span>
-      </div>
-      <div class="secao-c">
-        <div class="tip i" style="margin-bottom:8px;">Estes campos são preenchidos na <strong>admissão</strong> e ficam <strong>visíveis em todas as evoluções</strong> seguintes. Edite-os pelo botão "Editar Admissão" se necessário.</div>
-        <div class="fl"><label>HDA (História da Doença Atual)</label><textarea id="f-hda" rows="5" placeholder="Relato da história clínica..." data-adm-field></textarea></div>
-        <div class="fl"><label>Admissão na UTI (descrição do médico que recebeu)</label><textarea id="f-adm-desc" rows="4" placeholder="Recebo paciente..." data-adm-field></textarea></div>
-      </div>
-    </div>
-
-    <!-- EVOLUÇÃO DO DIA -->
-    <div class="secao">
-      <div class="secao-t">Evolução do Plantão</div>
-      <div class="secao-c">
-        <div class="fl"><label>Estado geral / evolução narrativa</label><textarea id="f-evol" rows="5" placeholder="Paciente em regular estado geral, evolui hemodinamicamente..."></textarea></div>
-        <div class="dc">
-          <div class="fl"><label>Em uso de ATB</label><input type="text" id="f-atb" placeholder="SEM ATB / especificar esquema"></div>
-          <div class="fl"><label>ATB já utilizados</label><input type="text" id="f-atb-prev" placeholder="esquemas anteriores"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- CONTROLES / SINAIS VITAIS 24H -->
-    <div class="secao">
-      <div class="secao-t">Controles / Sinais Vitais (24h)</div>
-      <div class="secao-c grid2">
-        <div class="fl"><label>PAM (mmHg)</label><input type="text" id="f-pam" placeholder="ex: 71-90"></div>
-        <div class="fl"><label>PAS (mmHg) <span class="saps-flag">SAPS3</span></label><input type="number" id="f-pas" placeholder="sistólica (pior)" oninput="_recalcSAPS()"></div>
-        <div class="fl"><label>FC (bpm) <span class="saps-flag">SAPS3</span></label><input type="number" id="f-fc" placeholder="maior FC" oninput="_recalcSAPS()"></div>
-        <div class="fl"><label>FR (irpm)</label><input type="text" id="f-fr" placeholder="ex: 13-19"></div>
-        <div class="fl"><label>Tmáx (°C) <span class="saps-flag">SAPS3</span></label><input type="number" step="0.1" id="f-tmax" placeholder="ex: 36.8" oninput="_recalcSAPS()"></div>
-        <div class="fl"><label>SpO₂ (%)</label><input type="text" id="f-spo2" placeholder="ex: 92-98"></div>
-        <div class="fl"><label>Diurese</label><input type="text" id="f-diurese" placeholder="espontânea / SVD"></div>
-        <div class="fl"><label>Balanço Hídrico 24h</label><input type="text" id="f-bh" placeholder="ex: (+) 1.200 ml"></div>
-        <div class="fl"><label>Evacuações</label><input type="text" id="f-evac" placeholder="ex: 2x"></div>
-        <div class="fl"><label>HGT (mg/dL)</label><input type="text" id="f-hgt" placeholder="ex: 139-184-149"></div>
-      </div>
-    </div>
-
-    <!-- EXAME FÍSICO -->
-    <div class="secao">
-      <div class="secao-t">Exame Físico</div>
-      <div class="secao-c grid2">
-        <div class="fl"><label>Ectoscopia</label><input type="text" id="f-ef-ecto" placeholder="EGG, consciente, orientada..."></div>
-        <div class="fl"><label>Neurológico</label><input type="text" id="f-ef-neuro" placeholder="ex: Glasgow 14"></div>
-        <div class="fl"><label>Glasgow <span class="saps-flag">SAPS3</span></label><input type="number" id="f-glasgow" min="3" max="15" placeholder="3–15" oninput="_recalcSAPS()"></div>
-        <div class="fl"><label>Pupilas</label><input type="text" id="f-ef-pupilas" placeholder="ISO / FR"></div>
-        <div class="fl"><label>ACV (cardiovascular)</label><input type="text" id="f-ef-acv" placeholder="RCI, 2T, BNF, sopro..."></div>
-        <div class="fl"><label>AR (respiratório)</label><input type="text" id="f-ef-ar" placeholder="MV+, AHT, crepitos..."></div>
-        <div class="fl"><label>ABD (abdome)</label><input type="text" id="f-ef-abd" placeholder="plano, flácido, indolor..."></div>
-        <div class="fl"><label>EXT (extremidades)</label><input type="text" id="f-ef-ext" placeholder="edema 2/4+, cianose..."></div>
-        <div class="fl"><label>Pele</label><input type="text" id="f-ef-pele" placeholder="íntegra / lesões"></div>
-        <div class="fl"><label>Genitália</label><input type="text" id="f-ef-genital" placeholder=""></div>
-      </div>
-    </div>
-
-    <!-- DISPOSITIVOS -->
-    <div class="secao">
-      <div class="secao-t">Dispositivos & Suporte</div>
-      <div class="secao-c grid2">
-        <div class="fl"><label>Acessos</label><input type="text" id="f-acessos" placeholder="periférico / central"></div>
-        <div class="fl"><label>Dispositivos</label><input type="text" id="f-dispositivos" placeholder="SVD (21/05), SNE..."></div>
-        <div class="fl"><label>Dieta</label>
-          <select id="f-dieta"><option value="">—</option><option>ORAL</option><option>ENTERAL (SNE/SNG)</option><option>PARENTERAL</option><option>JEJUM</option><option>ZERO</option></select>
-        </div>
-        <div class="fl"><label>Droga vasoativa (DVA) <span class="saps-flag">SAPS3</span></label>
-          <select id="f-dva" onchange="_recalcSAPS()"><option value="NAO">NÃO</option><option value="SIM">SIM</option></select>
-        </div>
-        <div class="fl"><label>Sedação</label><input type="text" id="f-sedacao" placeholder="sem / esquema"></div>
-        <div class="fl"><label>Transfusão sanguínea</label><input type="text" id="f-transfusao" placeholder="não / hemocomp."></div>
-      </div>
-    </div>
-
-    <!-- VENTILAÇÃO / GASOMETRIA -->
-    <div class="secao">
-      <div class="secao-t">Ventilação & Gasometria</div>
-      <div class="secao-c grid2">
-        <div class="fl"><label>Suporte ventilatório</label>
-          <select id="f-vent" onchange="_recalcSAPS()">
-            <option value="AA">Ar ambiente (AA)</option>
-            <option value="CN">Cateter nasal O₂</option>
-            <option value="CTNO2">Cateter de alto fluxo / CTNO2</option>
-            <option value="VM">Máscara de O₂ / VM (venturi)</option>
-            <option value="VNI">VNI (BiPAP/CPAP)</option>
-            <option value="VMI">Ventilação mecânica invasiva (TOT/TQT)</option>
-          </select>
-        </div>
-        <div class="fl"><label>Parâmetros ventilatórios</label><input type="text" id="f-vent-param" placeholder="modo, FiO2, PEEP..."></div>
-        <div class="fl"><label>PaO₂ (mmHg) <span class="saps-flag">SAPS3</span></label><input type="number" id="f-pao2" placeholder="da gasometria" oninput="_recalcSAPS()"></div>
-        <div class="fl"><label>FiO₂ (fração, ex: 0.4) <span class="saps-flag">SAPS3</span></label><input type="number" step="0.01" id="f-fio2" placeholder="0.21–1.0" oninput="_recalcSAPS()"></div>
-        <div class="fl"><label>pH arterial <span class="saps-flag">SAPS3</span></label><input type="number" step="0.01" id="f-ph" placeholder="ex: 7.35" oninput="_recalcSAPS()"></div>
-        <div class="fl"><label>Gasometria (texto livre)</label><input type="text" id="f-gaso" placeholder="resumo da gaso"></div>
-      </div>
-    </div>
-
-    <!-- CULTURAS -->
-    <div class="secao">
-      <div class="secao-t">Culturas
-        <button class="btn btn-sm" style="margin-left:8px;font-size:.66rem;padding:3px 8px;" onclick="buscarCulturas()">⌕ Buscar na planilha</button>
-        <button class="btn btn-sm" style="font-size:.66rem;padding:3px 8px;" onclick="abrirAddCulturaManual()">✎ Adicionar manual</button>
-      </div>
-      <div class="secao-c">
-        <div id="culturas-auto" style="display:none;margin-bottom:6px;"></div>
-        <div id="culturas-chips" class="culturas-chips"></div>
-        <div id="add-cultura-inline" style="display:none;margin-top:8px;padding:10px;border:1px dashed var(--borda);border-radius:8px;background:var(--bg2);">
-          <div class="grid2" style="gap:6px;">
-            <div class="fl"><label>Sítio/Cultura</label><input type="text" id="ac-sitio" placeholder="Hemocultura, Urocultura..."></div>
-            <div class="fl"><label>Microrganismo</label><input type="text" id="ac-micro" placeholder="ex: K. pneumoniae"></div>
-            <div class="fl"><label>Sensibilidade/Perfil</label><input type="text" id="ac-sens" placeholder="ex: ESBL, KPC..."></div>
-            <div class="fl"><label>Data</label><input type="date" id="ac-data"></div>
+          <!-- EVOLUÇÃO DO DIA -->
+          <div class="secao">
+            <div class="secao-t">Evolução do Plantão</div>
+            <div class="secao-c">
+              <div class="fl"><label>Estado geral / evolução narrativa</label><textarea id="f-evol" rows="5" placeholder="Paciente em regular estado geral, evolui hemodinamicamente..."></textarea></div>
+              <div class="dc">
+                <div class="fl"><label>Em uso de ATB</label><input type="text" id="f-atb" placeholder="SEM ATB / especificar esquema"></div>
+                <div class="fl"><label>ATB já utilizados</label><input type="text" id="f-atb-prev" placeholder="esquemas anteriores"></div>
+              </div>
+            </div>
           </div>
-          <div style="display:flex;gap:6px;margin-top:6px;">
-            <button class="btn btn-pri btn-sm" onclick="confirmarAddCulturaManual()">Adicionar</button>
-            <button class="btn btn-sec btn-sm" onclick="document.getElementById('add-cultura-inline').style.display='none'">Cancelar</button>
+
+          <!-- CONTROLES / SINAIS VITAIS 24H -->
+          <div class="secao">
+            <div class="secao-t">Controles / Sinais Vitais (24h)</div>
+            <div class="secao-c grid2">
+              <div class="fl"><label>PAM (mmHg)</label><input type="text" id="f-pam" placeholder="ex: 71-90"></div>
+              <div class="fl"><label>PAS (mmHg) <span class="saps-flag">SAPS3</span></label><input type="number" id="f-pas" placeholder="sistólica (pior)" oninput="_recalcSAPS()"></div>
+              <div class="fl"><label>FC (bpm) <span class="saps-flag">SAPS3</span></label><input type="number" id="f-fc" placeholder="maior FC" oninput="_recalcSAPS()"></div>
+              <div class="fl"><label>FR (irpm)</label><input type="text" id="f-fr" placeholder="ex: 13-19"></div>
+              <div class="fl"><label>Tmáx (°C) <span class="saps-flag">SAPS3</span></label><input type="number" step="0.1" id="f-tmax" placeholder="ex: 36.8" oninput="_recalcSAPS()"></div>
+              <div class="fl"><label>SpO₂ (%)</label><input type="text" id="f-spo2" placeholder="ex: 92-98"></div>
+              <div class="fl"><label>Diurese</label><input type="text" id="f-diurese" placeholder="espontânea / SVD"></div>
+              <div class="fl"><label>Balanço Hídrico 24h</label><input type="text" id="f-bh" placeholder="ex: (+) 1.200 ml"></div>
+              <div class="fl"><label>Evacuações</label><input type="text" id="f-evac" placeholder="ex: 2x"></div>
+              <div class="fl"><label>HGT (mg/dL)</label><input type="text" id="f-hgt" placeholder="ex: 139-184-149"></div>
+            </div>
           </div>
-        </div>
-        <input type="hidden" id="f-microorg">
-      </div>
-    </div>
 
-    <!-- EXAMES LABORATORIAIS -->
-    <div class="secao">
-      <div class="secao-t">Exames Laboratoriais
-        <button class="btn btn-sm" style="margin-left:8px;font-size:.66rem;padding:3px 8px;" onclick="abrirGraficoLab()">⌬ Visualizar gráfico</button>
-      </div>
-      <div class="secao-c">
-        <div class="tip i" style="margin-bottom:8px;">Registre os exames por data. Eles são acumulados ao longo da internação e podem ser visualizados em gráfico de tendência.</div>
-        <div id="lab-linhas"></div>
-        <button class="btn btn-sec btn-sm" style="margin-top:6px;" onclick="addLinhaLab()">+ Adicionar data de exames</button>
-      </div>
-    </div>
-
-    <!-- EXAMES DE IMAGEM -->
-    <div class="secao">
-      <div class="secao-t">Exames de Imagem</div>
-      <div class="secao-c">
-        <div class="fl"><label>Achados (ECO, RX, TC...)</label><textarea id="f-imagem" rows="3" placeholder="ECO (21/05): hipertrofia concêntrica do VE..."></textarea></div>
-      </div>
-    </div>
-
-    <!-- SAPS 3 -->
-    <div class="secao" id="secao-saps">
-      <div class="secao-t">SAPS 3 — Escore de Gravidade
-        <button class="btn btn-sm" style="margin-left:8px;font-size:.66rem;padding:3px 8px;" onclick="abrirModalSAPS()">⚙ Itens de admissão</button>
-      </div>
-      <div class="secao-c">
-        <div class="tip i" style="margin-bottom:10px;">
-          O SAPS 3 é calculado na <strong>admissão</strong>. Os itens fisiológicos vêm da evolução; os itens de admissão preenchem-se em <strong>"Itens de admissão"</strong>. Calibração: <strong>América do Sul</strong> (AMIB).
-        </div>
-        <div class="saps-box" id="saps-box">
-          <div class="saps-score-wrap">
-            <div class="saps-num" id="saps-num">—</div>
-            <div class="saps-lbl">pontos SAPS 3</div>
+          <!-- EXAME FÍSICO -->
+          <div class="secao">
+            <div class="secao-t">Exame Físico</div>
+            <div class="secao-c grid2">
+              <div class="fl"><label>Ectoscopia</label><input type="text" id="f-ef-ecto" placeholder="EGG, consciente, orientada..."></div>
+              <div class="fl"><label>Neurológico</label><input type="text" id="f-ef-neuro" placeholder="ex: Glasgow 14"></div>
+              <div class="fl"><label>Glasgow <span class="saps-flag">SAPS3</span></label><input type="number" id="f-glasgow" min="3" max="15" placeholder="3–15" oninput="_recalcSAPS()"></div>
+              <div class="fl"><label>Pupilas</label><input type="text" id="f-ef-pupilas" placeholder="ISO / FR"></div>
+              <div class="fl"><label>ACV (cardiovascular)</label><input type="text" id="f-ef-acv" placeholder="RCI, 2T, BNF, sopro..."></div>
+              <div class="fl"><label>AR (respiratório)</label><input type="text" id="f-ef-ar" placeholder="MV+, AHT, crepitos..."></div>
+              <div class="fl"><label>ABD (abdome)</label><input type="text" id="f-ef-abd" placeholder="plano, flácido, indolor..."></div>
+              <div class="fl"><label>EXT (extremidades)</label><input type="text" id="f-ef-ext" placeholder="edema 2/4+, cianose..."></div>
+              <div class="fl"><label>Pele</label><input type="text" id="f-ef-pele" placeholder="íntegra / lesões"></div>
+              <div class="fl"><label>Genitália</label><input type="text" id="f-ef-genital" placeholder=""></div>
+            </div>
           </div>
-          <div class="saps-mort-wrap">
-            <div class="saps-mort" id="saps-mort">—</div>
-            <div class="saps-lbl">mortalidade prevista (Am. do Sul)</div>
-            <div class="saps-mort-glob" id="saps-mort-glob"></div>
+
+          <!-- DISPOSITIVOS -->
+          <div class="secao">
+            <div class="secao-t">Dispositivos & Suporte</div>
+            <div class="secao-c grid2">
+              <div class="fl"><label>Acessos</label><input type="text" id="f-acessos" placeholder="periférico / central"></div>
+              <div class="fl"><label>Dispositivos</label><input type="text" id="f-dispositivos" placeholder="SVD (21/05), SNE..."></div>
+              <div class="fl"><label>Dieta</label>
+                <select id="f-dieta"><option value="">—</option><option>ORAL</option><option>ENTERAL (SNE/SNG)</option><option>PARENTERAL</option><option>JEJUM</option><option>ZERO</option></select>
+              </div>
+              <div class="fl"><label>Droga vasoativa (DVA) <span class="saps-flag">SAPS3</span></label>
+                <select id="f-dva" onchange="_recalcSAPS()"><option value="NAO">NÃO</option><option value="SIM">SIM</option></select>
+              </div>
+              <div class="fl"><label>Sedação</label><input type="text" id="f-sedacao" placeholder="sem / esquema"></div>
+              <div class="fl"><label>Transfusão sanguínea</label><input type="text" id="f-transfusao" placeholder="não / hemocomp."></div>
+            </div>
+          </div>
+
+          <!-- VENTILAÇÃO / GASOMETRIA -->
+          <div class="secao">
+            <div class="secao-t">Ventilação & Gasometria</div>
+            <div class="secao-c grid2">
+              <div class="fl"><label>Suporte ventilatório</label>
+                <select id="f-vent" onchange="_recalcSAPS()">
+                  <option value="AA">Ar ambiente (AA)</option>
+                  <option value="CN">Cateter nasal O₂</option>
+                  <option value="CTNO2">Cateter de alto fluxo / CTNO2</option>
+                  <option value="VM">Máscara de O₂ / VM (venturi)</option>
+                  <option value="VNI">VNI (BiPAP/CPAP)</option>
+                  <option value="VMI">Ventilação mecânica invasiva (TOT/TQT)</option>
+                </select>
+              </div>
+              <div class="fl"><label>Parâmetros ventilatórios</label><input type="text" id="f-vent-param" placeholder="modo, FiO2, PEEP..."></div>
+              <div class="fl"><label>PaO₂ (mmHg) <span class="saps-flag">SAPS3</span></label><input type="number" id="f-pao2" placeholder="da gasometria" oninput="_recalcSAPS()"></div>
+              <div class="fl"><label>FiO₂ (fração, ex: 0.4) <span class="saps-flag">SAPS3</span></label><input type="number" step="0.01" id="f-fio2" placeholder="0.21–1.0" oninput="_recalcSAPS()"></div>
+              <div class="fl"><label>pH arterial <span class="saps-flag">SAPS3</span></label><input type="number" step="0.01" id="f-ph" placeholder="ex: 7.35" oninput="_recalcSAPS()"></div>
+              <div class="fl"><label>Gasometria (texto livre)</label><input type="text" id="f-gaso" placeholder="resumo da gaso"></div>
+            </div>
+          </div>
+
+          <!-- CULTURAS -->
+          <div class="secao">
+            <div class="secao-t">Culturas
+              <button class="btn btn-sm" style="margin-left:8px;font-size:.66rem;padding:3px 8px;" onclick="buscarCulturas()">⌕ Buscar na planilha</button>
+              <button class="btn btn-sm" style="font-size:.66rem;padding:3px 8px;" onclick="abrirAddCulturaManual()">✎ Adicionar manual</button>
+            </div>
+            <div class="secao-c">
+              <div id="culturas-auto" style="display:none;margin-bottom:6px;"></div>
+              <div id="culturas-chips" class="culturas-chips"></div>
+              <div id="add-cultura-inline" style="display:none;margin-top:8px;padding:10px;border:1px dashed var(--borda);border-radius:8px;background:var(--bg2);">
+                <div class="grid2" style="gap:6px;">
+                  <div class="fl"><label>Sítio/Cultura</label><input type="text" id="ac-sitio" placeholder="Hemocultura, Urocultura..."></div>
+                  <div class="fl"><label>Microrganismo</label><input type="text" id="ac-micro" placeholder="ex: K. pneumoniae"></div>
+                  <div class="fl"><label>Sensibilidade/Perfil</label><input type="text" id="ac-sens" placeholder="ex: ESBL, KPC..."></div>
+                  <div class="fl"><label>Data</label><input type="date" id="ac-data"></div>
+                </div>
+                <div style="display:flex;gap:6px;margin-top:6px;">
+                  <button class="btn btn-pri btn-sm" onclick="confirmarAddCulturaManual()">Adicionar</button>
+                  <button class="btn btn-sec btn-sm" onclick="document.getElementById('add-cultura-inline').style.display='none'">Cancelar</button>
+                </div>
+              </div>
+              <input type="hidden" id="f-microorg">
+            </div>
+          </div>
+
+          <!-- EXAMES DE IMAGEM -->
+          <div class="secao">
+            <div class="secao-t">Exames de Imagem</div>
+            <div class="secao-c">
+              <div class="fl"><label>Achados (ECO, RX, TC...)</label><textarea id="f-imagem" rows="3" placeholder="ECO (21/05): hipertrofia concêntrica do VE..."></textarea></div>
+            </div>
+          </div>
+
+          <!-- SAPS 3 -->
+          <div class="secao" id="secao-saps">
+            <div class="secao-t">SAPS 3 — Escore de Gravidade
+              <button class="btn btn-sm" style="margin-left:8px;font-size:.66rem;padding:3px 8px;" onclick="abrirModalSAPS()">⚙ Itens de admissão</button>
+            </div>
+            <div class="secao-c">
+              <div class="tip i" style="margin-bottom:10px;">
+                O SAPS 3 é calculado na <strong>admissão</strong>. Os itens fisiológicos vêm da evolução; os itens de admissão preenchem-se em <strong>"Itens de admissão"</strong>. Calibração: <strong>América do Sul</strong> (AMIB).
+              </div>
+              <div class="saps-box" id="saps-box">
+                <div class="saps-score-wrap">
+                  <div class="saps-num" id="saps-num">—</div>
+                  <div class="saps-lbl">pontos SAPS 3</div>
+                </div>
+                <div class="saps-mort-wrap">
+                  <div class="saps-mort" id="saps-mort">—</div>
+                  <div class="saps-lbl">mortalidade prevista (Am. do Sul)</div>
+                  <div class="saps-mort-glob" id="saps-mort-glob"></div>
+                </div>
+              </div>
+              <details id="saps-detalhe" style="margin-top:10px;">
+                <summary style="cursor:pointer;font-family:var(--font-mono);font-size:.7rem;color:var(--vinho);font-weight:600;letter-spacing:.08em;text-transform:uppercase;">Ver decomposição dos pontos</summary>
+                <div id="saps-breakdown" style="margin-top:8px;"></div>
+              </details>
+            </div>
+          </div>
+
+          <!-- CONDUTAS -->
+          <div class="secao">
+            <div class="secao-t">Condutas</div>
+            <div class="secao-c">
+              <div class="fl"><label>Plano terapêutico / condutas</label><textarea id="f-condutas" rows="4" placeholder="Suporte intensivo, diureticoterapia mantida..."></textarea></div>
+            </div>
+          </div>
+
+          <!-- AÇÕES -->
+          <div class="form-actions">
+            <button class="btn btn-pri" onclick="salvarEvolucao()">⌘ Salvar evolução</button>
+            <button class="btn btn-sec" onclick="abrirPreview()">⌕ Preview / Imprimir</button>
           </div>
         </div>
-        <details id="saps-detalhe" style="margin-top:10px;">
-          <summary style="cursor:pointer;font-family:var(--font-mono);font-size:.7rem;color:var(--vinho);font-weight:600;letter-spacing:.08em;text-transform:uppercase;">Ver decomposição dos pontos</summary>
-          <div id="saps-breakdown" style="margin-top:8px;"></div>
-        </details>
-      </div>
-    </div>
+      </div><!-- /aba-evolucao -->
 
-    <!-- CONDUTAS -->
-    <div class="secao">
-      <div class="secao-t">Condutas</div>
-      <div class="secao-c">
-        <div class="fl"><label>Plano terapêutico / condutas</label><textarea id="f-condutas" rows="4" placeholder="Suporte intensivo, diureticoterapia mantida..."></textarea></div>
-      </div>
-    </div>
+      <!-- ══ ABA: PRESCRIÇÃO ══ -->
+      <div class="aba-panel" id="aba-prescricao" style="display:none;">
+        <div class="card">
+          <div class="presc-header">
+            <div class="presc-meta" id="presc-meta"></div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button class="btn btn-pri btn-sm" onclick="salvarPrescricao()">⌘ Salvar prescrição</button>
+              <button class="btn btn-sec btn-sm" onclick="imprimirPrescricao()">🖨 Imprimir</button>
+            </div>
+          </div>
 
-    <!-- AÇÕES -->
-    <div class="form-actions">
-      <button class="btn btn-pri" onclick="salvarEvolucao()">⌘ Salvar evolução</button>
-      <button class="btn btn-sec" onclick="abrirPreview()">⌕ Preview / Imprimir</button>
-      <button class="btn btn-sec" onclick="voltarLeitos()">↩ Voltar</button>
-    </div>
-  </div>
-</div>
+          <!-- ALERTAS (alergias) -->
+          <div id="presc-alerta-alergia" style="display:none;"></div>
+
+          <!-- TABELA DE ITENS -->
+          <div class="presc-wrap">
+            <table class="presc-table" id="presc-table">
+              <thead>
+                <tr>
+                  <th class="presc-th-num">#</th>
+                  <th class="presc-th-farm">Fármaco / Item</th>
+                  <th class="presc-th-dose">Dose</th>
+                  <th class="presc-th-via">Via</th>
+                  <th class="presc-th-freq">Frequência</th>
+                  <th class="presc-th-hor">Horários</th>
+                  <th class="presc-th-obs">Obs.</th>
+                  <th class="presc-th-del"></th>
+                </tr>
+              </thead>
+              <tbody id="presc-tbody"></tbody>
+            </table>
+          </div>
+
+          <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-pri btn-sm" onclick="addItemPrescricao()">+ Adicionar item</button>
+            <button class="btn btn-sec btn-sm" onclick="addItemPrescricaoEspecial('dieta')">+ Dieta</button>
+            <button class="btn btn-sec btn-sm" onclick="addItemPrescricaoEspecial('sn')">+ Medicamento SN</button>
+            <button class="btn btn-sec btn-sm" onclick="addItemPrescricaoEspecial('cuidados')">+ Cuidados gerais</button>
+          </div>
+
+          <!-- AUTOCOMPLETE (dropdown flutuante) -->
+          <div id="rx-autocomplete" class="rx-autocomplete" style="display:none;"></div>
+        </div>
+      </div><!-- /aba-prescricao -->
+
+      <!-- ══ ABA: EXAMES LABORATORIAIS ══ -->
+      <div class="aba-panel" id="aba-laboratorio" style="display:none;">
+        <div class="card">
+          <div class="secao">
+            <div class="secao-t">Exames Laboratoriais
+              <button class="btn btn-sm" style="margin-left:8px;font-size:.66rem;padding:3px 8px;" onclick="abrirGraficoLab()">⌬ Visualizar gráfico</button>
+            </div>
+            <div class="secao-c">
+              <div class="tip i" style="margin-bottom:8px;">Registre os exames por data. Acumulados ao longo da internação e visualizáveis em gráfico de tendência.</div>
+              <div id="lab-linhas"></div>
+              <button class="btn btn-sec btn-sm" style="margin-top:6px;" onclick="addLinhaLab()">+ Adicionar data de exames</button>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-pri" onclick="salvarEvolucao()">⌘ Salvar exames</button>
+          </div>
+        </div>
+      </div><!-- /aba-laboratorio -->
+
+    </div><!-- /prontuario-content -->
+  </div><!-- /prontuario-layout -->
+</div><!-- /t-form -->
+
 
 <!-- ══════════════ TELA USUÁRIOS ══════════════ -->
 <div id="t-usuarios" class="tela" style="display:none;">
