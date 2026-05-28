@@ -1651,114 +1651,309 @@ function _atualizarPnavPac(){
    ─ Você enviará a lista completa; por ora inclui os principais da UTI.
    ─ Cada item: { nome, dose, via, freq, horarios, categoria, obs }
    ════════════════════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════════
+   BANCO DE MEDICAMENTOS — Hospital dos Pescadores · UTI
+   ─ Ordem de categorias (prioridade de exibição na prescrição):
+     1 Dieta   2 ATB   3 Hidratação EV   4 Droga Vasoativa
+     5 Sedação/Analgesia   6 Medicações Gerais   7 Protocolo Insulina/HGT
+     8 Cuidados
+   ─ A função _rxOrdenar() reorganiza os itens da prescrição por essa ordem.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+// Mapa de prioridade por categoria (menor = aparece primeiro)
+const RX_PRIO = {
+  'Dieta':1, 'ATB':2, 'Hidratação':3, 'Droga Vasoativa':4,
+  'Sedação':5, 'Medicação Geral':6, 'Protocolo':7, 'Cuidados':8
+};
+
 const RX_BANCO = [
-  // ── CARDIOVASCULAR ──────────────────────────────────────────────────────
-  {nome:'AMIODARONA 200MG',        dose:'200MG',      via:'VO',  freq:'12/12H',   hor:['08','20'],          cat:'Cardiovascular'},
-  {nome:'AMIODARONA 150MG/3ML',    dose:'150MG',      via:'EV',  freq:'ACM',      hor:['ACM'],              cat:'Cardiovascular', obs:'diluir em 100ml SF'},
-  {nome:'ATENOLOL 25MG',           dose:'25MG',       via:'VO',  freq:'24/24H',   hor:['08'],               cat:'Cardiovascular'},
-  {nome:'CAPTOPRIL 25MG',          dose:'25MG',       via:'VO',  freq:'8/8H',     hor:['08','16','24'],     cat:'Cardiovascular'},
-  {nome:'DIGOXINA 0,25MG',         dose:'0,25MG',     via:'VO',  freq:'24/24H',   hor:['08'],               cat:'Cardiovascular'},
-  {nome:'ENALAPRIL 10MG',          dose:'10MG',       via:'VO',  freq:'12/12H',   hor:['08','20'],          cat:'Cardiovascular'},
-  {nome:'FUROSEMIDA 20MG',         dose:'40MG (2amp)',via:'EV',  freq:'24/24H',   hor:['16'],               cat:'Cardiovascular'},
-  {nome:'FUROSEMIDA 40MG',         dose:'40MG',       via:'VO',  freq:'24/24H',   hor:['08'],               cat:'Cardiovascular'},
-  {nome:'HIDRALAZINA 20MG/ML',     dose:'20MG',       via:'EV',  freq:'ACM',      hor:['ACM'],              cat:'Cardiovascular'},
-  {nome:'LOSARTANA 50MG',          dose:'50MG',       via:'VO',  freq:'24/24H',   hor:['08'],               cat:'Cardiovascular'},
-  {nome:'METOPROLOL 25MG',         dose:'25MG',       via:'VO',  freq:'24/24H',   hor:['08'],               cat:'Cardiovascular'},
-  {nome:'METOPROLOL 50MG',         dose:'50MG',       via:'VO',  freq:'12/12H',   hor:['08','20'],          cat:'Cardiovascular'},
-  {nome:'NITROGLICERINA 5MG/ML',   dose:'SNC',        via:'EV',  freq:'SNC',      hor:['SNC'],              cat:'Cardiovascular', obs:'bomba de infusão contínua'},
-  {nome:'NOREPINEFRINA 4MG',       dose:'SNC',        via:'EV',  freq:'SNC',      hor:['SNC'],              cat:'Cardiovascular', obs:'BIC — protocolo UTI'},
-  {nome:'SPIRONOLACTONA 25MG',     dose:'25MG',       via:'VO',  freq:'24/24H',   hor:['08'],               cat:'Cardiovascular'},
-  {nome:'VARFARINA 5MG',           dose:'5MG',        via:'VO',  freq:'24/24H',   hor:['18'],               cat:'Cardiovascular'},
-  {nome:'RIVAROXABANA 10MG',       dose:'10MG',       via:'VO',  freq:'24/24H',   hor:['08'],               cat:'Cardiovascular'},
-  {nome:'RIVAROXABANA 20MG',       dose:'20MG',       via:'VO',  freq:'24/24H',   hor:['08'],               cat:'Cardiovascular'},
-  {nome:'DAPAGLIFLOZINA 10MG',     dose:'10MG',       via:'VO',  freq:'24/24H',   hor:['10'],               cat:'Cardiovascular'},
-  {nome:'ISOSSORBIDA 20MG',        dose:'20MG',       via:'VO',  freq:'8/8H',     hor:['08','16','24'],     cat:'Cardiovascular'},
-  // ── SEDAÇÃO / ANALGESIA ─────────────────────────────────────────────────
-  {nome:'DEXMEDETOMIDINA 200MCG',  dose:'SNC',        via:'EV',  freq:'SNC',      hor:['SNC'],              cat:'Sedação/Analgesia', obs:'BIC — protocolo UTI'},
-  {nome:'FENTANIL 0,05MG/ML',      dose:'SNC',        via:'EV',  freq:'SNC',      hor:['SNC'],              cat:'Sedação/Analgesia', obs:'BIC — protocolo UTI'},
-  {nome:'KETAMINA 500MG',          dose:'ACM',        via:'EV',  freq:'ACM',      hor:['ACM'],              cat:'Sedação/Analgesia'},
-  {nome:'MIDAZOLAM 15MG/3ML',      dose:'SNC',        via:'EV',  freq:'SNC',      hor:['SNC'],              cat:'Sedação/Analgesia', obs:'BIC'},
-  {nome:'MORFINA 10MG/ML',         dose:'2MG',        via:'EV',  freq:'4/4H',     hor:['04','08','12','16','20','24'], cat:'Sedação/Analgesia'},
-  {nome:'PROPOFOL 10MG/ML',        dose:'SNC',        via:'EV',  freq:'SNC',      hor:['SNC'],              cat:'Sedação/Analgesia', obs:'BIC'},
-  // ── ANALGÉSICOS / ANTITÉRMICOS ───────────────────────────────────────────
-  {nome:'DIPIRONA 500MG/ML',       dose:'1G (2ml)',   via:'EV',  freq:'SN',       hor:['SN'],               cat:'Analgesia', obs:'ACM se dor ou febre'},
-  {nome:'PARACETAMOL 200MG/ML',    dose:'1G (5ml)',   via:'VO',  freq:'6/6H',     hor:['06','12','18','24'],cat:'Analgesia'},
-  {nome:'TRAMADOL 50MG/ML',        dose:'100MG',      via:'EV',  freq:'8/8H',     hor:['08','16','24'],     cat:'Analgesia'},
-  // ── ANTIBIÓTICOS ────────────────────────────────────────────────────────
-  {nome:'AMOXICILINA+CLAVULANATO 875MG', dose:'875MG', via:'VO', freq:'12/12H',  hor:['08','20'],          cat:'ATB'},
-  {nome:'AMPICILINA+SULBACTAM 3G', dose:'3G',         via:'EV',  freq:'6/6H',    hor:['06','12','18','24'],cat:'ATB'},
-  {nome:'AZITROMICINA 500MG',      dose:'500MG',      via:'VO',  freq:'24/24H',  hor:['08'],               cat:'ATB'},
-  {nome:'CEFAZOLINA 1G',           dose:'1G',         via:'EV',  freq:'8/8H',    hor:['08','16','24'],     cat:'ATB'},
-  {nome:'CEFEPIMA 1G',             dose:'1G',         via:'EV',  freq:'8/8H',    hor:['08','16','24'],     cat:'ATB', obs:'infundir em 30min'},
-  {nome:'CEFTAZIDIMA 1G',          dose:'1G',         via:'EV',  freq:'8/8H',    hor:['08','16','24'],     cat:'ATB'},
-  {nome:'CEFTRIAXONA 1G',          dose:'1G',         via:'EV',  freq:'24/24H',  hor:['08'],               cat:'ATB'},
-  {nome:'CIPROFLOXACINO 400MG',    dose:'400MG',      via:'EV',  freq:'12/12H',  hor:['08','20'],          cat:'ATB', obs:'infundir em 60min'},
-  {nome:'CLARITROMICINA 500MG',    dose:'500MG',      via:'VO',  freq:'12/12H',  hor:['08','20'],          cat:'ATB'},
-  {nome:'CLINDAMICINA 600MG',      dose:'600MG',      via:'EV',  freq:'8/8H',    hor:['08','16','24'],     cat:'ATB'},
-  {nome:'COLISTINA 150MG',         dose:'150MG',      via:'EV',  freq:'12/12H',  hor:['08','20'],          cat:'ATB', obs:'dose de ataque 300mg'},
-  {nome:'ERTAPENEM 1G',            dose:'1G',         via:'EV',  freq:'24/24H',  hor:['08'],               cat:'ATB'},
-  {nome:'FLUCONAZOL 200MG',        dose:'200MG',      via:'EV',  freq:'24/24H',  hor:['08'],               cat:'ATB'},
-  {nome:'LINEZOLIDA 600MG',        dose:'600MG',      via:'EV',  freq:'12/12H',  hor:['08','20'],          cat:'ATB'},
-  {nome:'MEROPENEM 1G',            dose:'1G',         via:'EV',  freq:'8/8H',    hor:['08','16','24'],     cat:'ATB', obs:'infundir em 3h (PK/PD)'},
-  {nome:'METRONIDAZOL 500MG',      dose:'500MG',      via:'EV',  freq:'8/8H',    hor:['08','16','24'],     cat:'ATB'},
-  {nome:'OXACILINA 500MG',         dose:'500MG',      via:'EV',  freq:'4/4H',    hor:['04','08','12','16','20','24'], cat:'ATB'},
-  {nome:'PIPERACILINA+TAZOBACTAM 4,5G', dose:'4,5G', via:'EV',  freq:'6/6H',    hor:['06','12','18','24'],cat:'ATB', obs:'infundir em 4h'},
-  {nome:'TIGECICLINA 50MG',        dose:'50MG',       via:'EV',  freq:'12/12H',  hor:['08','20'],          cat:'ATB', obs:'dose ataque 100mg'},
-  {nome:'VANCOMICINA 500MG',       dose:'ACM',        via:'EV',  freq:'6/6H',    hor:['06','12','18','24'],cat:'ATB', obs:'dosar nível + ajuste TFG'},
-  // ── ANTICOAGULANTES ─────────────────────────────────────────────────────
-  {nome:'ENOXAPARINA 20MG',        dose:'20MG',       via:'SC',  freq:'24/24H',  hor:['08'],               cat:'Anticoagulante', obs:'profilática'},
-  {nome:'ENOXAPARINA 40MG',        dose:'40MG',       via:'SC',  freq:'24/24H',  hor:['08'],               cat:'Anticoagulante', obs:'profilática'},
-  {nome:'ENOXAPARINA 60MG',        dose:'60MG',       via:'SC',  freq:'12/12H',  hor:['08','20'],          cat:'Anticoagulante', obs:'terapêutica'},
-  {nome:'HEPARINA NÃO FRACIONADA', dose:'SNC',        via:'EV',  freq:'SNC',     hor:['SNC'],              cat:'Anticoagulante', obs:'BIC — protocolo'},
-  // ── DIURÉTICOS ──────────────────────────────────────────────────────────
-  {nome:'ESPIRONOLACTONA 25MG',    dose:'25MG',       via:'VO',  freq:'24/24H',  hor:['08'],               cat:'Diurético'},
-  {nome:'HIDROCLOROTIAZIDA 25MG',  dose:'25MG',       via:'VO',  freq:'24/24H',  hor:['08'],               cat:'Diurético'},
-  // ── NEUROLOGIA / PSIQUIATRIA ─────────────────────────────────────────────
-  {nome:'CARBAMAZEPINA 200MG',     dose:'200MG',      via:'VO',  freq:'12/12H',  hor:['08','20'],          cat:'Neurologia'},
-  {nome:'DIAZEPAM 5MG',            dose:'5MG',        via:'VO',  freq:'ACM NOITE',hor:['22'],              cat:'Neurologia'},
-  {nome:'FENOBARBITAL 100MG',      dose:'100MG',      via:'VO',  freq:'12/12H',  hor:['08','20'],          cat:'Neurologia'},
-  {nome:'FENITOÍNA 100MG',         dose:'100MG',      via:'VO',  freq:'8/8H',    hor:['08','16','24'],     cat:'Neurologia'},
-  {nome:'HALOPERIDOL 5MG/ML',      dose:'5MG',        via:'EV',  freq:'ACM',     hor:['ACM'],              cat:'Neurologia'},
-  {nome:'LEVETIRACETAM 500MG',     dose:'500MG',      via:'VO',  freq:'12/12H',  hor:['08','20'],          cat:'Neurologia'},
-  {nome:'QUETIAPINA 25MG',         dose:'25MG',       via:'VO',  freq:'24/24H',  hor:['22'],               cat:'Neurologia'},
-  // ── ENDÓCRINO / METABÓLICO ───────────────────────────────────────────────
-  {nome:'GLICOSE 50% 04 AMP',      dose:'200ML',      via:'EV',  freq:'SN',      hor:['SN'],               cat:'Metabólico', obs:'se HGT < 70'},
-  {nome:'INSULINA REGULAR',        dose:'CONF PROTOC', via:'SC', freq:'SN',      hor:['SN'],               cat:'Metabólico', obs:'protocolo HGT'},
-  {nome:'INSULINA GLARGINA',       dose:'ACM',        via:'SC',  freq:'24/24H',  hor:['22'],               cat:'Metabólico'},
-  {nome:'LEVOTIROXINA 50MCG',      dose:'50MCG',      via:'VO',  freq:'24/24H',  hor:['06'],               cat:'Metabólico', obs:'em jejum'},
-  {nome:'METFORMINA 500MG',        dose:'500MG',      via:'VO',  freq:'12/12H',  hor:['08','20'],          cat:'Metabólico'},
-  {nome:'PREDNISONA 20MG',         dose:'20MG',       via:'VO',  freq:'24/24H',  hor:['08'],               cat:'Metabólico'},
-  {nome:'METILPREDNISOLONA 125MG', dose:'125MG',      via:'EV',  freq:'24/24H',  hor:['08'],               cat:'Metabólico'},
-  {nome:'HIDROCORTISONA 100MG',    dose:'100MG',      via:'EV',  freq:'6/6H',    hor:['06','12','18','24'],cat:'Metabólico'},
-  // ── GASTROINTESTINAL ────────────────────────────────────────────────────
-  {nome:'METOCLOPRAMIDA 10MG',     dose:'10MG',       via:'EV',  freq:'8/8H',    hor:['08','16','24'],     cat:'Gastrointestinal'},
-  {nome:'OMEPRAZOL 20MG',          dose:'20MG',       via:'VO',  freq:'24/24H',  hor:['08'],               cat:'Gastrointestinal'},
-  {nome:'OMEPRAZOL 40MG',          dose:'40MG',       via:'EV',  freq:'24/24H',  hor:['08'],               cat:'Gastrointestinal'},
-  {nome:'ONDANSETRONA 2MG/ML',     dose:'8MG (4ml)',  via:'EV',  freq:'8/8H SN', hor:['SN'],              cat:'Gastrointestinal', obs:'se náusea/vômito'},
-  {nome:'PANTOPRAZOL 40MG',        dose:'40MG',       via:'EV',  freq:'12/12H',  hor:['08','20'],          cat:'Gastrointestinal'},
-  {nome:'RANITIDINA 50MG',         dose:'50MG',       via:'EV',  freq:'8/8H',    hor:['08','16','24'],     cat:'Gastrointestinal'},
-  // ── ELETRÓLITOS / REPOSIÇÃO ─────────────────────────────────────────────
-  {nome:'CLORETO DE POTÁSSIO 10%', dose:'10MEQ',      via:'EV',  freq:'ACM',     hor:['ACM'],              cat:'Eletrólito', obs:'diluir — máx 20mEq/h'},
-  {nome:'GLUCONATO DE CÁLCIO 10%', dose:'1G',         via:'EV',  freq:'ACM',     hor:['ACM'],              cat:'Eletrólito'},
-  {nome:'SULFATO DE MAGNÉSIO 50%', dose:'2G',         via:'EV',  freq:'ACM',     hor:['ACM'],              cat:'Eletrólito'},
-  {nome:'SF 0,9% 500ML',           dose:'500ML',      via:'EV',  freq:'SNC',     hor:['SNC'],              cat:'Hidratação'},
-  {nome:'SF 0,9% 250ML',           dose:'250ML',      via:'EV',  freq:'ACM',     hor:['ACM'],              cat:'Hidratação'},
-  {nome:'RINGER LACTATO 500ML',    dose:'500ML',      via:'EV',  freq:'ACM',     hor:['ACM'],              cat:'Hidratação'},
-  // ── DIETA / CUIDADOS ────────────────────────────────────────────────────
-  {nome:'DIETA ORAL LIVRE',        dose:'—',          via:'VO',  freq:'SND',     hor:['SND'],              cat:'Dieta'},
-  {nome:'DIETA ORAL LÍQUIDA-PASTOSA', dose:'—',       via:'VO',  freq:'SND',     hor:['SND'],              cat:'Dieta'},
-  {nome:'DIETA ENTERAL',           dose:'ACM',        via:'SNE', freq:'SND',     hor:['SND'],              cat:'Dieta', obs:'volume conforme nutricionista'},
-  {nome:'JEJUM',                   dose:'—',          via:'—',   freq:'—',       hor:[],                   cat:'Dieta'},
-  {nome:'RESTRIÇÃO HÍDRICA',       dose:'ACM',        via:'—',   freq:'24H',     hor:[],                   cat:'Dieta'},
-  {nome:'HGT 6/6H',                dose:'—',          via:'—',   freq:'6/6H',    hor:['06','12','18','24'],cat:'Cuidados'},
-  {nome:'HGT ANTES REFEIÇÕES',     dose:'—',          via:'—',   freq:'SND',     hor:['SND'],              cat:'Cuidados'},
-  {nome:'PNI + MCC + SAT CONTÍNUO',dose:'—',          via:'—',   freq:'SNC',     hor:['EM USO'],           cat:'Cuidados'},
-  {nome:'JELCO HIDRATADO',         dose:'—',          via:'EV',  freq:'—',       hor:[],                   cat:'Cuidados'},
-  {nome:'CURATIVO',                dose:'—',          via:'—',   freq:'SND',     hor:['SND'],              cat:'Cuidados'},
-  {nome:'DECÚBITO ELEVADO 30-45°', dose:'—',          via:'—',   freq:'SNC',     hor:['EM USO'],           cat:'Cuidados'},
-  {nome:'FISIOTERAPIA RESPIRATÓRIA',dose:'—',         via:'—',   freq:'SND',     hor:['SND'],              cat:'Cuidados'},
-  {nome:'SONDA VESICAL DRENAGEM',  dose:'—',          via:'—',   freq:'SNC',     hor:['EM USO'],           cat:'Cuidados'},
+  // ══════════════════════════════════════════════════════
+  // 1 — DIETA
+  // ══════════════════════════════════════════════════════
+  {nome:'DIETA ORAL LIVRE',                              dose:'—', via:'VO',  freq:'SND',     hor:['SND'], cat:'Dieta'},
+  {nome:'DIETA ORAL PASTOSA CONFORME ACEITAÇÃO',         dose:'—', via:'VO',  freq:'SND',     hor:['SND'], cat:'Dieta'},
+  {nome:'DIETA ORAL LIQUIDA-PASTOSA CONFORME ACEITAÇÃO + RESTRIÇÃO HIDRICA 800ML/DIA', dose:'—', via:'VO', freq:'SND', hor:['SND'], cat:'Dieta'},
+  {nome:'DIETA ORAL PASTOSA/SNE + RESTRIÇÃO HIDRICA 800ML/DIA / NÃO FAZER ÁGUA LIVRE PELA SNE', dose:'—', via:'SNE', freq:'SND', hor:['SND'], cat:'Dieta'},
+  {nome:'DIETA ORAL HAS E DM',                          dose:'—', via:'VO',  freq:'SND',     hor:['SND'], cat:'Dieta'},
+  {nome:'DIETA ORAL ASSISTIDA',                         dose:'—', via:'VO',  freq:'SND',     hor:['SND'], cat:'Dieta'},
+  {nome:'DIETA POR SNE',                                dose:'—', via:'SNE', freq:'SND',     hor:['SND'], cat:'Dieta'},
+  {nome:'DIETA ENTERAL',                                dose:'—', via:'SNE', freq:'SND',     hor:['SND'], cat:'Dieta', obs:'volume conforme nutricionista'},
+  {nome:'DIETA ENTERAL CONTÍNUA',                       dose:'—', via:'SNE', freq:'SNC',     hor:['SNC'], cat:'Dieta'},
+  {nome:'DIETA ENTERAL + AGUA 200ML 4/4H',              dose:'—', via:'SNE', freq:'SND',     hor:['SND'], cat:'Dieta'},
+  {nome:'DIETA PARA HAS E DRC VIA SNE + SUPLEMENTAÇÃO PROTEICA 2X/DIA', dose:'—', via:'SNE', freq:'SND', hor:['SND'], cat:'Dieta'},
+  {nome:'DIETA ZERO ATÉ 2ª ORDEM',                      dose:'—', via:'—',  freq:'—',       hor:[],      cat:'Dieta'},
+  {nome:'JEJUM',                                        dose:'—', via:'—',  freq:'—',       hor:[],      cat:'Dieta'},
+  {nome:'RESTRIÇÃO HÍDRICA 800ML/DIA',                  dose:'—', via:'—',  freq:'24H',     hor:[],      cat:'Dieta'},
+
+  // ══════════════════════════════════════════════════════
+  // 2 — ANTIMICROBIANOS
+  // ══════════════════════════════════════════════════════
+  {nome:'AAS 100MG',                   dose:'1 COMP',      via:'VO',  freq:'1X/DIA',  hor:['08'],              cat:'ATB', obs:'no almoço'},
+  {nome:'AAS 100MG',                   dose:'1 COMP',      via:'SNE', freq:'1X/DIA',  hor:['08'],              cat:'ATB'},
+  {nome:'AMPICILINA+SULBACTAM 3G',     dose:'3FA + 250ML SF 0,9%', via:'EV', freq:'8/8H', hor:['08','16','24'], cat:'ATB', obs:'informar D0'},
+  {nome:'CEFTRIAXONA 1G',              dose:'1 FCO + 100ML SF', via:'EV', freq:'12/12H', hor:['08','20'],      cat:'ATB'},
+  {nome:'CEFTRIAXONA 1G',              dose:'1 FCO + 100ML SF', via:'EV', freq:'24/24H', hor:['08'],           cat:'ATB'},
+  {nome:'CIPROFLOXACINO 400MG',        dose:'400MG',       via:'EV',  freq:'12/12H',  hor:['08','20'],         cat:'ATB', obs:'infundir em 60min'},
+  {nome:'CLARITROMICINA 500MG',        dose:'500MG',       via:'VO',  freq:'12/12H',  hor:['08','20'],         cat:'ATB'},
+  {nome:'CLORANFENICOL',               dose:'ACM',         via:'EV',  freq:'6/6H',    hor:['06','12','18','24'],cat:'ATB'},
+  {nome:'CLOPIDOGREL 75MG',            dose:'1 COMP',      via:'VO',  freq:'1X/DIA',  hor:['08'],              cat:'ATB'},
+  {nome:'COLISTINA 500000UI',          dose:'1,5FA + 200ML SG 5%', via:'EV', freq:'12/12H', hor:['08','20'],   cat:'ATB', obs:'informar D0'},
+  {nome:'ERTAPENEM 1G',                dose:'1G',          via:'EV',  freq:'24/24H',  hor:['08'],              cat:'ATB'},
+  {nome:'FLUCONAZOL 200MG',            dose:'200MG',       via:'EV',  freq:'24/24H',  hor:['08'],              cat:'ATB'},
+  {nome:'LINEZOLIDA 600MG',            dose:'600MG',       via:'EV',  freq:'12/12H',  hor:['08','20'],         cat:'ATB'},
+  {nome:'MEROPENEM 1G',                dose:'2FA + 100ML SF 0,9%', via:'EV', freq:'8/8H', hor:['08','16','24'],cat:'ATB', obs:'informar D0'},
+  {nome:'MEROPENEM 2G',                dose:'1FA + 100ML SF 0,9%', via:'EV', freq:'8/8H', hor:['08','16','24'],cat:'ATB', obs:'informar D0'},
+  {nome:'METRONIDAZOL 500MG',          dose:'500MG',       via:'EV',  freq:'8/8H',    hor:['08','16','24'],    cat:'ATB'},
+  {nome:'MICAFUNGINA 100MG',           dose:'100MG',       via:'EV',  freq:'24/24H',  hor:['08'],              cat:'ATB'},
+  {nome:'OXACILINA 500MG',             dose:'500MG',       via:'EV',  freq:'4/4H',    hor:['04','08','12','16','20','24'],cat:'ATB'},
+  {nome:'PIPERACILINA+TAZOBACTAM 4,5G (TAZOCIN)',dose:'1FA + 100ML SF 0,9%', via:'EV', freq:'6/6H', hor:['06','12','18','24'],cat:'ATB', obs:'infundir em 4h — informar D0'},
+  {nome:'POLIMIXINA B 500000UI',       dose:'1,5FA + 200ML SG 5%',via:'EV', freq:'12/12H', hor:['08','20'],    cat:'ATB', obs:'informar D0'},
+  {nome:'TIGECICLINA 50MG',            dose:'2FA + 100ML SF 0,9%',via:'EV', freq:'12/12H', hor:['08','20'],    cat:'ATB', obs:'dose ataque 100mg — informar D0'},
+  {nome:'VANCOMICINA 1G',              dose:'1FA + 100ML SF 0,9%',via:'EV', freq:'12/12H', hor:['08','20'],    cat:'ATB', obs:'dosar nível — informar D0'},
+  {nome:'VANCOMICINA 500MG',           dose:'500MG',       via:'EV',  freq:'6/6H',    hor:['06','12','18','24'],cat:'ATB', obs:'ajustar TFG'},
+  {nome:'AZITROMICINA 500MG',          dose:'500MG',       via:'VO',  freq:'24/24H',  hor:['08'],              cat:'ATB'},
+  {nome:'AMICACINA 500MG',             dose:'500MG',       via:'EV',  freq:'24/24H',  hor:['08'],              cat:'ATB'},
+  {nome:'CEFAZOLINA 1G',               dose:'1G',          via:'EV',  freq:'8/8H',    hor:['08','16','24'],    cat:'ATB'},
+  {nome:'CEFEPIMA 1G',                 dose:'1G',          via:'EV',  freq:'8/8H',    hor:['08','16','24'],    cat:'ATB'},
+
+  // ══════════════════════════════════════════════════════
+  // 3 — HIDRATAÇÃO VENOSA
+  // ══════════════════════════════════════════════════════
+  {nome:'SF 0,9% 120ML EV EM BIC ~5ML/H',          dose:'120ML',  via:'EV', freq:'SNC', hor:['SNC'], cat:'Hidratação'},
+  {nome:'SF 0,9% 250ML EV EM BIC',                 dose:'250ML',  via:'EV', freq:'ACM', hor:['ACM'], cat:'Hidratação'},
+  {nome:'SF 0,9% 500ML EV EM BIC',                 dose:'500ML',  via:'EV', freq:'ACM', hor:['ACM'], cat:'Hidratação'},
+  {nome:'SF 0,9% 1000ML EV EM BIC 42ML/H',         dose:'1000ML', via:'EV', freq:'SNC', hor:['SNC'], cat:'Hidratação'},
+  {nome:'SG 5% 420ML + BICARBONATO DE SÓDIO 8,4% 80ML EV EM BIC ~84ML/H', dose:'500ML', via:'EV', freq:'SNC', hor:['SNC'], cat:'Hidratação'},
+  {nome:'RINGER LACTATO 500ML ETAPA RÁPIDA',        dose:'500ML',  via:'EV', freq:'ACM', hor:['ACM'], cat:'Hidratação'},
+  {nome:'RINGER LACTATO 1500ML EV EM BIC ~63ML/H',  dose:'1500ML', via:'EV', freq:'SNC', hor:['SNC'], cat:'Hidratação'},
+  {nome:'RINGER LACTATO 120ML EV EM BIC 5ML/H',     dose:'120ML',  via:'EV', freq:'SNC', hor:['SNC'], cat:'Hidratação'},
+  {nome:'SORO FISIOLÓGICO 0,9% EV EM BIC A 4ML/H',  dose:'ACM',    via:'EV', freq:'SNC', hor:['SNC'], cat:'Hidratação'},
+  {nome:'JELCO HIDRATADO',                          dose:'—',      via:'EV', freq:'—',   hor:[],      cat:'Hidratação'},
+
+  // ══════════════════════════════════════════════════════
+  // 4 — DROGAS VASOATIVAS
+  // ══════════════════════════════════════════════════════
+  {nome:'NORADRENALINA (NOREPINEFRINA) 4MG/4ML',   dose:'4AMP + 234ML SF 0,9%', via:'EV', freq:'BIC ACM', hor:['SNC'], cat:'Droga Vasoativa', obs:'BIC — protocolo UTI'},
+  {nome:'NOREPINEFRINA 2MG/ML',                    dose:'16ML + 234ML SG 5%',   via:'EV', freq:'BIC ACM', hor:['SNC'], cat:'Droga Vasoativa', obs:'BIC'},
+  {nome:'DOBUTAMINA 50MG/20ML',                    dose:'4AMP + SF 0,9% 170ML', via:'EV', freq:'BIC ACM', hor:['SNC'], cat:'Droga Vasoativa', obs:'BIC'},
+  {nome:'VASOPRESSINA 20UI/1ML',                   dose:'1ML + 99ML SF 0,9%',   via:'EV', freq:'BIC ACM', hor:['SNC'], cat:'Droga Vasoativa', obs:'BIC'},
+  {nome:'NIPRIDE (NITROPRUSSIATO) 25MG/ML',        dose:'2ML + 250ML SG 5%',    via:'EV', freq:'BIC ACM', hor:['SNC'], cat:'Droga Vasoativa', obs:'BIC — proteger da luz'},
+  {nome:'NITROGLICERINA (TRIDIL) 50MG',            dose:'1AMP + 240ML SG 5%',   via:'EV', freq:'BIC ACM', hor:['SNC'], cat:'Droga Vasoativa', obs:'BIC'},
+  {nome:'AMIODARONA 150MG/3ML',                    dose:'150MG',                via:'EV', freq:'ACM',     hor:['ACM'], cat:'Droga Vasoativa', obs:'diluir em 100ml SF — ACM'},
+
+  // ══════════════════════════════════════════════════════
+  // 5 — SEDAÇÃO / ANALGESIA
+  // ══════════════════════════════════════════════════════
+  {nome:'FENTANIL 50MCG/ML',         dose:'50ML + 50ML SF 0,9%', via:'EV', freq:'BIC ACM', hor:['SNC'], cat:'Sedação', obs:'BIC'},
+  {nome:'MIDAZOLAM 5MG/ML',          dose:'30ML + 120ML SF 0,9%',via:'EV', freq:'BIC ACM', hor:['SNC'], cat:'Sedação', obs:'BIC'},
+  {nome:'PROPOFOL 1% (10MG/ML)',      dose:'100ML',               via:'EV', freq:'BIC ACM', hor:['SNC'], cat:'Sedação', obs:'BIC — puro'},
+  {nome:'PROPOFOL 1% (10MG/ML)',      dose:'50ML',                via:'EV', freq:'BIC ACM', hor:['SNC'], cat:'Sedação', obs:'BIC'},
+  {nome:'DEXMEDETOMIDINA 200MCG',     dose:'SNC',                 via:'EV', freq:'BIC ACM', hor:['SNC'], cat:'Sedação', obs:'BIC — protocolo UTI'},
+  {nome:'KETAMINA 500MG',             dose:'ACM',                 via:'EV', freq:'ACM',     hor:['ACM'], cat:'Sedação'},
+  {nome:'MORFINA 10MG/ML',            dose:'2MG',                 via:'EV', freq:'4/4H',    hor:['04','08','12','16','20','24'],cat:'Sedação'},
+  {nome:'TRAMADOL 50MG/ML',           dose:'100MG',               via:'EV', freq:'8/8H',    hor:['08','16','24'],cat:'Sedação'},
+  {nome:'DIPIRONA 1G',                dose:'01AMP + ABD',         via:'EV', freq:'6/6H SN', hor:['SN'],  cat:'Sedação', obs:'se dor ou febre'},
+  {nome:'DIPIRONA 500MG/ML',          dose:'2ML + 8ML ABD',       via:'EV', freq:'6/6H SN', hor:['SN'],  cat:'Sedação', obs:'se necessário'},
+  {nome:'DIPIRONA 500MG',             dose:'1 COMP',              via:'VO', freq:'6/6H SN', hor:['SN'],  cat:'Sedação', obs:'se dor'},
+  {nome:'DIPIRONA 500MG/ML',          dose:'40 GTS',              via:'SNE',freq:'6/6H SN', hor:['SN'],  cat:'Sedação'},
+  {nome:'PARACETAMOL 200MG/ML',       dose:'40 GTS',              via:'SNE',freq:'6/6H SN', hor:['SN'],  cat:'Sedação'},
+
+  // ══════════════════════════════════════════════════════
+  // 6 — MEDICAÇÕES GERAIS
+  // ══════════════════════════════════════════════════════
+  // Cardiovascular
+  {nome:'AEROLIM 100MCG',             dose:'04 PUFFS',            via:'IN', freq:'4/4H',    hor:['04','08','12','16','20','24'],cat:'Medicação Geral', obs:'nebulização'},
+  {nome:'AEROLIN 100MCG/JATO',        dose:'06 JATOS',            via:'IN', freq:'6/6H',    hor:['06','12','18','24'],cat:'Medicação Geral'},
+  {nome:'AMIODARONA 200MG',           dose:'200MG',               via:'VO', freq:'12/12H',  hor:['08','20'],cat:'Medicação Geral'},
+  {nome:'ANLODIPINO 10MG',            dose:'1 COMP',              via:'VO', freq:'24/24H',  hor:['08'],     cat:'Medicação Geral'},
+  {nome:'ANLODIPINO 10MG',            dose:'1 COMP',              via:'SNE',freq:'1X/DIA',  hor:['08'],     cat:'Medicação Geral'},
+  {nome:'ATROPINA COLÍRIO 1%',        dose:'2 GOTAS',             via:'ORAL',freq:'8/8H',   hor:['08','16','24'],cat:'Medicação Geral', obs:'em cavidade oral'},
+  {nome:'ATROVENT (IPRATRÓPIO) 40GTS NBZ',dose:'40GTS',          via:'IN', freq:'6/6H',    hor:['06','12','18','24'],cat:'Medicação Geral'},
+  {nome:'BROMOPRIDA 5MG/ML',          dose:'2ML + 18ML ABD',      via:'EV', freq:'8/8H',    hor:['08','16','24'],cat:'Medicação Geral', obs:'fixo'},
+  {nome:'BROMOPRIDA 5MG/ML',          dose:'2ML + 18ML ABD',      via:'EV', freq:'8/8H SN', hor:['SN'],     cat:'Medicação Geral', obs:'se necessário'},
+  {nome:'CAPTOPRIL 25MG',             dose:'25MG',                via:'VO', freq:'8/8H',    hor:['08','16','24'],cat:'Medicação Geral'},
+  {nome:'CARVEDILOL 6,25MG',          dose:'1 COMP',              via:'VO', freq:'12/12H',  hor:['08','20'],cat:'Medicação Geral'},
+  {nome:'CLENIL HFA 200MCG/JATO',     dose:'2 JATOS',             via:'IN', freq:'12/12H',  hor:['08','20'],cat:'Medicação Geral'},
+  {nome:'CLONAZEPAM 2,5MG/ML',        dose:'10 GTS',              via:'SNE',freq:'8/8H',    hor:['08','16','24'],cat:'Medicação Geral'},
+  {nome:'CLONAZEPAM GTS',             dose:'5 GTS',               via:'SNE',freq:'12/12H',  hor:['08','20'],cat:'Medicação Geral'},
+  {nome:'DAPAGLIFLOZINA 10MG',        dose:'10MG',                via:'VO', freq:'24/24H',  hor:['10'],     cat:'Medicação Geral'},
+  {nome:'DIAZEPAM 5MG',               dose:'1 COMP',              via:'VO', freq:'ACM NOITE',hor:['22'],    cat:'Medicação Geral', obs:'à noite'},
+  {nome:'DIAZEPAM 10MG',              dose:'1 COMP',              via:'SNE',freq:'12/12H',  hor:['08','20'],cat:'Medicação Geral'},
+  {nome:'DIGOXINA 0,25MG',            dose:'0,25MG',              via:'VO', freq:'24/24H',  hor:['08'],     cat:'Medicação Geral'},
+  {nome:'ENALAPRIL 10MG',             dose:'10MG',                via:'VO', freq:'12/12H',  hor:['08','20'],cat:'Medicação Geral'},
+  {nome:'ENOXAPARINA 20MG',           dose:'20MG',                via:'SC', freq:'24/24H',  hor:['08'],     cat:'Medicação Geral', obs:'profilática'},
+  {nome:'ENOXAPARINA 40MG',           dose:'40MG',                via:'SC', freq:'24/24H',  hor:['08'],     cat:'Medicação Geral', obs:'profilática'},
+  {nome:'ENOXAPARINA 60MG',           dose:'60MG',                via:'SC', freq:'12/12H',  hor:['08','20'],cat:'Medicação Geral', obs:'terapêutica'},
+  {nome:'ESOMEPRAZOL 20MG',           dose:'1 COMP',              via:'SNE',freq:'24/24H',  hor:['08'],     cat:'Medicação Geral', obs:'se falta de acesso venoso'},
+  {nome:'ESPIRONOLACTONA 25MG',       dose:'25MG',                via:'VO', freq:'24/24H',  hor:['08'],     cat:'Medicação Geral'},
+  {nome:'FENITOÍNA 100MG',            dose:'2ML + 18ML ABD',      via:'EV', freq:'8/8H',    hor:['08','16','24'],cat:'Medicação Geral'},
+  {nome:'FUROSEMIDA 20MG',            dose:'02 AMP',              via:'EV', freq:'24/24H',  hor:['16'],     cat:'Medicação Geral'},
+  {nome:'FUROSEMIDA 10MG/ML',         dose:'4ML (2AMP) + ABD',    via:'EV', freq:'6/6H',    hor:['06','12','18','24'],cat:'Medicação Geral'},
+  {nome:'FUROSEMIDA 40MG',            dose:'02 COMP',             via:'SNE',freq:'8/8H',    hor:['08','16','24'],cat:'Medicação Geral'},
+  {nome:'HALDOL 2MG/ML',              dose:'5 GTS',               via:'SNE',freq:'12/12H',  hor:['08','20'],cat:'Medicação Geral'},
+  {nome:'HALDOL 2MG/ML',              dose:'15 GOTAS',            via:'SNE',freq:'8/8H',    hor:['08','16','24'],cat:'Medicação Geral'},
+  {nome:'HALDOL 2MG/ML',              dose:'20 GOTAS',            via:'SNE',freq:'6/6H',    hor:['06','12','18','24'],cat:'Medicação Geral'},
+  {nome:'HALDOL 5MG',                 dose:'1 AMP',               via:'IM', freq:'ACM',     hor:['ACM'],    cat:'Medicação Geral'},
+  {nome:'HALOPERIDOL 1MG/ML GTS',     dose:'20 GOTAS',            via:'SNE',freq:'8/8H',    hor:['08','16','24'],cat:'Medicação Geral'},
+  {nome:'HEPARINA NÃO FRACIONADA (HNF) 5000UI', dose:'0,25ML', via:'SC', freq:'12/12H', hor:['08','20'], cat:'Medicação Geral'},
+  {nome:'HIDRALAZINA 25MG',           dose:'3 COMP',              via:'SNE',freq:'8/8H',    hor:['08','16','24'],cat:'Medicação Geral'},
+  {nome:'HIDRALAZINA 50MG',           dose:'1 COMP',              via:'VO', freq:'8/8H',    hor:['08','16','24'],cat:'Medicação Geral'},
+  {nome:'HIDRALAZINA 20MG/ML',        dose:'20MG',                via:'EV', freq:'ACM',     hor:['ACM'],    cat:'Medicação Geral'},
+  {nome:'HIDROCORTISONA 100MG',       dose:'1FA + 10ML ABD — FAZER 5ML', via:'EV', freq:'6/6H', hor:['06','12','18','24'],cat:'Medicação Geral'},
+  {nome:'ISOSSORBIDA (MONOCORDIL) 40MG', dose:'1 COMP',          via:'VO', freq:'8/8H',    hor:['08','14','20'],cat:'Medicação Geral'},
+  {nome:'ISOSSORBIDA 20MG',           dose:'20MG',                via:'VO', freq:'8/8H',    hor:['08','16','24'],cat:'Medicação Geral'},
+  {nome:'LEVETIRACETAM 500MG',        dose:'500MG',               via:'VO', freq:'12/12H',  hor:['08','20'],cat:'Medicação Geral'},
+  {nome:'LEVOTIROXINA 50MCG',         dose:'50MCG',               via:'VO', freq:'24/24H',  hor:['06'],     cat:'Medicação Geral', obs:'em jejum'},
+  {nome:'LOSARTANA 50MG',             dose:'1 COMP',              via:'VO', freq:'12/12H',  hor:['08','20'],cat:'Medicação Geral'},
+  {nome:'LOSARTANA 50MG',             dose:'1 COMP',              via:'SNE',freq:'1X/DIA',  hor:['08'],     cat:'Medicação Geral'},
+  {nome:'LUNERA COLÍRIO',             dose:'1 GOTA EM CADA OLHO', via:'OF', freq:'8/8H',   hor:['08','16','24'],cat:'Medicação Geral'},
+  {nome:'METILPREDNISOLONA 125MG',    dose:'1/2 FA + ABD',        via:'EV', freq:'24/24H',  hor:['08'],     cat:'Medicação Geral'},
+  {nome:'METOCLOPRAMIDA 10MG',        dose:'1 COMP',              via:'SNE',freq:'8/8H SN', hor:['SN'],     cat:'Medicação Geral'},
+  {nome:'METOCLOPRAMIDA 10MG/2ML',    dose:'1AMP + 18ML SF 0,9%', via:'EV', freq:'8/8H SN', hor:['SN'],    cat:'Medicação Geral', obs:'se necessário'},
+  {nome:'METOCLOPRAMIDA 5MG/ML',      dose:'2ML + ABD',           via:'EV', freq:'8/8H SN', hor:['SN'],    cat:'Medicação Geral'},
+  {nome:'METOPROLOL 25MG',            dose:'1 COMP',              via:'VO', freq:'24/24H',  hor:['08'],     cat:'Medicação Geral'},
+  {nome:'METOPROLOL 50MG',            dose:'1 COMP',              via:'VO', freq:'12/12H',  hor:['08','20'],cat:'Medicação Geral'},
+  {nome:'N-ACETILCISTEÍNA 600MG',     dose:'1 SACHÊ + ÁGUA',      via:'SNE',freq:'1X/DIA',  hor:['08'],     cat:'Medicação Geral'},
+  {nome:'NBZ SF 0,9% 3ML',            dose:'3ML',                 via:'IN', freq:'4/4H',    hor:['04','08','12','16','20','24'],cat:'Medicação Geral'},
+  {nome:'NBZ SF 0,9% 3ML + ATROVENT 40GTS', dose:'3ML+40GTS',   via:'IN', freq:'6/6H',    hor:['06','12','18','24'],cat:'Medicação Geral'},
+  {nome:'OMEPRAZOL 20MG',             dose:'1 COMP',              via:'SNE',freq:'24/24H',  hor:['08'],     cat:'Medicação Geral'},
+  {nome:'OMEPRAZOL 40MG',             dose:'1FA + ABD',           via:'EV', freq:'24/24H',  hor:['08'],     cat:'Medicação Geral'},
+  {nome:'ONDANSETRONA 4MG/ML',        dose:'2ML + ABD',           via:'EV', freq:'8/8H SN', hor:['SN'],    cat:'Medicação Geral', obs:'se náusea/vômito'},
+  {nome:'ONDASETRONA 2MG/ML',         dose:'1AMP + ABD',          via:'EV', freq:'8/8H SN', hor:['SN'],    cat:'Medicação Geral', obs:'se náusea ou vômitos'},
+  {nome:'PANTOPRAZOL 40MG',           dose:'1FA + DP',            via:'EV', freq:'24/24H',  hor:['08'],     cat:'Medicação Geral'},
+  {nome:'PANTOPRAZOL 40MG',           dose:'1 COMP',              via:'VO', freq:'1X/DIA',  hor:['08'],     cat:'Medicação Geral'},
+  {nome:'PREDNISOLONA 3MG/ML',        dose:'7ML',                 via:'SNE',freq:'1X/DIA',  hor:['08'],     cat:'Medicação Geral', obs:'informar D1'},
+  {nome:'PREDNISONA 20MG',            dose:'20MG',                via:'VO', freq:'24/24H',  hor:['08'],     cat:'Medicação Geral'},
+  {nome:'QUETIAPINA 25MG',            dose:'1 COMP',              via:'SNE',freq:'12/12H',  hor:['08','22'],cat:'Medicação Geral'},
+  {nome:'QUETIAPINA 25MG',            dose:'1 COMP',              via:'VO', freq:'24/24H',  hor:['22'],     cat:'Medicação Geral'},
+  {nome:'RIVAROXABANA 10MG',          dose:'10MG',                via:'VO', freq:'24/24H',  hor:['08'],     cat:'Medicação Geral'},
+  {nome:'RIVAROXABANA 20MG',          dose:'20MG',                via:'VO', freq:'24/24H',  hor:['08'],     cat:'Medicação Geral'},
+  {nome:'ROSUVASTATINA 20MG',         dose:'1 COMP',              via:'VO', freq:'24/24H',  hor:['22'],     cat:'Medicação Geral', obs:'à noite'},
+  {nome:'SALBUTAMOL 100MCG',          dose:'6 PUFFS',             via:'IN', freq:'4/4H',    hor:['04','08','12','16','20','24'],cat:'Medicação Geral'},
+  {nome:'SINVASTATINA 40MG',          dose:'1 COMP',              via:'VO', freq:'24/24H',  hor:['22'],     cat:'Medicação Geral', obs:'à noite'},
+  {nome:'SORO FISIOLÓGICO 5ML NBZ',   dose:'5ML',                 via:'IN', freq:'4/4H',    hor:['04','08','12','16','20','24'],cat:'Medicação Geral'},
+  {nome:'SPIRONOLACTONA 25MG',        dose:'25MG',                via:'VO', freq:'24/24H',  hor:['08'],     cat:'Medicação Geral'},
+  {nome:'SULFATO DE MAGNÉSIO 10%',    dose:'20ML + 100ML SF 0,9%',via:'EV', freq:'ACM',     hor:['ACM'],    cat:'Medicação Geral'},
+  {nome:'SULBACTAM + SUSTRATE (PROPATILNITRATO) 10MG', dose:'2 COMP', via:'VO', freq:'8/8H', hor:['08','16','24'],cat:'Medicação Geral'},
+  {nome:'SYMBICORT 6+100MCG',         dose:'2 SPRAYS',            via:'IN', freq:'12/12H',  hor:['08','20'],cat:'Medicação Geral'},
+  {nome:'TERBUTALINA 0,5MG',          dose:'0,5MG',               via:'SC', freq:'8/8H ACM',hor:['ACM'],   cat:'Medicação Geral'},
+  {nome:'VARFARINA 5MG',              dose:'5MG',                 via:'VO', freq:'24/24H',  hor:['18'],     cat:'Medicação Geral'},
+  {nome:'CLORETO DE POTÁSSIO 10%',    dose:'10MEQ',               via:'EV', freq:'ACM',     hor:['ACM'],    cat:'Medicação Geral', obs:'diluir — máx 20mEq/h'},
+  {nome:'GLUCONATO DE CÁLCIO 10%',    dose:'1G',                  via:'EV', freq:'ACM',     hor:['ACM'],    cat:'Medicação Geral'},
+  {nome:'AMPLICTIL 5MG/ML',           dose:'3ML',                 via:'IM', freq:'8/8H',    hor:['08','16','24'],cat:'Medicação Geral'},
+  {nome:'FENITOÍNA 100MG',            dose:'100MG',               via:'VO', freq:'8/8H',    hor:['08','16','24'],cat:'Medicação Geral'},
+
+  // ══════════════════════════════════════════════════════
+  // 7 — PROTOCOLO DE INSULINA / HGT
+  // ══════════════════════════════════════════════════════
+  {nome:'HGT 6/6H // INSULINA REGULAR CONFORME PROTOCOLO SE HGT > 200',  dose:'—', via:'—', freq:'6/6H', hor:['06','12','18','24'],cat:'Protocolo'},
+  {nome:'HGT 6/6H // INSULINA REGULAR CONFORME PROTOCOLO SE HGT > 250',  dose:'—', via:'—', freq:'6/6H', hor:['06','12','18','24'],cat:'Protocolo'},
+  {nome:'HGT 6/6H // INSULINA REGULAR CONFORME PROTOCOLO',               dose:'—', via:'—', freq:'6/6H', hor:['06','12','18','24'],cat:'Protocolo'},
+  {nome:'HGT ANTES DO CAFÉ, ALMOÇO, JANTAR E 22H + INSULINA REG CONFORME PROTOCOLO', dose:'—', via:'—', freq:'SND', hor:['SND'], cat:'Protocolo'},
+  {nome:'HGT ANTES DO CAFÉ, ALMOÇO, JANTAR E 22H // IR PROTOCOLO SE HGT > 250', dose:'—', via:'—', freq:'SND', hor:['SND'], cat:'Protocolo'},
+  {nome:'GLICOSE 50% 40ML SE HGT < 70 | REPETIR HGT 30 MIN APÓS CORREÇÃO', dose:'40ML', via:'EV', freq:'SN', hor:['SN'], cat:'Protocolo', obs:'se HGT < 70'},
+  {nome:'GLICOSE 50% 30ML EV SE HGT < 70MG/DL',                          dose:'30ML', via:'EV', freq:'SN', hor:['SN'], cat:'Protocolo'},
+  {nome:'GLICOSE 50% 04 AMP EV SE HGT < 70MG/ML',                        dose:'4AMP', via:'EV', freq:'SN', hor:['SN'], cat:'Protocolo'},
+  {nome:'INSULINA REGULAR CONFORME PROTOCOLO',                            dose:'CONF PROTOC', via:'SC', freq:'SN', hor:['SN'], cat:'Protocolo'},
+  {nome:'INSULINA NPH 12UI SC ÀS 22H',                                    dose:'12UI', via:'SC', freq:'24/24H', hor:['22'], cat:'Protocolo'},
+  {nome:'INSULINA NPH 12UI SC ANTES DO CAFÉ, ALMOÇO E ÀS 22H',           dose:'12UI', via:'SC', freq:'8/8H',   hor:['06','12','22'],cat:'Protocolo'},
+  {nome:'INSULINA NPH 8UI SC 12/12H',                                     dose:'8UI',  via:'SC', freq:'12/12H', hor:['08','20'],cat:'Protocolo'},
+  {nome:'INSULINA NPH 4UI SC 8/8H',                                       dose:'4UI',  via:'SC', freq:'8/8H',   hor:['08','16','24'],cat:'Protocolo'},
+  {nome:'INSULINA GLARGINA',                                              dose:'ACM',  via:'SC', freq:'24/24H', hor:['22'],cat:'Protocolo'},
+
+  // ══════════════════════════════════════════════════════
+  // 8 — CUIDADOS
+  // ══════════════════════════════════════════════════════
+  {nome:'PNI + MCC + SAT DE PULSO CONTÍNUO',                   dose:'—', via:'—', freq:'SNC', hor:['EM USO'], cat:'Cuidados'},
+  {nome:'MCC + OP + PNI',                                      dose:'—', via:'—', freq:'SNC', hor:['EM USO'], cat:'Cuidados'},
+  {nome:'OP',                                                   dose:'—', via:'—', freq:'SNC', hor:['EM USO'], cat:'Cuidados'},
+  {nome:'SSVV E CCGG DE 2/2 HORAS — ROTINA',                   dose:'—', via:'—', freq:'2/2H', hor:['SND'],   cat:'Cuidados'},
+  {nome:'SSVV + CCGG + MUDANÇA DE DECÚBITO 2/2H',              dose:'—', via:'—', freq:'2/2H', hor:['SND'],   cat:'Cuidados'},
+  {nome:'CABECEIRA 30-45°',                                    dose:'—', via:'—', freq:'SNC', hor:['EM USO'], cat:'Cuidados'},
+  {nome:'CABECEIRA 30-45° + MUDANÇA DE DECÚBITO 2/2H',        dose:'—', via:'—', freq:'SNC', hor:['EM USO'], cat:'Cuidados'},
+  {nome:'CABECEIRA 30-45° + MANTER SVD E QUANTIFICAR DÉBITO', dose:'—', via:'—', freq:'SNC', hor:['EM USO'], cat:'Cuidados'},
+  {nome:'MANTER SVD + QUANTIFICAR DIURESE + FECHAR BH',        dose:'—', via:'—', freq:'SNC', hor:['EM USO'], cat:'Cuidados'},
+  {nome:'QUANTIFICAR DIURESE + FECHAR BH',                     dose:'—', via:'—', freq:'SNC', hor:['EM USO'], cat:'Cuidados'},
+  {nome:'FISIOTERAPIA MOTORA E RESPIRATÓRIA',                  dose:'—', via:'—', freq:'SND', hor:['SND'],   cat:'Cuidados'},
+  {nome:'FISIOTERAPIA MOTORA E RESPIRATÓRIA + AJUSTES DE VM + AVAS', dose:'—', via:'—', freq:'SND', hor:['SND'], cat:'Cuidados'},
+  {nome:'SONDA VESICAL DRENAGEM (SVD)',                        dose:'—', via:'—', freq:'SNC', hor:['EM USO'], cat:'Cuidados'},
+  {nome:'CURATIVO',                                            dose:'—', via:'—', freq:'SND', hor:['SND'],   cat:'Cuidados'},
+  {nome:'DECÚBITO LATERAL ALTERNADO 2/2H',                    dose:'—', via:'—', freq:'2/2H', hor:['SND'],   cat:'Cuidados'},
+
+  // ══════════════════════════════════════════════════════
+  // MEDICAÇÕES GERAIS — itens adicionais do hospital
+  // ══════════════════════════════════════════════════════
+
+  // Uso oral / tópico / ambulatorial
+  {nome:'ÁCIDO FÓLICO 5MG',                           dose:'1 COMP',    via:'VO',  freq:'24/24H',  hor:['08'],           cat:'Medicação Geral'},
+  {nome:'ADESIVO DE NICOTINA 14MG',                   dose:'1 ADESIVO', via:'TD',  freq:'24/24H',  hor:['08'],           cat:'Medicação Geral', obs:'trocar a cada 24h'},
+  {nome:'ADESIVO DE NICOTINA 21MG',                   dose:'1 ADESIVO', via:'TD',  freq:'24/24H',  hor:['08'],           cat:'Medicação Geral', obs:'trocar a cada 24h'},
+  {nome:'CICLOBENZAPRINA 5MG',                        dose:'1 COMP',    via:'VO',  freq:'8/8H',    hor:['08','16','24'], cat:'Medicação Geral'},
+  {nome:'DEXAMETASONA CREME 1MG/G',                   dose:'ACM',       via:'TD',  freq:'SND',     hor:['SND'],          cat:'Medicação Geral', obs:'CRÍTICO — uso tópico'},
+  {nome:'GLIBENCLAMIDA 5MG',                          dose:'1 COMP',    via:'VO',  freq:'24/24H',  hor:['08'],           cat:'Medicação Geral', obs:'no almoço'},
+  {nome:'LIDOCAÍNA 2% 5ML',                           dose:'5ML',       via:'EV',  freq:'ACM',     hor:['ACM'],          cat:'Medicação Geral', obs:'CRÍTICO'},
+  {nome:'LIDOCAÍNA + EPINEFRINA 20MG/ML+0,005MG/ML', dose:'ACM',       via:'INF', freq:'ACM',     hor:['ACM'],          cat:'Medicação Geral', obs:'uso infiltrativo'},
+  {nome:'LIDOCAÍNA GEL',                              dose:'ACM',       via:'TD',  freq:'ACM',     hor:['ACM'],          cat:'Medicação Geral', obs:'CRÍTICO — 2 tubos'},
+  {nome:'METFORMINA 850MG',                           dose:'1 COMP',    via:'VO',  freq:'12/12H',  hor:['08','20'],      cat:'Medicação Geral', obs:'CRÍTICO'},
+  {nome:'PERMETRINA 5% LOÇÃO CREMOSA',                dose:'ACM',       via:'TD',  freq:'ACM',     hor:['ACM'],          cat:'Medicação Geral'},
+  {nome:'POMADA PREVENÇÃO DE ASSADURA',               dose:'ACM',       via:'TD',  freq:'SND',     hor:['SND'],          cat:'Cuidados',        obs:'CRÍTICO'},
+  {nome:'SIMETICONA 75MG/ML GTS',                     dose:'1ML (20GTS)',via:'VO', freq:'8/8H',    hor:['08','16','24'], cat:'Medicação Geral', obs:'CRÍTICO'},
+  {nome:'SULFATO FERROSO 125MG/ML GTS',               dose:'ACM',       via:'VO',  freq:'24/24H',  hor:['08'],           cat:'Medicação Geral', obs:'em jejum'},
+
+  // ══════════════════════════════════════════════════════
+  // ATB — Frascos / Ampolas / Bolsas (formulário hospitalar completo)
+  // ══════════════════════════════════════════════════════
+  {nome:'ACICLOVIR 250MG',                            dose:'1FA + 100ML SF 0,9%', via:'EV', freq:'8/8H',   hor:['08','16','24'],        cat:'ATB', obs:'infundir em 1h'},
+  {nome:'AMOXICILINA 1G + CLAVULANATO 0,2G',          dose:'1FA',       via:'EV',  freq:'8/8H',    hor:['08','16','24'],         cat:'ATB'},
+  {nome:'AMOXICILINA 875MG + CLAVULANATO 125MG',      dose:'1 COMP',    via:'VO',  freq:'12/12H',  hor:['08','20'],              cat:'ATB'},
+  {nome:'AMOXICILINA+CLAVULANATO 50+12,5MG/ML SUSPENSÃO', dose:'ACM',  via:'VO',  freq:'8/8H',    hor:['08','16','24'],         cat:'ATB'},
+  {nome:'AMPICILINA 1G',                              dose:'1FA + 100ML SF 0,9%', via:'EV', freq:'6/6H',   hor:['06','12','18','24'],   cat:'ATB'},
+  {nome:'AMPICILINA 2G + SULBACTAM 1G',               dose:'1FA + 100ML SF 0,9%', via:'EV', freq:'6/6H',   hor:['06','12','18','24'],   cat:'ATB'},
+  {nome:'ANFOTERICINA B 50MG',                        dose:'1FA + DILUENTE PRÓPRIO + SG 5%', via:'EV', freq:'24/24H', hor:['08'], cat:'ATB', obs:'termolábil — proteger da luz — infundir em 4-6h'},
+  {nome:'AZITROMICINA 500MG',                         dose:'1FA + 250ML SF 0,9%', via:'EV', freq:'24/24H', hor:['08'],           cat:'ATB', obs:'infundir em 1h'},
+  {nome:'AZITROMICINA 500MG',                         dose:'1 COMP',    via:'VO',  freq:'24/24H',  hor:['08'],                  cat:'ATB'},
+  {nome:'AZITROMICINA 600MG PÓ',                      dose:'ACM',       via:'VO',  freq:'24/24H',  hor:['08'],                  cat:'ATB'},
+  {nome:'BENZILPENICILINA BENZATINA 1.200.000UI',     dose:'1FA',       via:'IM',  freq:'ACM',     hor:['ACM'],                 cat:'ATB', obs:'dose única IM profunda'},
+  {nome:'BENZILMETRONIDAZOL 4% (40MG/ML) 100ML',     dose:'100ML',     via:'VO',  freq:'8/8H',    hor:['08','16','24'],         cat:'ATB'},
+  {nome:'CEFALOTINA 1G',                              dose:'1FA + 100ML SF 0,9%', via:'EV', freq:'6/6H',   hor:['06','12','18','24'],   cat:'ATB'},
+  {nome:'CEFAZOLINA 1G',                              dose:'1FA + 100ML SF 0,9%', via:'EV', freq:'8/8H',   hor:['08','16','24'],         cat:'ATB'},
+  {nome:'CEFEPIMA 1G',                                dose:'1FA + 100ML SF 0,9%', via:'EV', freq:'8/8H',   hor:['08','16','24'],         cat:'ATB'},
+  {nome:'CEFOTAXIMA 500MG',                           dose:'1FA + 100ML SF 0,9%', via:'EV', freq:'6/6H',   hor:['06','12','18','24'],   cat:'ATB'},
+  {nome:'CEFTAZIDIMA 1G',                             dose:'1FA + 100ML SF 0,9%', via:'EV', freq:'8/8H',   hor:['08','16','24'],         cat:'ATB'},
+  {nome:'CEFTRIAXONA 1G',                             dose:'1FA + 100ML SF 0,9%', via:'EV', freq:'24/24H', hor:['08'],                  cat:'ATB'},
+  {nome:'CETOCONAZOL 200MG',                          dose:'1 COMP',    via:'VO',  freq:'24/24H',  hor:['08'],                  cat:'ATB'},
+  {nome:'CETOCONAZOL CREME 20MG/G',                   dose:'ACM',       via:'TD',  freq:'SND',     hor:['SND'],                 cat:'ATB', obs:'uso tópico'},
+  {nome:'CIPROFLOXACINO 200MG/100ML',                 dose:'100ML',     via:'EV',  freq:'12/12H',  hor:['08','20'],              cat:'ATB', obs:'infundir em 60min'},
+  {nome:'CIPROFLOXACINO 500MG',                       dose:'1 COMP',    via:'VO',  freq:'12/12H',  hor:['08','20'],              cat:'ATB'},
+  {nome:'CLINDAMICINA 300MG',                         dose:'1 CÁP',     via:'VO',  freq:'8/8H',    hor:['08','16','24'],         cat:'ATB'},
+  {nome:'CLINDAMICINA 600MG/4ML',                     dose:'1AMP + 100ML SF 0,9%', via:'EV', freq:'8/8H', hor:['08','16','24'], cat:'ATB'},
+  {nome:'FLUCONAZOL 200MG/100ML',                     dose:'100ML',     via:'EV',  freq:'24/24H',  hor:['08'],                  cat:'ATB'},
+  {nome:'GENTAMICINA 40MG/ML 2ML',                    dose:'2ML + 100ML SF 0,9%', via:'EV', freq:'24/24H', hor:['08'],          cat:'ATB', obs:'ajustar TFG — dosar nível'},
+  {nome:'GENTAMICINA 40MG/ML 1ML',                    dose:'1ML + 100ML SF 0,9%', via:'EV', freq:'24/24H', hor:['08'],          cat:'ATB'},
+  {nome:'IVERMECTINA 6MG',                            dose:'ACM',       via:'VO',  freq:'ACM',     hor:['ACM'],                 cat:'ATB', obs:'dose calculada pelo peso'},
+  {nome:'LEVOFLOXACINO 500MG/100ML',                  dose:'100ML',     via:'EV',  freq:'24/24H',  hor:['08'],                  cat:'ATB', obs:'infundir em 60min'},
+  {nome:'LINEZOLIDA 600MG/300ML',                     dose:'300ML',     via:'EV',  freq:'12/12H',  hor:['08','20'],              cat:'ATB'},
+  {nome:'MEROPENEM 500MG',                            dose:'1FA + 100ML SF 0,9%', via:'EV', freq:'8/8H',   hor:['08','16','24'],         cat:'ATB', obs:'informar D0'},
+  {nome:'MEROPENEM 1G',                               dose:'1FA + 100ML SF 0,9%', via:'EV', freq:'8/8H',   hor:['08','16','24'],         cat:'ATB', obs:'informar D0'},
+  {nome:'METRONIDAZOL 250MG',                         dose:'1 COMP',    via:'VO',  freq:'8/8H',    hor:['08','16','24'],         cat:'ATB'},
+  {nome:'METRONIDAZOL 400MG',                         dose:'1 COMP',    via:'VO',  freq:'8/8H',    hor:['08','16','24'],         cat:'ATB'},
+  {nome:'METRONIDAZOL 500MG/100ML',                   dose:'100ML',     via:'EV',  freq:'8/8H',    hor:['08','16','24'],         cat:'ATB'},
+  {nome:'MOXIFLOXACINO 400MG/250ML',                  dose:'250ML',     via:'EV',  freq:'24/24H',  hor:['08'],                  cat:'ATB', obs:'infundir em 60min'},
+  {nome:'NEOMICINA+BACITRACINA POMADA',               dose:'ACM',       via:'TD',  freq:'SND',     hor:['SND'],                 cat:'ATB', obs:'uso tópico'},
+  {nome:'NISTATINA 100.000UI/ML 50ML',                dose:'5ML',       via:'VO',  freq:'6/6H',    hor:['06','12','18','24'],   cat:'ATB', obs:'bochechar e engolir'},
+  {nome:'OSELTAMIVIR 75MG',                           dose:'1 CÁP',     via:'VO',  freq:'12/12H',  hor:['08','20'],              cat:'ATB', obs:'5 dias'},
+  {nome:'OSELTAMIVIR 45MG',                           dose:'1 CÁP',     via:'VO',  freq:'12/12H',  hor:['08','20'],              cat:'ATB'},
+  {nome:'OSELTAMIVIR 30MG',                           dose:'1 CÁP',     via:'VO',  freq:'12/12H',  hor:['08','20'],              cat:'ATB'},
+  {nome:'OXACILINA 500MG',                            dose:'1FA + 100ML SF 0,9%', via:'EV', freq:'4/4H',   hor:['04','08','12','16','20','24'],cat:'ATB'},
+  {nome:'PIPERACILINA 4G + TAZOBACTAM 500MG',         dose:'1FA + 100ML SF 0,9%', via:'EV', freq:'6/6H',   hor:['06','12','18','24'],   cat:'ATB', obs:'infundir em 4h — informar D0'},
+  {nome:'POLIMIXINA B SULFATO 500.000UI',             dose:'1FA + 100ML SF 0,9%', via:'EV', freq:'12/12H', hor:['08','20'],      cat:'ATB', obs:'informar D0'},
+  {nome:'RHZE/RIPE 150+75+400+275MG',                 dose:'ACM',       via:'VO',  freq:'24/24H',  hor:['08'],                  cat:'ATB', obs:'DOTS — em jejum'},
+  {nome:'TEICOPLANINA 400MG',                         dose:'1FA + 100ML SF 0,9%', via:'EV', freq:'24/24H', hor:['08'],           cat:'ATB', obs:'dose ataque 12/12h por 3 doses'},
+  {nome:'VANCOMICINA 500MG',                          dose:'1FA + 100ML SF 0,9%', via:'EV', freq:'6/6H',   hor:['06','12','18','24'],   cat:'ATB', obs:'dosar nível — ajustar TFG'},
+  {nome:'ALBENDAZOL 4MG/ML 10ML',                     dose:'10ML (40MG)',via:'VO',  freq:'12/12H',  hor:['08','20'],              cat:'ATB', obs:'junto à refeição'},
+  {nome:'PERMETRINA 5% LOÇÃO 60ML',                   dose:'ACM',       via:'TD',  freq:'ACM',     hor:['ACM'],                 cat:'ATB', obs:'aplicar e lavar após 8-14h'},
 ];
+
 
 /* ════════════════════════════════════════════════════════════════════════════
    PRESCRIÇÃO — estado e funções
@@ -1767,11 +1962,22 @@ let _rxItens = [];   // array de itens da prescrição atual
 let _rxAcTarget = null; // input do autocomplete ativo
 
 const RX_HORAS = ['02','04','06','08','10','12','14','16','18','20','22','24'];
-const RX_VIAS  = ['VO','EV','SC','IM','SL','IN','SNE','SNG','TD','INH','—'];
-const RX_FREQS = ['SNC','24/24H','12/12H','8/8H','6/6H','4/4H','2/2H','SN','ACM','SND','—'];
+const RX_VIAS  = ['VO','EV','SC','IM','SL','IN','SNE','SNG','OF','ORAL','TD','INH','BIC','—'];
+const RX_FREQS = ['SNC','BIC ACM','24/24H','12/12H','8/8H','6/6H','4/4H','2/2H','1X/DIA','SN','6/6H SN','8/8H SN','ACM','ACM NOITE','SND','—'];
+
+// Ordena os itens da prescrição pela prioridade de categoria
+function _rxOrdenar(){
+  _rxItens.sort((a,b)=>{
+    const pa = RX_PRIO[a._cat||'Medicação Geral'] || 6;
+    const pb = RX_PRIO[b._cat||'Medicação Geral'] || 6;
+    return pa - pb;
+  });
+  _renderPrescricao();
+  toast('Itens reordenados por prioridade clínica.');
+}
 
 function _rxNovoItem(tipo){
-  return { id:Date.now()+Math.random(), farm:'', dose:'', via:'EV', freq:'24/24H', hor:[], obs:'', tipo:tipo||'normal' };
+  return { id:Date.now()+Math.random(), farm:'', dose:'', via:'EV', freq:'24/24H', hor:[], obs:'', tipo:tipo||'normal', _cat:'Medicação Geral' };
 }
 
 function addItemPrescricao(){ _rxItens.push(_rxNovoItem('normal')); _renderPrescricao(); _rxFocusUltimo(); }
@@ -1868,26 +2074,46 @@ let _rxAcIdx=-1, _rxAcItId=null, _rxAcResultados=[];
 
 function _rxAcInput(el, itId){
   _rxAcTarget=el; _rxAcItId=itId; _rxAcIdx=-1;
-  const q=(el.value||'').trim().toUpperCase();
+  const q=(el.value||'').trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
   if(q.length<2){ _rxAcFechar(); return; }
   _rxAcResultados=RX_BANCO.filter(m=>{
-    const n=m.nome.toUpperCase();
-    return n.includes(q) || (m.cat||'').toUpperCase().includes(q);
-  }).slice(0,10);
+    const n=m.nome.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    const c=(m.cat||'').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    return n.includes(q)||c.includes(q);
+  }).slice(0,12);
   if(!_rxAcResultados.length){ _rxAcFechar(); return; }
   const rect=el.getBoundingClientRect();
   const ac=$('rx-autocomplete');
   ac.style.display='block';
   ac.style.top=(rect.bottom+window.scrollY+2)+'px';
   ac.style.left=(rect.left+window.scrollX)+'px';
-  ac.style.minWidth=Math.max(rect.width,280)+'px';
+  ac.style.minWidth=Math.max(rect.width,320)+'px';
+  const reQ=new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');
   ac.innerHTML=_rxAcResultados.map((m,i)=>{
-    const mark=m.nome.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<span class="rx-ac-mark">$1</span>');
+    const nNorm=m.nome.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    const mark=m.nome.replace(reQ,'<span class="rx-ac-mark">$1</span>');
+    const badgeCor=_rxCatCor(m.cat);
     return `<div class="rx-ac-item" data-idx="${i}" onmousedown="_rxAcEscolher(${i})">
-      <div class="rx-ac-nome">${mark}</div>
-      <div class="rx-ac-info">${m.dose||''} · ${m.via||''} · ${m.freq||''}${m.obs?' · '+m.obs:''}</div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <div class="rx-ac-nome" style="flex:1;">${mark}</div>
+        <span style="font-size:.58rem;font-weight:700;padding:1px 6px;border-radius:8px;white-space:nowrap;${badgeCor}">${m.cat||''}</span>
+      </div>
+      <div class="rx-ac-info">${m.dose||''}${m.via?' · '+m.via:''}${m.freq?' · '+m.freq:''}${m.obs?' · <em>'+m.obs+'</em>':''}</div>
     </div>`;
   }).join('');
+}
+
+// Cor do badge por categoria
+function _rxCatCor(cat){
+  const c={'Dieta':'background:#e6f4ec;color:#1a6b3a;',
+    'ATB':'background:#fde8e6;color:#b71c1c;',
+    'Hidratação':'background:#e3f0ff;color:#0d47a1;',
+    'Droga Vasoativa':'background:#f3e5f5;color:#6a1b9a;',
+    'Sedação':'background:#fff3e0;color:#e65100;',
+    'Medicação Geral':'background:#f0f4ff;color:#1565c0;',
+    'Protocolo':'background:#fdf2dd;color:#6b4a06;',
+    'Cuidados':'background:#f5f5f5;color:#555;'};
+  return c[cat]||'background:#eee;color:#333;';
 }
 
 function _rxAcEscolher(idx){
@@ -1895,6 +2121,12 @@ function _rxAcEscolher(idx){
   const it=_rxItens.find(i=>i.id===_rxAcItId); if(!it) return;
   it.farm=m.nome; it.dose=m.dose||''; it.via=m.via||'EV';
   it.freq=m.freq||'24/24H'; it.hor=[...(m.hor||[])]; it.obs=m.obs||'';
+  it._cat=m.cat||'Medicação Geral';
+  // define tipo da linha pela categoria
+  if(m.cat==='Dieta') it.tipo='dieta';
+  else if(m.cat==='Protocolo') it.tipo='sn';
+  else if(m.cat==='Cuidados') it.tipo='cuidados';
+  else it.tipo='normal';
   _rxAcFechar();
   _renderPrescricao();
 }
