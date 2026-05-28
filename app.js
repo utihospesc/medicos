@@ -67,12 +67,12 @@ function hideLoading(){ $('loading-overlay').classList.remove('show'); }
 function toast(msg,err=false){ const t=$('toast'); t.textContent=msg; t.className='toast'+(err?' err':''); t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3200); }
 function fecharModal(){ $('modal-adm').classList.remove('show'); }
 
-/* ── LOGO — usa icone.png do repositório; cai no SVG se a imagem faltar ─── */
+/* ── LOGO — usa logo.png do repositório; cai no SVG se a imagem faltar ─── */
 function _logoImg(size){
-  // Glass Cockpit: usa direto o SVG inline (sem buscar icone.png) pra evitar
-  // 404 ruidoso em ambientes de preview/dev. Em produção, basta substituir
-  // o retorno por _logoSVG(size) → `<img src="icone.png" …>` quando o png existir.
-  return _logoSVG(size||120);
+  const s = size||120;
+  return `<img src="logo.png" alt="Hospital dos Pescadores" `+
+    `style="max-width:${s}px;width:100%;height:auto;display:block;margin:0 auto;" `+
+    `onerror="this.onerror=null;this.outerHTML=_logoSVG(${s});">`;
 }
 function _logoSVG(size){
   const s = size||120;
@@ -1214,7 +1214,7 @@ function abrirPreview(){
   const cult = d.culturas&&d.culturas.length ? d.culturas.map(c=>`${c.micro||c.resultado}${c.sitio?' ('+c.sitio+')':''}`).join('; ') : '—';
   const labTab = _labParaTabela(d.labLinhas);
   $('preview-conteudo').innerHTML=`
-    <div style="text-align:center;margin-bottom:.4rem;"><img src="icone.png" alt="" style="max-height:64px;width:auto;" onerror="this.style.display='none'"></div>
+    <div style="text-align:center;margin-bottom:.4rem;"><img src="logo.png" alt="" style="max-height:64px;width:auto;" onerror="this.style.display='none'"></div>
     <h1>EVOLUÇÃO MÉDICA — UTI GERAL</h1>
     <div class="pv-sub">Hospital dos Pescadores · ${d.turno} · ${_fmtDataCurta(d.data)}</div>
     <table>
@@ -2265,14 +2265,15 @@ function imprimirPrescricao(){
     .rodape{margin-top:8px;font-size:7.5pt;color:#888;text-align:center;border-top:1px solid #eee;padding-top:4px;}
   </style></head><body>
   <div class="cabecalho">
-    <div style="width:120px;font-size:7.5pt;color:#555;line-height:1.5;">
-      SECRETARIA MUNICIPAL DE SAÚDE<br>HOSPITAL DOS PESCADORES
+    <div style="width:100px;text-align:center;">
+      <img src="logo.png" alt="" style="max-height:56px;max-width:90px;width:auto;height:auto;"
+        onerror="this.style.display='none'">
     </div>
     <div class="cab-centro">
       <div class="cab-titulo">PRESCRIÇÃO MÉDICA — UTI GERAL</div>
       <div class="cab-sub">HOSPITAL DOS PESCADORES · NATAL/RN</div>
     </div>
-    <div class="cab-logo" style="text-align:right;font-size:7.5pt;color:#555;line-height:1.5;">
+    <div style="width:100px;text-align:right;font-size:7.5pt;color:#555;line-height:1.6;">
       DATA: ${_fmtDataCurta(data)||'—'}<br>LEITO: ${leito||'?'}
     </div>
   </div>
