@@ -1678,7 +1678,7 @@ const RX_BANCO = [
   {nome:'DIETA ORAL ASSISTIDA',                         dose:'—', via:'VO',  freq:'SND',     hor:['SND'], cat:'Dieta'},
   {nome:'DIETA POR SNE',                                dose:'—', via:'SNE', freq:'SND',     hor:['SND'], cat:'Dieta'},
   {nome:'DIETA ENTERAL',                                dose:'—', via:'SNE', freq:'SND',     hor:['SND'], cat:'Dieta', obs:'volume conforme nutricionista'},
-  {nome:'DIETA ENTERAL CONTÍNUA',                       dose:'—', via:'SNE', freq:'SNC',     hor:['SNC'], cat:'Dieta'},
+  {nome:'DIETA ENTERAL CONTÍNUA',                       dose:'—', via:'SNE', freq:'BIC ACM',     hor:['BIC'], cat:'Dieta'},
   {nome:'DIETA ENTERAL + AGUA 200ML 4/4H',              dose:'—', via:'SNE', freq:'SND',     hor:['SND'], cat:'Dieta'},
   {nome:'DIETA PARA HAS E DRC VIA SNE + SUPLEMENTAÇÃO PROTEICA 2X/DIA', dose:'—', via:'SNE', freq:'SND', hor:['SND'], cat:'Dieta'},
   {nome:'DIETA ZERO ATÉ 2ª ORDEM',                      dose:'—', via:'—',  freq:'—',       hor:[],      cat:'Dieta'},
@@ -1719,36 +1719,36 @@ const RX_BANCO = [
   // ══════════════════════════════════════════════════════
   // 3 — HIDRATAÇÃO VENOSA
   // ══════════════════════════════════════════════════════
-  {nome:'SF 0,9% 120ML EV EM BIC ~5ML/H',          dose:'120ML',  via:'EV', freq:'SNC', hor:['SNC'], cat:'Hidratação'},
+  {nome:'SF 0,9% 120ML EV EM BIC ~5ML/H',          dose:'120ML',  via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Hidratação'},
   {nome:'SF 0,9% 250ML EV EM BIC',                 dose:'250ML',  via:'EV', freq:'ACM', hor:['ACM'], cat:'Hidratação'},
   {nome:'SF 0,9% 500ML EV EM BIC',                 dose:'500ML',  via:'EV', freq:'ACM', hor:['ACM'], cat:'Hidratação'},
-  {nome:'SF 0,9% 1000ML EV EM BIC 42ML/H',         dose:'1000ML', via:'EV', freq:'SNC', hor:['SNC'], cat:'Hidratação'},
-  {nome:'SG 5% 420ML + BICARBONATO DE SÓDIO 8,4% 80ML EV EM BIC ~84ML/H', dose:'500ML', via:'EV', freq:'SNC', hor:['SNC'], cat:'Hidratação'},
+  {nome:'SF 0,9% 1000ML EV EM BIC 42ML/H',         dose:'1000ML', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Hidratação'},
+  {nome:'SG 5% 420ML + BICARBONATO DE SÓDIO 8,4% 80ML EV EM BIC ~84ML/H', dose:'500ML', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Hidratação'},
   {nome:'RINGER LACTATO 500ML ETAPA RÁPIDA',        dose:'500ML',  via:'EV', freq:'ACM', hor:['ACM'], cat:'Hidratação'},
-  {nome:'RINGER LACTATO 1500ML EV EM BIC ~63ML/H',  dose:'1500ML', via:'EV', freq:'SNC', hor:['SNC'], cat:'Hidratação'},
-  {nome:'RINGER LACTATO 120ML EV EM BIC 5ML/H',     dose:'120ML',  via:'EV', freq:'SNC', hor:['SNC'], cat:'Hidratação'},
-  {nome:'SORO FISIOLÓGICO 0,9% EV EM BIC A 4ML/H',  dose:'ACM',    via:'EV', freq:'SNC', hor:['SNC'], cat:'Hidratação'},
+  {nome:'RINGER LACTATO 1500ML EV EM BIC ~63ML/H',  dose:'1500ML', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Hidratação'},
+  {nome:'RINGER LACTATO 120ML EV EM BIC 5ML/H',     dose:'120ML',  via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Hidratação'},
+  {nome:'SORO FISIOLÓGICO 0,9% EV EM BIC A 4ML/H',  dose:'ACM',    via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Hidratação'},
   {nome:'JELCO HIDRATADO',                          dose:'—',      via:'EV', freq:'—',   hor:[],      cat:'Hidratação'},
 
   // ══════════════════════════════════════════════════════
   // 4 — DROGAS VASOATIVAS
   // ══════════════════════════════════════════════════════
-  {nome:'NORADRENALINA (NOREPINEFRINA) 4MG/4ML',   dose:'4AMP + 234ML SF 0,9%', via:'EV', freq:'BIC ACM', hor:['SNC'], cat:'Droga Vasoativa', obs:'BIC — protocolo UTI'},
-  {nome:'NOREPINEFRINA 2MG/ML',                    dose:'16ML + 234ML SG 5%',   via:'EV', freq:'BIC ACM', hor:['SNC'], cat:'Droga Vasoativa', obs:'BIC'},
-  {nome:'DOBUTAMINA 50MG/20ML',                    dose:'4AMP + SF 0,9% 170ML', via:'EV', freq:'BIC ACM', hor:['SNC'], cat:'Droga Vasoativa', obs:'BIC'},
-  {nome:'VASOPRESSINA 20UI/1ML',                   dose:'1ML + 99ML SF 0,9%',   via:'EV', freq:'BIC ACM', hor:['SNC'], cat:'Droga Vasoativa', obs:'BIC'},
-  {nome:'NIPRIDE (NITROPRUSSIATO) 25MG/ML',        dose:'2ML + 250ML SG 5%',    via:'EV', freq:'BIC ACM', hor:['SNC'], cat:'Droga Vasoativa', obs:'BIC — proteger da luz'},
-  {nome:'NITROGLICERINA (TRIDIL) 50MG',            dose:'1AMP + 240ML SG 5%',   via:'EV', freq:'BIC ACM', hor:['SNC'], cat:'Droga Vasoativa', obs:'BIC'},
+  {nome:'NORADRENALINA (NOREPINEFRINA) 4MG/4ML',   dose:'4AMP + 234ML SF 0,9%', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Droga Vasoativa', obs:'BIC — protocolo UTI'},
+  {nome:'NOREPINEFRINA 2MG/ML',                    dose:'16ML + 234ML SG 5%',   via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Droga Vasoativa', obs:'BIC'},
+  {nome:'DOBUTAMINA 50MG/20ML',                    dose:'4AMP + SF 0,9% 170ML', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Droga Vasoativa', obs:'BIC'},
+  {nome:'VASOPRESSINA 20UI/1ML',                   dose:'1ML + 99ML SF 0,9%',   via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Droga Vasoativa', obs:'BIC'},
+  {nome:'NIPRIDE (NITROPRUSSIATO) 25MG/ML',        dose:'2ML + 250ML SG 5%',    via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Droga Vasoativa', obs:'BIC — proteger da luz'},
+  {nome:'NITROGLICERINA (TRIDIL) 50MG',            dose:'1AMP + 240ML SG 5%',   via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Droga Vasoativa', obs:'BIC'},
   {nome:'AMIODARONA 150MG/3ML',                    dose:'150MG',                via:'EV', freq:'ACM',     hor:['ACM'], cat:'Droga Vasoativa', obs:'diluir em 100ml SF — ACM'},
 
   // ══════════════════════════════════════════════════════
   // 5 — SEDAÇÃO / ANALGESIA
   // ══════════════════════════════════════════════════════
-  {nome:'FENTANIL 50MCG/ML',         dose:'50ML + 50ML SF 0,9%', via:'EV', freq:'BIC ACM', hor:['SNC'], cat:'Sedação', obs:'BIC'},
-  {nome:'MIDAZOLAM 5MG/ML',          dose:'30ML + 120ML SF 0,9%',via:'EV', freq:'BIC ACM', hor:['SNC'], cat:'Sedação', obs:'BIC'},
-  {nome:'PROPOFOL 1% (10MG/ML)',      dose:'100ML',               via:'EV', freq:'BIC ACM', hor:['SNC'], cat:'Sedação', obs:'BIC — puro'},
-  {nome:'PROPOFOL 1% (10MG/ML)',      dose:'50ML',                via:'EV', freq:'BIC ACM', hor:['SNC'], cat:'Sedação', obs:'BIC'},
-  {nome:'DEXMEDETOMIDINA 200MCG',     dose:'SNC',                 via:'EV', freq:'BIC ACM', hor:['SNC'], cat:'Sedação', obs:'BIC — protocolo UTI'},
+  {nome:'FENTANIL 50MCG/ML',         dose:'50ML + 50ML SF 0,9%', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Sedação', obs:'BIC'},
+  {nome:'MIDAZOLAM 5MG/ML',          dose:'30ML + 120ML SF 0,9%',via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Sedação', obs:'BIC'},
+  {nome:'PROPOFOL 1% (10MG/ML)',      dose:'100ML',               via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Sedação', obs:'BIC — puro'},
+  {nome:'PROPOFOL 1% (10MG/ML)',      dose:'50ML',                via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Sedação', obs:'BIC'},
+  {nome:'DEXMEDETOMIDINA 200MCG',     dose:'BIC',                 via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Sedação', obs:'BIC — protocolo UTI'},
   {nome:'KETAMINA 500MG',             dose:'ACM',                 via:'EV', freq:'ACM',     hor:['ACM'], cat:'Sedação'},
   {nome:'MORFINA 10MG/ML',            dose:'2MG',                 via:'EV', freq:'4/4H',    hor:['04','08','12','16','20','24'],cat:'Sedação'},
   {nome:'TRAMADOL 50MG/ML',           dose:'100MG',               via:'EV', freq:'8/8H',    hor:['08','16','24'],cat:'Sedação'},
@@ -1864,19 +1864,19 @@ const RX_BANCO = [
   // ══════════════════════════════════════════════════════
   // 8 — CUIDADOS
   // ══════════════════════════════════════════════════════
-  {nome:'PNI + MCC + SAT DE PULSO CONTÍNUO',                   dose:'—', via:'—', freq:'SNC', hor:['EM USO'], cat:'Cuidados'},
-  {nome:'MCC + OP + PNI',                                      dose:'—', via:'—', freq:'SNC', hor:['EM USO'], cat:'Cuidados'},
-  {nome:'OP',                                                   dose:'—', via:'—', freq:'SNC', hor:['EM USO'], cat:'Cuidados'},
+  {nome:'PNI + MCC + SAT DE PULSO CONTÍNUO',                   dose:'—', via:'—', freq:'BIC ACM', hor:['EM USO'], cat:'Cuidados'},
+  {nome:'MCC + OP + PNI',                                      dose:'—', via:'—', freq:'BIC ACM', hor:['EM USO'], cat:'Cuidados'},
+  {nome:'OP',                                                   dose:'—', via:'—', freq:'BIC ACM', hor:['EM USO'], cat:'Cuidados'},
   {nome:'SSVV E CCGG DE 2/2 HORAS — ROTINA',                   dose:'—', via:'—', freq:'2/2H', hor:['SND'],   cat:'Cuidados'},
   {nome:'SSVV + CCGG + MUDANÇA DE DECÚBITO 2/2H',              dose:'—', via:'—', freq:'2/2H', hor:['SND'],   cat:'Cuidados'},
-  {nome:'CABECEIRA 30-45°',                                    dose:'—', via:'—', freq:'SNC', hor:['EM USO'], cat:'Cuidados'},
-  {nome:'CABECEIRA 30-45° + MUDANÇA DE DECÚBITO 2/2H',        dose:'—', via:'—', freq:'SNC', hor:['EM USO'], cat:'Cuidados'},
-  {nome:'CABECEIRA 30-45° + MANTER SVD E QUANTIFICAR DÉBITO', dose:'—', via:'—', freq:'SNC', hor:['EM USO'], cat:'Cuidados'},
-  {nome:'MANTER SVD + QUANTIFICAR DIURESE + FECHAR BH',        dose:'—', via:'—', freq:'SNC', hor:['EM USO'], cat:'Cuidados'},
-  {nome:'QUANTIFICAR DIURESE + FECHAR BH',                     dose:'—', via:'—', freq:'SNC', hor:['EM USO'], cat:'Cuidados'},
+  {nome:'CABECEIRA 30-45°',                                    dose:'—', via:'—', freq:'BIC ACM', hor:['EM USO'], cat:'Cuidados'},
+  {nome:'CABECEIRA 30-45° + MUDANÇA DE DECÚBITO 2/2H',        dose:'—', via:'—', freq:'BIC ACM', hor:['EM USO'], cat:'Cuidados'},
+  {nome:'CABECEIRA 30-45° + MANTER SVD E QUANTIFICAR DÉBITO', dose:'—', via:'—', freq:'BIC ACM', hor:['EM USO'], cat:'Cuidados'},
+  {nome:'MANTER SVD + QUANTIFICAR DIURESE + FECHAR BH',        dose:'—', via:'—', freq:'BIC ACM', hor:['EM USO'], cat:'Cuidados'},
+  {nome:'QUANTIFICAR DIURESE + FECHAR BH',                     dose:'—', via:'—', freq:'BIC ACM', hor:['EM USO'], cat:'Cuidados'},
   {nome:'FISIOTERAPIA MOTORA E RESPIRATÓRIA',                  dose:'—', via:'—', freq:'SND', hor:['SND'],   cat:'Cuidados'},
   {nome:'FISIOTERAPIA MOTORA E RESPIRATÓRIA + AJUSTES DE VM + AVAS', dose:'—', via:'—', freq:'SND', hor:['SND'], cat:'Cuidados'},
-  {nome:'SONDA VESICAL DRENAGEM (SVD)',                        dose:'—', via:'—', freq:'SNC', hor:['EM USO'], cat:'Cuidados'},
+  {nome:'SONDA VESICAL DRENAGEM (SVD)',                        dose:'—', via:'—', freq:'BIC ACM', hor:['EM USO'], cat:'Cuidados'},
   {nome:'CURATIVO',                                            dose:'—', via:'—', freq:'SND', hor:['SND'],   cat:'Cuidados'},
   {nome:'DECÚBITO LATERAL ALTERNADO 2/2H',                    dose:'—', via:'—', freq:'2/2H', hor:['SND'],   cat:'Cuidados'},
 
@@ -1961,9 +1961,9 @@ const RX_BANCO = [
 let _rxItens = [];   // array de itens da prescrição atual
 let _rxAcTarget = null; // input do autocomplete ativo
 
-const RX_HORAS = ['02','04','06','08','10','12','14','16','18','20','22','24'];
+const RX_HORAS = ['01','02','04','06','08','10','12','14','16','18','20','22','24'];
 const RX_VIAS  = ['VO','EV','SC','IM','SL','IN','SNE','SNG','OF','ORAL','TD','INH','BIC','—'];
-const RX_FREQS = ['SNC','BIC ACM','24/24H','12/12H','8/8H','6/6H','4/4H','2/2H','1X/DIA','SN','6/6H SN','8/8H SN','ACM','ACM NOITE','SND','—'];
+const RX_FREQS = ['BIC ACM','24/24H','12/12H','8/8H','6/6H','4/4H','2/2H','1/1H','1X/DIA','SN','6/6H SN','8/8H SN','ACM','ACM NOITE','SND','—'];
 
 // Ordena os itens da prescrição pela prioridade de categoria
 function _rxOrdenar(){
@@ -2002,7 +2002,7 @@ function _rxSetField(id, campo, val){
 }
 function _rxToggleHor(id, hor){
   const it=_rxItens.find(i=>i.id===id); if(!it) return;
-  const especiais=['SN','SND','SNC','ACM','EM USO'];
+  const especiais=['SN','SND','ACM','EM USO'];
   if(especiais.includes(hor)){
     it.hor = it.hor.includes(hor) ? [] : [hor];
   } else {
@@ -2017,7 +2017,7 @@ function _rxToggleHor(id, hor){
 }
 
 function _rxHorariosHtml(it){
-  const especiais=['SN','SND','SNC','ACM','EM USO'];
+  const especiais=['SN','SND','ACM','EM USO'];
   const ativos=it.hor||[];
   const horChips=RX_HORAS.map(h=>`<span class="rx-hor-chip ${ativos.includes(h)?'on':''}" onclick="_rxToggleHor(${it.id},'${h}')">${h}</span>`).join('');
   const espChips=especiais.map(e=>`<span class="rx-hor-chip rx-hor-chip-sn ${ativos.includes(e)?'on':''}" onclick="_rxToggleHor(${it.id},'${e}')">${e}</span>`).join('');
@@ -2048,21 +2048,31 @@ function _renderPrescricao(){
     const rowCls = it.tipo==='dieta'?'presc-dieta':it.tipo==='sn'?'presc-sn':it.tipo==='cuidados'?'presc-cuidado':'';
     const viaOpts=RX_VIAS.map(v=>`<option ${it.via===v?'selected':''}>${v}</option>`).join('');
     const freqOpts=RX_FREQS.map(f=>`<option ${it.freq===f?'selected':''}>${f}</option>`).join('');
+    // Dose vazia = fundo vermelho para sinalizar obrigatoriedade
+    const dosePendente = !it.dose || it.dose.trim()===''||it.dose==='—';
+    const doseStyle = dosePendente ? 'border-color:#e53935!important;background:#fff5f5!important;' : '';
     return `<tr class="${rowCls}">
       <td class="presc-num">${i+1}</td>
       <td>
-        <input type="text" class="rx-farm" value="${it.farm||''}" placeholder="fármaco / item"
-          oninput="_rxSetField(${it.id},'farm',this.value);_rxAcInput(this,${it.id})"
+        <input type="text" class="rx-farm" value="${it.farm||''}" placeholder="FÁRMACO / ITEM"
+          style="text-transform:uppercase;"
+          oninput="_rxSetField(${it.id},'farm',this.value.toUpperCase());_rxAcInput(this,${it.id})"
           onblur="_rxAcFechar()" onkeydown="_rxAcKey(event,${it.id})">
       </td>
-      <td><input type="text" value="${it.dose||''}" placeholder="dose"
-        oninput="_rxSetField(${it.id},'dose',this.value)"></td>
+      <td>
+        <input type="text" value="${it.dose||''}" placeholder="DOSE *"
+          style="text-transform:uppercase;${doseStyle}"
+          oninput="_rxSetField(${it.id},'dose',this.value.toUpperCase());_rxValidarDose(${it.id},this)">
+      </td>
       <td><select onchange="_rxSetField(${it.id},'via',this.value)">${viaOpts}</select></td>
       <td><select onchange="_rxSetField(${it.id},'freq',this.value)">${freqOpts}</select></td>
       <td data-rx-hor="${it.id}">${_rxHorariosHtml(it)}</td>
-      <td><input type="text" value="${it.obs||''}" placeholder="obs."
-        oninput="_rxSetField(${it.id},'obs',this.value)"></td>
-      <td><button class="presc-del" onclick="_rxRemover(${it.id})" title="Remover">×</button></td>
+      <td><input type="text" value="${it.obs||''}" placeholder="OBS."
+        style="text-transform:uppercase;"
+        oninput="_rxSetField(${it.id},'obs',this.value.toUpperCase())"></td>
+      <td>
+        <button class="presc-del" onclick="_rxRemover(${it.id})" title="Excluir item">🗑</button>
+      </td>
     </tr>`;
   }).join('');
 }
@@ -2158,8 +2168,37 @@ document.addEventListener('click', e=>{
 /* ════════════════════════════════════════════════════════════════════════════
    SALVAR / CARREGAR PRESCRIÇÃO
    ════════════════════════════════════════════════════════════════════════════ */
+// Valida dose em tempo real — pinta o campo de vermelho se vazio
+function _rxValidarDose(id, el){
+  const v=(el.value||'').trim();
+  const vazio = !v||v==='—';
+  el.style.borderColor = vazio ? '#e53935' : '';
+  el.style.background  = vazio ? '#fff5f5' : '';
+}
+
+// Itens que não precisam de dose (cuidados/dieta sem medicamento)
+function _rxDispensaDose(it){
+  const semDose=['DIETA','JEJUM','RESTRIÇÃO','PNI','MCC','OP','SSVV','CABECEIRA','MANTER',
+    'QUANTIFICAR','FISIOTERAPIA','SONDA','CURATIVO','DECÚBITO','HGT','JELCO','—'];
+  return semDose.some(s=>(it.farm||'').toUpperCase().startsWith(s)) ||
+    it.tipo==='cuidados' ||
+    it.via==='—' || (it.dose||'').trim()==='—';
+}
+
 async function salvarPrescricao(){
   if(!leitoAtual){ toast('Abra o prontuário de um paciente.',true); return; }
+  // Valida: nenhum medicamento pode ter dose vazia
+  const semDose=_rxItens.filter(it=>!_rxDispensaDose(it)&&(!it.dose||it.dose.trim()===''||it.dose.trim()==='—'));
+  if(semDose.length){
+    const nomes=semDose.map((it,i)=>`${i===0?'':'  '}${it.farm||'item '+(it.id)}`).join('\n');
+    toast(`❌ Dose obrigatória:\n${nomes}`,true);
+    // Rola até o primeiro item sem dose
+    setTimeout(()=>{
+      const el=document.querySelector('#presc-tbody input[style*="fff5f5"]');
+      if(el) el.scrollIntoView({behavior:'smooth',block:'center'});
+    },100);
+    return;
+  }
   showLoading('Salvando prescrição...');
   try{
     const data=gf('f-data')||hoje();
@@ -2182,64 +2221,112 @@ async function _carregarPrescricao(leito){
    IMPRESSÃO DA PRESCRIÇÃO (página dedicada)
    ════════════════════════════════════════════════════════════════════════════ */
 function imprimirPrescricao(){
-  const pac=gf('f-pac'), leito=gf('f-leito'), data=gf('f-data');
-  const alergia=gf('f-alergia'), diag=gf('f-diag'), adm=gf('f-adm');
+  const pac=(gf('f-pac')||'').toUpperCase();
+  const leito=gf('f-leito');
+  const data=gf('f-data');
+  const alergia=(gf('f-alergia')||'').toUpperCase();
+  const diag=(gf('f-diag')||'').toUpperCase();
+  const adm=gf('f-adm');
+  const medico=perfilUsuario?(perfilUsuario.nome||'')+(perfilUsuario.crm?' · CRM '+perfilUsuario.crm:''):'';
   const tituloOrig=document.title;
-  document.title=`Prescrição ${leito} - ${(pac||'').split(' ').slice(0,2).join(' ')} - ${_fmtDataCurta(data)}`;
+  document.title=`PRESCRICAO ${leito} - ${pac.split(' ').slice(0,2).join(' ')} - ${_fmtDataCurta(data)}`;
 
-  // Gera janela de impressão limpa
   const html=`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
   <title>${document.title}</title>
   <style>
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Segoe UI',sans-serif;font-size:11pt;color:#111;padding:1.2cm}
-    h1{font-size:13pt;text-align:center;color:#7a1020;margin-bottom:2px}
-    .sub{text-align:center;font-size:9pt;color:#555;margin-bottom:10px}
-    .meta{display:flex;justify-content:space-between;border:1px solid #ccc;padding:6px 10px;margin-bottom:8px;font-size:10pt;border-radius:4px}
-    .alerta{background:#fde8e6;border:1px solid #f3c2bd;padding:5px 10px;border-radius:4px;font-size:10pt;color:#7a1f17;margin-bottom:8px}
-    table{width:100%;border-collapse:collapse;font-size:10pt}
-    th{background:#7a1020;color:white;padding:6px 8px;text-align:left;font-size:9pt}
-    td{border:1px solid #ddd;padding:5px 8px;vertical-align:middle}
-    tr:nth-child(even){background:#f9f0f1}
-    .n{text-align:center;font-weight:700;color:#555}
-    .farm{font-weight:700}
-    .hor{font-size:9pt;color:#444}
-    .assin{margin-top:32px;text-align:center;font-size:10pt}
-    .linha{border-top:1px solid #555;width:240px;margin:20px auto 4px}
-    @media print{body{padding:.8cm}}
+    *{box-sizing:border-box;margin:0;padding:0;text-transform:uppercase;}
+    @page{size:A4 landscape;margin:.8cm 1cm}
+    body{font-family:'Arial Narrow',Arial,sans-serif;font-size:9.5pt;color:#111;}
+    .cabecalho{display:flex;justify-content:space-between;align-items:flex-start;
+      border-bottom:2px solid #7a1020;padding-bottom:6px;margin-bottom:6px;}
+    .cab-centro{text-align:center;flex:1;}
+    .cab-titulo{font-size:13pt;font-weight:800;color:#7a1020;letter-spacing:.04em;}
+    .cab-sub{font-size:8pt;color:#555;margin-top:1px;}
+    .cab-logo{width:80px;text-align:right;font-size:7.5pt;color:#888;}
+    .meta-linha{display:flex;gap:6px;margin-bottom:5px;flex-wrap:wrap;}
+    .meta-box{border:1px solid #bbb;padding:4px 8px;border-radius:3px;font-size:8.5pt;flex:1;min-width:120px;}
+    .meta-box strong{color:#7a1020;}
+    .alerta{background:#fde8e6;border:1.5px solid #e57373;padding:4px 10px;border-radius:3px;
+      font-size:9pt;color:#7a1020;font-weight:700;margin-bottom:5px;}
+    table{width:100%;border-collapse:collapse;font-size:9pt;}
+    thead tr{background:#7a1020;color:white;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    th{padding:5px 6px;text-align:left;font-size:8pt;font-weight:700;border:1px solid #5c0a18;}
+    td{border:1px solid #ccc;padding:4px 6px;vertical-align:middle;}
+    tr:nth-child(even) td{background:#faf5f6;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .tr-dieta td{background:#e6f4ec!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .tr-sn td{background:#fdf2dd!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .tr-cuidado td{background:#f0f4ff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .n{text-align:center;font-weight:700;color:#7a1020;width:22px;}
+    .farm{font-weight:700;}
+    .th-num{width:22px;}.th-farm{min-width:220px;}.th-dose{width:85px;}.th-via{width:45px;}
+    .th-freq{width:80px;}.th-hor{width:170px;}.th-obs{min-width:90px;}
+    .assin{margin-top:18px;display:flex;justify-content:flex-end;}
+    .assin-box{border-top:1px solid #555;text-align:center;padding-top:4px;min-width:260px;font-size:8.5pt;}
+    .rodape{margin-top:8px;font-size:7.5pt;color:#888;text-align:center;border-top:1px solid #eee;padding-top:4px;}
   </style></head><body>
-  <h1>PRESCRIÇÃO MÉDICA</h1>
-  <div class="sub">SECRETARIA MUNICIPAL DE SAÚDE · HOSPITAL DOS PESCADORES · UTI</div>
-  <div class="meta">
-    <span><strong>PACIENTE:</strong> ${pac||'—'}</span>
-    <span><strong>LEITO:</strong> ${leito||'?'}</span>
-    <span><strong>DATA:</strong> ${_fmtDataCurta(data)||'—'}</span>
-    <span><strong>ADM:</strong> ${_fmtDataCurta(adm)||'—'}</span>
+  <div class="cabecalho">
+    <div style="width:120px;font-size:7.5pt;color:#555;line-height:1.5;">
+      SECRETARIA MUNICIPAL DE SAÚDE<br>HOSPITAL DOS PESCADORES
+    </div>
+    <div class="cab-centro">
+      <div class="cab-titulo">PRESCRIÇÃO MÉDICA — UTI GERAL</div>
+      <div class="cab-sub">HOSPITAL DOS PESCADORES · NATAL/RN</div>
+    </div>
+    <div class="cab-logo" style="text-align:right;font-size:7.5pt;color:#555;line-height:1.5;">
+      DATA: ${_fmtDataCurta(data)||'—'}<br>LEITO: ${leito||'?'}
+    </div>
   </div>
-  ${diag?`<div class="meta"><strong>DIAGNÓSTICO:</strong> ${diag.toUpperCase()}</div>`:''}
-  ${alergia&&!/^nega$/i.test(alergia)?`<div class="alerta">⚠️ <strong>ALERGIA:</strong> ${alergia.toUpperCase()}</div>`:''}
+
+  <div class="meta-linha">
+    <div class="meta-box"><strong>PACIENTE:</strong> ${pac||'—'}</div>
+    <div class="meta-box"><strong>LEITO:</strong> ${leito||'?'}</div>
+    <div class="meta-box"><strong>DATA:</strong> ${_fmtDataCurta(data)||'—'}</div>
+    <div class="meta-box"><strong>ADM UTI:</strong> ${_fmtDataCurta(adm)||'—'}</div>
+  </div>
+  ${diag?`<div class="meta-linha"><div class="meta-box" style="flex:none;width:100%;"><strong>DIAGNÓSTICO:</strong> ${diag}</div></div>`:''}
+  ${alergia&&!/^NEGA$/.test(alergia.trim())?`<div class="alerta">⚠ ALERGIA: ${alergia}</div>`:''}
+
   <table>
-    <tr><th width="28">#</th><th>FÁRMACO / ITEM</th><th width="90">DOSE</th><th width="55">VIA</th><th width="85">FREQUÊNCIA</th><th>HORÁRIOS</th><th>OBS.</th></tr>
-    ${_rxItens.map((it,i)=>`<tr>
-      <td class="n">${i+1}</td>
-      <td class="farm">${it.farm||'—'}</td>
-      <td>${it.dose||'—'}</td>
-      <td>${it.via||'—'}</td>
-      <td>${it.freq||'—'}</td>
-      <td class="hor">${(it.hor||[]).join(' · ')||'—'}</td>
-      <td>${it.obs||''}</td>
-    </tr>`).join('')}
+    <thead>
+      <tr>
+        <th class="th-num">#</th>
+        <th class="th-farm">FÁRMACO / ITEM</th>
+        <th class="th-dose">DOSE</th>
+        <th class="th-via">VIA</th>
+        <th class="th-freq">FREQUÊNCIA</th>
+        <th class="th-hor">HORÁRIOS</th>
+        <th class="th-obs">OBSERVAÇÕES</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${_rxItens.map((it,i)=>{
+        const rowCls=it.tipo==='dieta'?'tr-dieta':it.tipo==='sn'?'tr-sn':it.tipo==='cuidados'?'tr-cuidado':'';
+        const hors=(it.hor||[]).join(' · ')||'—';
+        return `<tr class="${rowCls}">
+          <td class="n">${i+1}</td>
+          <td class="farm">${(it.farm||'—').toUpperCase()}</td>
+          <td>${(it.dose||'—').toUpperCase()}</td>
+          <td>${(it.via||'—').toUpperCase()}</td>
+          <td>${(it.freq||'—').toUpperCase()}</td>
+          <td style="font-size:8.5pt;">${hors.toUpperCase()}</td>
+          <td style="font-size:8.5pt;">${(it.obs||'').toUpperCase()}</td>
+        </tr>`;
+      }).join('')}
+    </tbody>
   </table>
+
   <div class="assin">
-    <div class="linha"></div>
-    ${perfilUsuario?perfilUsuario.nome+(perfilUsuario.crm?' · CRM '+perfilUsuario.crm:''):''}
-    <br><span style="font-size:9pt;color:#777">Prescrição médica · ${_fmtDataCurta(data)} · ${agoraHora()}</span>
+    <div class="assin-box">
+      ${medico||'&nbsp;'}<br>
+      <span style="font-size:7.5pt;color:#777;">PRESCRIÇÃO MÉDICA · ${_fmtDataCurta(data)} · ${agoraHora()}</span>
+    </div>
   </div>
+  <div class="rodape">DOCUMENTO GERADO ELETRONICAMENTE — HOSPITAL DOS PESCADORES · UTI GERAL</div>
   <script>window.onload=()=>{window.print();window.onafterprint=()=>window.close();}<\/script>
   </body></html>`;
 
-  const w=window.open('','_blank','width=820,height=700');
+  const w=window.open('','_blank','width=1000,height=700');
   if(w){ w.document.write(html); w.document.close(); }
-  else { toast('Popup bloqueado — permita popups para imprimir.',true); }
+  else{ toast('Popup bloqueado — permita popups para imprimir.',true); }
   setTimeout(()=>{ document.title=tituloOrig; },2000);
 }
