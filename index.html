@@ -523,6 +523,14 @@
                   </div>
                   <div class="guia-acao">Preencher →</div>
                 </div>
+                <div class="guia-card" onclick="abrirFichaHemo()">
+                  <div class="guia-icon">🩸</div>
+                  <div class="guia-info">
+                    <div class="guia-titulo">Solicitação de Hemoterápicos — HEMONORTE</div>
+                    <div class="guia-sub">Concentrado de hemácias, plaquetas, plasma, crioprecipitado</div>
+                  </div>
+                  <div class="guia-acao">Preencher →</div>
+                </div>
               </div>
               <!-- Lista de fichas salvas do paciente -->
               <div style="margin-top:16px;">
@@ -654,6 +662,146 @@
         <button class="btn btn-pri" onclick="salvarFichaATB()">⌘ Salvar ficha</button>
         <button class="btn btn-sec" onclick="imprimirFichaATB()">🖨 Imprimir</button>
         <button class="btn" onclick="fecharFichaATB()">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ MODAL SOLICITAÇÃO DE HEMOTERÁPICOS ══════════════ -->
+<div class="modal" id="modal-hemo-ficha">
+  <div class="modal-box" style="max-width:780px;max-height:94vh;overflow-y:auto;">
+    <div class="modal-head">
+      <h3>🩸 Solicitação de Hemoterápicos — HEMONORTE</h3>
+      <button class="modal-x" onclick="fecharFichaHemo()">×</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- PARTE 1: SOLICITAÇÃO -->
+      <div class="hemo-secao-titulo">SOLICITAÇÃO DE HEMOTERÁPICOS</div>
+
+      <!-- Dados do paciente -->
+      <div class="secao">
+        <div class="secao-t">Identificação do Paciente</div>
+        <div class="secao-c">
+          <div class="dc">
+            <div class="fl" style="flex:3"><label>Nome</label><input type="text" id="fhemo-nome" style="text-transform:uppercase;font-weight:700;"></div>
+            <div class="fl"><label>Sexo</label>
+              <select id="fhemo-sexo"><option value="">—</option><option>MASCULINO</option><option>FEMININO</option></select>
+            </div>
+          </div>
+          <div class="fl"><label>Nome da Mãe</label><input type="text" id="fhemo-mae" style="text-transform:uppercase;"></div>
+          <div class="dc">
+            <div class="fl"><label>Data de Nasc.</label><input type="date" id="fhemo-dn"></div>
+            <div class="fl"><label>Nº Cartão SUS</label><input type="text" id="fhemo-cns" placeholder="000000000000000"></div>
+            <div class="fl"><label>Naturalidade</label><input type="text" id="fhemo-natur" value="NATAL - RN" style="text-transform:uppercase;"></div>
+          </div>
+          <div class="fl"><label>Endereço</label><input type="text" id="fhemo-end" style="text-transform:uppercase;"></div>
+          <div class="dc">
+            <div class="fl"><label>Hospital</label><input type="text" id="fhemo-hosp" value="HOSPESC" style="text-transform:uppercase;"></div>
+            <div class="fl" style="flex:2"><label>Diagnóstico</label><input type="text" id="fhemo-diag" style="text-transform:uppercase;"></div>
+            <div class="fl"><label>CID</label><input type="text" id="fhemo-cid" style="text-transform:uppercase;"></div>
+          </div>
+          <div class="dc">
+            <div class="fl"><label>Registro</label><input type="text" id="fhemo-reg"></div>
+            <div class="fl"><label>Convênio</label><input type="text" id="fhemo-conv" value="SUS" style="text-transform:uppercase;"></div>
+            <div class="fl"><label>Leito</label><input type="text" id="fhemo-leito" readonly style="background:var(--bg2);"></div>
+          </div>
+          <div class="dc">
+            <div class="fl"><label>Grupo sanguíneo ABO (opcional)</label><input type="text" id="fhemo-grupo" placeholder="A / B / O / AB"></div>
+            <div class="fl"><label>Fator Rh (opcional)</label>
+              <select id="fhemo-rh"><option value="">—</option><option>+ (Positivo)</option><option>- (Negativo)</option></select>
+            </div>
+          </div>
+          <div class="dc">
+            <div class="fl"><label>Já recebeu transfusão?</label>
+              <div style="display:flex;gap:14px;margin-top:4px;">
+                <label class="radio-label"><input type="radio" name="fhemo-transf" value="sim"> Sim</label>
+                <label class="radio-label"><input type="radio" name="fhemo-transf" value="nao" checked> Não</label>
+              </div>
+            </div>
+            <div class="fl"><label>Houve reação?</label>
+              <div style="display:flex;gap:14px;margin-top:4px;">
+                <label class="radio-label"><input type="radio" name="fhemo-reac" value="sim"> Sim</label>
+                <label class="radio-label"><input type="radio" name="fhemo-reac" value="nao" checked> Não</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resultados de exames -->
+      <div class="secao">
+        <div class="secao-t">Resultados de Exames</div>
+        <div class="secao-c">
+          <div class="dc">
+            <div class="fl"><label>Hemoglobina (g/dL)</label><input type="number" step="0.1" id="fhemo-hb" placeholder="ex: 8.3"></div>
+            <div class="fl"><label>Hematócrito (%)</label><input type="number" step="0.1" id="fhemo-htc" placeholder="ex: 25.5"></div>
+            <div class="fl"><label>Plaquetas (/mm³)</label><input type="number" id="fhemo-plaq" placeholder="ex: 40000"></div>
+            <div class="fl" style="flex:2"><label>Outros</label><input type="text" id="fhemo-outros-exam"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Urgência -->
+      <div class="secao">
+        <div class="secao-t">Urgência / Indicação</div>
+        <div class="secao-c">
+          <div class="dc">
+            <div class="fl"><label>Prioridade</label>
+              <div style="display:flex;gap:14px;margin-top:4px;flex-wrap:wrap;">
+                <label class="radio-label"><input type="radio" name="fhemo-prio" value="urgencia" checked> Urgência (24h)</label>
+                <label class="radio-label"><input type="radio" name="fhemo-prio" value="emergencia"> Emergência</label>
+                <label class="radio-label"><input type="radio" name="fhemo-prio" value="rotina"> Rotina</label>
+              </div>
+            </div>
+            <div class="fl">
+              <label class="check-label" style="margin-top:24px;"><input type="checkbox" id="fhemo-preop"> Pré-operatório</label>
+            </div>
+          </div>
+          <div class="fl"><label>Justificativa / Observações</label>
+            <textarea id="fhemo-justif" rows="2" placeholder="Ex: AUTORIZO HEMOTRANSFUSÃO DE HETEROGRUPO. PACIENTE COM ANEMIA FARÁ CIRURGIA AMANHÃ" style="text-transform:uppercase;"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pedido de hemocomponentes -->
+      <div class="secao">
+        <div class="secao-t">Pedido de Hemocomponentes</div>
+        <div class="secao-c">
+          <div class="hemo-pedido-grid">
+            <div class="hemo-item"><label class="check-label"><input type="checkbox" id="fhemo-ch"> Conc. Hemácias</label><input type="text" id="fhemo-ch-qtd" class="hemo-qtd" placeholder="qtd"></div>
+            <div class="hemo-item"><label class="check-label"><input type="checkbox" id="fhemo-chpl"> Conc. Hemácias Pobre em Leucócitos</label><input type="text" id="fhemo-chpl-qtd" class="hemo-qtd" placeholder="qtd"></div>
+            <div class="hemo-item"><label class="check-label"><input type="checkbox" id="fhemo-chl"> Conc. Hemácias Leucotizado</label><input type="text" id="fhemo-chl-qtd" class="hemo-qtd" placeholder="qtd"></div>
+            <div class="hemo-item"><label class="check-label"><input type="checkbox" id="fhemo-chlav"> Conc. Hemácias Lavadas</label><input type="text" id="fhemo-chlav-qtd" class="hemo-qtd" placeholder="qtd"></div>
+            <div class="hemo-item"><label class="check-label"><input type="checkbox" id="fhemo-plaqconv"> Conc. Plaquetas Convencionais (1UI/10kg)</label><input type="text" id="fhemo-plaqconv-qtd" class="hemo-qtd" placeholder="qtd"></div>
+            <div class="hemo-item"><label class="check-label"><input type="checkbox" id="fhemo-pool"> Pool de Plaquetas</label><input type="text" id="fhemo-pool-qtd" class="hemo-qtd" placeholder="qtd"></div>
+            <div class="hemo-item"><label class="check-label"><input type="checkbox" id="fhemo-plaqaf"> Conc. Plaquetas de Aférese</label><input type="text" id="fhemo-plaqaf-qtd" class="hemo-qtd" placeholder="qtd"></div>
+            <div class="hemo-item"><label class="check-label"><input type="checkbox" id="fhemo-pfc"> Plasma Fresco Congelado</label><input type="text" id="fhemo-pfc-qtd" class="hemo-qtd" placeholder="qtd"></div>
+            <div class="hemo-item"><label class="check-label"><input type="checkbox" id="fhemo-crio"> Crioprecipitado</label><input type="text" id="fhemo-crio-qtd" class="hemo-qtd" placeholder="qtd"></div>
+            <div class="hemo-item"><label class="check-label"><input type="checkbox" id="fhemo-fat"> Conc. Fator VIII / IX</label><input type="text" id="fhemo-fat-qtd" class="hemo-qtd" placeholder="qtd"></div>
+            <div class="hemo-item" style="grid-column:1/-1;"><label class="check-label"><input type="checkbox" id="fhemo-outros"> Outros:</label><input type="text" id="fhemo-outros-txt" style="flex:1;min-width:180px;padding:4px 8px;border:1.5px solid var(--borda);border-radius:6px;font-size:.84rem;" placeholder="especificar"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dados do médico -->
+      <div class="secao">
+        <div class="secao-t">Prescrição</div>
+        <div class="secao-c">
+          <div class="dc">
+            <div class="fl"><label>Data</label><input type="date" id="fhemo-data"></div>
+            <div class="fl"><label>Hora</label><input type="time" id="fhemo-hora"></div>
+            <div class="fl" style="flex:2"><label>Médico</label><input type="text" id="fhemo-med" style="text-transform:uppercase;"></div>
+            <div class="fl"><label>CRM</label><input type="text" id="fhemo-crm"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ações -->
+      <div class="form-actions" style="margin-top:0;">
+        <button class="btn btn-pri" onclick="salvarFichaHemo()">⌘ Salvar ficha</button>
+        <button class="btn btn-sec" onclick="imprimirFichaHemo()">🖨 Imprimir</button>
+        <button class="btn" onclick="fecharFichaHemo()">Fechar</button>
       </div>
     </div>
   </div>
