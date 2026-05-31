@@ -483,8 +483,7 @@
             <button class="btn btn-sec btn-sm" onclick="addItemPrescricaoEspecial('cuidados')">+ Cuidados gerais</button>
           </div>
 
-          <!-- AUTOCOMPLETE (dropdown flutuante) -->
-          <div id="rx-autocomplete" class="rx-autocomplete" style="display:none;"></div>
+          <!-- AUTOCOMPLETE movido para o body via JS -->
         </div>
       </div><!-- /aba-prescricao -->
 
@@ -940,5 +939,8 @@
 <div class="toast" id="toast"></div>
 
 <script src="app.js?v=glasscockpit1"></script>
+<!-- Autocomplete flutuante — deve ficar no body para não ser cortado por overflow -->
+<div id="rx-autocomplete" class="rx-autocomplete" style="display:none;position:fixed;z-index:9999;"></div>
+
 </body>
 </html>
