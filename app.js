@@ -1645,13 +1645,14 @@ window.addEventListener('load',()=>{
    NAVEGAÇÃO POR ABAS DO PRONTUÁRIO
    ════════════════════════════════════════════════════════════════════════════ */
 function mudarAba(aba){
-  ['evolucao','prescricao','laboratorio'].forEach(id=>{
-    const panel=$(  `aba-${id}`), btn=$(`pnav-${id}`);
+  ['evolucao','prescricao','laboratorio','guias'].forEach(id=>{
+    const panel=$(`aba-${id}`), btn=$(`pnav-${id}`);
     if(panel) panel.style.display = id===aba ? '' : 'none';
     if(btn){ btn.classList.toggle('ativo', id===aba); }
   });
   if(aba==='prescricao') _renderPrescricao();
   if(aba==='laboratorio') _renderLabLinhas();
+  if(aba==='guias') _renderGuiasFichas();
 }
 
 // Atualiza o mini-resumo do paciente na sidebar
@@ -2089,7 +2090,7 @@ function _rxOrdenar(){
 }
 
 function _rxNovoItem(tipo){
-  return { id:Date.now()+Math.random(), farm:'', qtd:'', apres:'', dose:'', diluicao:'', via:'EV', freq:'24/24H', hor:[], obs:'', tipo:tipo||'normal', _cat:'Medicação Geral' };
+  return { id:Date.now()+Math.random(), farm:'', qtd:'', apres:'', dose:'', diluicao:'', via:'EV', freq:'24/24H', hor:[], obs:'', tipo:tipo||'normal', _cat:'Medicação Geral', ddInicio:'' };
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
@@ -2516,6 +2517,8 @@ function _rxAcEscolher(idx){
   // Diluição vai para Obs (concatenada à obs do banco, se houver)
   it.obs=[m.obs||'', m.diluicao||''].filter(Boolean).join(' · ');
   it._cat=m.cat||'Medicação Geral';
+  // Marca D0 se for ATB novo (sem ddInicio anterior)
+  if(m.cat==='ATB' && !it.ddInicio) it.ddInicio=gf('f-data')||hoje();
   // define tipo da linha pela categoria
   if(m.cat==='Dieta') it.tipo='dieta';
   else if(m.cat==='Protocolo') it.tipo='sn';
@@ -2813,6 +2816,8 @@ async function _carregarPrescricao(leito){
   const key=`uti_med_rx_${leito}_${data}`;
   const saved=await dbGet(key);
   _rxItens = saved&&saved.itens ? saved.itens : [];
+  _rxAtualizarDdias();   // substitui "informar D0" pelo D real
+  _snapshotRX();         // snapshot para detectar novos ATBs
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
@@ -2931,4 +2936,424 @@ function imprimirPrescricao(){
   if(w){ w.document.write(html); w.document.close(); }
   else{ toast('Popup bloqueado — permita popups para imprimir.',true); }
   setTimeout(()=>{ document.title=tituloOrig; },2000);
+}
+
+
+/* ════════════════════════════════════════════════════════════════════════════
+   FICHA DE ANTIMICROBIANO
+   ─ Estado, abertura, preenchimento automático, save/load, impressão
+   ════════════════════════════════════════════════════════════════════════════ */
+let _fichaATBLinhas = []; // [{atb, via, posologia, ddInicio, dias}]
+let _fichaATBKey = null;  // chave do Firebase da ficha atual
+
+// Abre o modal pré-preenchido com dados do paciente
+function abrirFichaATB(atbPresel){
+  // Preenche dados do paciente
+  sf('fatb-pac',   gf('f-pac')||'');
+  sf('fatb-dn',    gf('f-dn')||'');
+  sf('fatb-leito', gf('f-leito')||'');
+  sf('fatb-data',  gf('f-data')||hoje());
+  // Se não tem linhas, cria uma
+  if(!_fichaATBLinhas.length) _fichaATBLinhas=[_fatbNovaLinha(atbPresel||'')];
+  _fatbRenderLinhas();
+  _fatbRenderCCIH();
+  // Auto-detecta diagnóstico pela evolução
+  _fatbAutoDetectarDiag();
+  // Auto-detecta exame micro pelas culturas
+  _fatbAutoDetectarMicro();
+  $('modal-atb-ficha').classList.add('show');
+}
+
+function fecharFichaATB(){ $('modal-atb-ficha').classList.remove('show'); }
+
+function _fatbNovaLinha(atb){
+  return { atb:atb||'', via:'EV', posologia:'', ddInicio:gf('f-data')||hoje(), dias:'7' };
+}
+function _fatbAddLinha(){ _fichaATBLinhas.push(_fatbNovaLinha('')); _fatbRenderLinhas(); }
+
+function _fatbRenderLinhas(){
+  const w=$('fatb-atbs-wrap'); if(!w) return;
+  w.innerHTML=_fichaATBLinhas.map((l,i)=>`
+    <div class="fatb-linha-atb">
+      <div class="fl" style="flex:2"><label>Antimicrobiano ${i+1}</label>
+        <input type="text" value="${l.atb||''}" style="text-transform:uppercase;"
+          oninput="_fichaATBLinhas[${i}].atb=this.value.toUpperCase()">
+      </div>
+      <div class="fl"><label>Via</label>
+        <select onchange="_fichaATBLinhas[${i}].via=this.value">
+          ${['EV','VO','SC','IM','IN','SNE'].map(v=>`<option ${l.via===v?'selected':''}>${v}</option>`).join('')}
+        </select>
+      </div>
+      <div class="fl" style="flex:2"><label>Posologia / Frequência</label>
+        <input type="text" value="${l.posologia||''}" style="text-transform:uppercase;"
+          oninput="_fichaATBLinhas[${i}].posologia=this.value.toUpperCase()">
+      </div>
+      <div class="fl"><label>D0 (início)</label>
+        <input type="date" value="${l.ddInicio||hoje()}"
+          oninput="_fichaATBLinhas[${i}].ddInicio=this.value">
+      </div>
+      <div class="fl"><label>Dias previstos</label>
+        <input type="number" value="${l.dias||7}" min="1" max="90" style="width:70px;"
+          oninput="_fichaATBLinhas[${i}].dias=this.value">
+      </div>
+      ${_fichaATBLinhas.length>1?`<button class="presc-del" onclick="_fichaATBLinhas.splice(${i},1);_fatbRenderLinhas()" title="Remover">🗑</button>`:''}
+    </div>
+  `).join('<hr style="border:none;border-top:1px dashed var(--borda);margin:6px 0;">');
+}
+
+function _fatbRenderCCIH(){
+  const w=$('fatb-ccih-linhas'); if(!w) return;
+  w.innerHTML=_fichaATBLinhas.map((l,i)=>`
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 2fr 1fr;gap:6px;align-items:center;font-size:.8rem;padding:4px 0;border-bottom:1px dashed #e0cc99;">
+      <span style="font-weight:700;">${l.atb||('ATB '+(i+1))}</span>
+      <span>Autorização:
+        <label><input type="radio" name="ccih-aut-${i}" value="sim"> S</label>
+        <label><input type="radio" name="ccih-aut-${i}" value="nao" checked> N</label>
+      </span>
+      <span>Alteração:
+        <label><input type="radio" name="ccih-alt-${i}" value="sim"> S</label>
+        <label><input type="radio" name="ccih-alt-${i}" value="nao" checked> N</label>
+      </span>
+      <input type="text" placeholder="Via sugerida" style="font-size:.76rem;padding:3px 6px;border:1px solid var(--borda);border-radius:5px;">
+      <input type="text" placeholder="Posologia sugerida" style="font-size:.76rem;padding:3px 6px;border:1px solid var(--borda);border-radius:5px;">
+      <input type="text" placeholder="Duração" style="font-size:.76rem;padding:3px 6px;border:1px solid var(--borda);border-radius:5px;">
+    </div>
+  `).join('');
+}
+
+// Autodetectar diagnóstico infeccioso pela evolução/diagnóstico
+function _fatbAutoDetectarDiag(){
+  const diag=(gf('f-diag')||'').toUpperCase();
+  const evol=(gf('f-evol')||'').toUpperCase();
+  const txt=diag+' '+evol;
+  const mapa=[
+    ['fatb-d-pneumo', /PNEUMONIA|PAC|PAVM|PAV/],
+    ['fatb-d-itu',    /ITU|URIN|UROCULT|CISTITE|PIELONE/],
+    ['fatb-d-sepse',  /SEPSE|SEPSIS/],
+    ['fatb-d-bact',   /BACTEREMIA|HEMOCULTURA/],
+    ['fatb-d-cateter',/CATETER|CDL|IPCS/],
+    ['fatb-d-digest', /ABDOMIN|PERITONITE|COLANGITE|COLECISTITE|DIGESTIV/],
+    ['fatb-d-cirurg', /CIRURG|FERIDA|ISC/],
+  ];
+  mapa.forEach(([id, re])=>{ const el=$(id); if(el) el.checked=re.test(txt); });
+}
+
+// Autodetectar exame micro pelas culturas do formulário
+function _fatbAutoDetectarMicro(){
+  if(!_culturasForm||!_culturasForm.length) return;
+  const pos=_culturasForm.filter(c=>c.micro);
+  if(!pos.length) return;
+  const ult=pos[pos.length-1];
+  sf('fatb-micro-data', ult.data||'');
+  sf('fatb-micro-mat',  ult.sitio||'');
+  sf('fatb-micro-sens', ult.sens||ult.micro||'');
+}
+
+// Salvar ficha no Firebase
+async function salvarFichaATB(){
+  if(!leitoAtual){ toast('Abra o prontuário de um paciente.',true); return; }
+  showLoading('Salvando ficha...');
+  try{
+    const ficha=_coletarFichaATB();
+    const key=`uti_med_atb_ficha_${leitoAtual}_${ficha.data}_${Date.now()}`;
+    await dbSet(key, ficha);
+    _fichaATBKey=key;
+    hideLoading();
+    toast('✓ Ficha salva.');
+    _renderGuiasFichas();
+  }catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
+}
+
+function _coletarFichaATB(){
+  const origem = document.querySelector('input[name="fatb-origem"]:checked');
+  const uso    = document.querySelector('input[name="fatb-uso"]:checked');
+  const hdia   = document.querySelector('input[name="fatb-hdia"]:checked');
+  const diags  = ['bact','cateter','neutro','itu','pneumo','pele','cirurg','sepse','digest']
+    .filter(d=>$('fatb-d-'+d)&&$('fatb-d-'+d).checked);
+  if($('fatb-d-outro')&&$('fatb-d-outro').checked) diags.push(gf('fatb-d-outro-txt')||'Outro');
+  return {
+    pac:gf('fatb-pac'), dn:gf('fatb-dn'), leito:gf('fatb-leito'),
+    data:gf('fatb-data'), hospitalDia:hdia?hdia.value:'nao',
+    origem:origem?origem.value:'', uso:uso?uso.value:'terapeutico',
+    diagnosticos:diags,
+    microData:gf('fatb-micro-data'), microMat:gf('fatb-micro-mat'), microSens:gf('fatb-micro-sens'),
+    atbs:_fichaATBLinhas.map(l=>({...l})),
+    ccihSug:gf('fatb-ccih-sug'), ccihMed:gf('fatb-ccih-med'),
+    autor:usuarioEmail, autorNome:perfilUsuario?perfilUsuario.nome:'',
+    salvadoEm:new Date().toISOString()
+  };
+}
+
+// Listar fichas salvas na aba Guias
+async function _renderGuiasFichas(){
+  const w=$('guias-fichas-lista'); if(!w) return;
+  w.innerHTML='<span style="font-size:.8rem;color:var(--muted);">Carregando...</span>';
+  try{
+    const todas=await dbListByPrefix(`uti_med_atb_ficha_${leitoAtual}_`);
+    const arr=Object.entries(todas).map(([k,v])=>({key:k,...v})).filter(x=>x.pac);
+    arr.sort((a,b)=>(b.salvadoEm||'').localeCompare(a.salvadoEm||''));
+    if(!arr.length){ w.innerHTML='<span style="font-size:.8rem;color:var(--muted);">Nenhuma ficha salva.</span>'; return; }
+    w.innerHTML=arr.map(f=>`
+      <div style="border:1px solid var(--borda);border-radius:9px;padding:10px 12px;margin-bottom:6px;background:var(--bg2);display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <div style="flex:1;">
+          <strong style="color:var(--vinho);">🦠 ${(f.atbs||[]).map(a=>a.atb).filter(Boolean).join(', ')||'ATB'}</strong><br>
+          <span style="font-size:.74rem;color:var(--muted);">${_fmtDataCurta(f.data)||'?'} · ${f.uso||'terapêutico'} · ${f.autorNome||f.autor||'?'}</span>
+        </div>
+        <div style="display:flex;gap:4px;">
+          <button class="btn btn-sm" onclick="_abrirFichaExistente('${f.key}')">✎ Editar</button>
+          <button class="btn btn-sm" onclick="_imprimirFichaChave('${f.key}')">🖨 Imprimir</button>
+        </div>
+      </div>
+    `).join('');
+  }catch(e){ w.innerHTML='<span style="font-size:.8rem;color:var(--vermelho);">Erro ao carregar fichas.</span>'; }
+}
+
+async function _abrirFichaExistente(key){
+  showLoading('Carregando ficha...');
+  try{
+    const f=await dbGet(key);
+    hideLoading();
+    if(!f){ toast('Ficha não encontrada.',true); return; }
+    _fichaATBKey=key;
+    _fichaATBLinhas=f.atbs||[_fatbNovaLinha('')];
+    // Preenche campos
+    ['pac','dn','leito','data'].forEach(c=>sf('fatb-'+c,f[c]||''));
+    sf('fatb-micro-data',f.microData||''); sf('fatb-micro-mat',f.microMat||'');
+    sf('fatb-micro-sens',f.microSens||''); sf('fatb-ccih-sug',f.ccihSug||'');
+    sf('fatb-ccih-med',f.ccihMed||'');
+    // Radios
+    if(f.origem){ const r=document.querySelector(`input[name="fatb-origem"][value="${f.origem}"]`); if(r) r.checked=true; }
+    if(f.uso){    const r=document.querySelector(`input[name="fatb-uso"][value="${f.uso}"]`);    if(r) r.checked=true; }
+    // Checkboxes diagnósticos
+    const map={bact:'bacteremia',cateter:'cateter',neutro:'neutro',itu:'itu',pneumo:'pneumo',pele:'pele',cirurg:'cirurg',sepse:'sepse',digest:'digest'};
+    Object.keys(map).forEach(k=>{ const el=$('fatb-d-'+k); if(el) el.checked=(f.diagnosticos||[]).some(d=>d.toLowerCase().includes(k)); });
+    _fatbRenderLinhas(); _fatbRenderCCIH();
+    $('modal-atb-ficha').classList.add('show');
+  }catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
+}
+
+/* ── Detecta ATBs novos ou com dose/freq alterada ao salvar prescrição ──── */
+let _rxItensPrevios = []; // snapshot antes das edições
+function _snapshotRX(){ _rxItensPrevios=_rxItens.map(i=>({farm:i.farm,dose:i.dose,freq:i.freq,_cat:i._cat,ddInicio:i.ddInicio})); }
+
+function _detectarATBsNovos(){
+  const novos=[];
+  _rxItens.forEach(it=>{
+    if(it._cat!=='ATB'||!it.farm) return;
+    const prev=_rxItensPrevios.find(p=>p.farm===it.farm);
+    if(!prev) { novos.push({...it, motivo:'novo'}); return; }
+    if(prev.dose!==it.dose||prev.freq!==it.freq) novos.push({...it, motivo:'alterado'});
+  });
+  return novos;
+}
+
+/* ── Wrapper do salvarPrescricao para interceptar ATBs novos ─────────── */
+const _salvarPrescricaoOriginal = salvarPrescricao;
+salvarPrescricao = async function(){
+  const atbsNovos=_detectarATBsNovos();
+  await _salvarPrescricaoOriginal();
+  _snapshotRX();
+  if(atbsNovos.length){
+    // Aguarda um tick para o toast desaparecer
+    await new Promise(r=>setTimeout(r,600));
+    _mostrarModalATBNovos(atbsNovos);
+  }
+};
+
+function _mostrarModalATBNovos(atbs){
+  const nomes=atbs.map(a=>`${a.motivo==='novo'?'🆕':'✏️'} ${a.farm}`).join('<br>');
+  // Usa um confirm customizado simples via toast/modal inline
+  const el=document.createElement('div');
+  el.className='modal show'; el.id='modal-atb-prompt';
+  el.innerHTML=`<div class="modal-box" style="max-width:480px;">
+    <div class="modal-head"><h3>🦠 Ficha de Antimicrobiano</h3></div>
+    <div class="modal-body">
+      <div class="tip i" style="margin-bottom:12px;">
+        ${atbs.length===1?'Um antimicrobiano foi':'Antimicrobianos foram'}
+        ${atbs[0].motivo==='novo'?'adicionado(s)':'alterado(s)'} na prescrição:<br>
+        <strong style="margin-top:6px;display:block;">${nomes}</strong>
+      </div>
+      <p style="font-size:.86rem;margin-bottom:14px;">Deseja preencher a ficha de solicitação de antimicrobiano agora?</p>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn btn-pri" onclick="document.getElementById('modal-atb-prompt').remove();abrirFichaATBComATBs(${JSON.stringify(atbs.map(a=>a.farm))})">✓ Sim, preencher ficha</button>
+        <button class="btn" onclick="document.getElementById('modal-atb-prompt').remove()">Agora não</button>
+      </div>
+    </div>
+  </div>`;
+  document.body.appendChild(el);
+}
+
+function abrirFichaATBComATBs(farms){
+  if(!_fichaATBLinhas.length||!_fichaATBLinhas[0].atb){
+    _fichaATBLinhas=farms.map(f=>_fatbNovaLinha(f));
+  } else {
+    // Adiciona apenas os que ainda não estão
+    farms.forEach(f=>{ if(!_fichaATBLinhas.some(l=>l.atb===f)) _fichaATBLinhas.push(_fatbNovaLinha(f)); });
+  }
+  abrirFichaATB();
+}
+
+/* ── Impressão da ficha ─────────────────────────────────────────────── */
+function imprimirFichaATB(){ _imprimirFichaObj(_coletarFichaATB()); }
+async function _imprimirFichaChave(key){
+  showLoading('Carregando ficha...');
+  try{ const f=await dbGet(key); hideLoading(); if(f) _imprimirFichaObj(f); }
+  catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
+}
+
+function _imprimirFichaObj(f){
+  const DIAG_MAP={bact:'Bacteremia primária sem foco',cateter:'Infecção associada à cateter',neutro:'Neutropenia febril',itu:'ITU',pneumo:'Pneumonia',pele:'Pele / partes moles',cirurg:'Infecção de sítio cirúrgico',sepse:'Sepse',digest:'Trato digestivo'};
+  const diagTxt=(f.diagnosticos||[]).map(d=>DIAG_MAP[d]||d).join(', ')||'—';
+  const atbsHtml=(f.atbs||[]).map((a,i)=>`
+    <tr>
+      <td style="font-weight:700;">${(a.atb||'—').toUpperCase()}</td>
+      <td>${a.via||'—'}</td>
+      <td>${(a.posologia||'—').toUpperCase()}</td>
+      <td>${a.ddInicio?_fmtDataCurta(a.ddInicio):'—'}</td>
+      <td>${a.dias||'—'} dias</td>
+    </tr>`).join('');
+  const ccihHtml=(f.atbs||[]).map((a,i)=>`
+    <tr>
+      <td style="font-weight:700;">${(a.atb||'').toUpperCase()}</td>
+      <td>
+        <label style="margin-right:8px;"><input type="radio" name="p-aut-${i}" checked> SIM</label>
+        <label><input type="radio" name="p-aut-${i}"> NÃO</label>
+      </td>
+      <td>
+        <label style="margin-right:8px;"><input type="radio" name="p-alt-${i}"> SIM</label>
+        <label><input type="radio" name="p-alt-${i}" checked> NÃO</label>
+      </td>
+      <td></td><td></td><td></td>
+    </tr>`).join('');
+
+  const html=`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+  <title>Ficha ATB — ${f.pac||''}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;font-family:'Arial Narrow',Arial,sans-serif;}
+    @page{size:A4 portrait;margin:1.2cm}
+    body{font-size:9.5pt;color:#111;padding:0;}
+    .logo-wrap{text-align:center;border-bottom:2px solid #7a1020;padding-bottom:8px;margin-bottom:10px;}
+    .logo-wrap h1{font-size:13pt;color:#7a1020;font-weight:800;}
+    .logo-wrap h2{font-size:10pt;font-weight:700;letter-spacing:.04em;margin-top:2px;}
+    .logo-wrap p{font-size:8pt;color:#555;}
+    .secao{margin-bottom:10px;border:1px solid #ccc;border-radius:4px;overflow:hidden;}
+    .secao-titulo{background:#7a1020;color:white;padding:4px 10px;font-size:8pt;font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
+    .secao-corpo{padding:8px 10px;font-size:9pt;line-height:1.6;}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+    .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;}
+    .campo{margin-bottom:4px;}
+    .campo label{font-size:7.5pt;font-weight:700;color:#7a1020;display:block;margin-bottom:1px;text-transform:uppercase;}
+    .campo .val{border-bottom:1px solid #aaa;min-height:16px;font-size:9pt;padding:1px 0;}
+    .diag-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px 10px;font-size:8.5pt;}
+    .check-item{display:flex;align-items:center;gap:4px;}
+    table{width:100%;border-collapse:collapse;font-size:8.5pt;}
+    th{background:#7a1020;color:white;padding:4px 6px;text-align:left;font-size:7.5pt;font-weight:700;text-transform:uppercase;}
+    td{border:1px solid #ddd;padding:4px 6px;vertical-align:middle;}
+    .secao-ccih{border-color:#d0a020;}
+    .secao-ccih .secao-titulo{background:#8a6a10;}
+    .secao-farm{border-color:#336;}
+    .secao-farm .secao-titulo{background:#223;}
+    .assin{border-top:1px solid #555;margin-top:24px;text-align:center;padding-top:4px;font-size:8pt;color:#555;width:240px;display:inline-block;}
+    .assin-wrap{margin-top:14px;text-align:right;}
+    @media print{body{padding:0}}
+  </style></head><body>
+  <div class="logo-wrap">
+    <p>PREFEITURA DO NATAL · SECRETARIA MUNICIPAL DE SAÚDE</p>
+    <h1>HOSPITAL DOS PESCADORES</h1>
+    <h2>FICHA DE SOLICITAÇÃO DE ANTIMICROBIANO</h2>
+  </div>
+  <div class="secao">
+    <div class="secao-titulo">Identificação</div>
+    <div class="secao-corpo">
+      <div class="grid2">
+        <div class="campo"><label>Paciente</label><div class="val">${(f.pac||'').toUpperCase()}</div></div>
+        <div class="campo"><label>Data de Nascimento</label><div class="val">${f.dn?_fmtDataCurta(f.dn):'—'}</div></div>
+      </div>
+      <div class="grid3">
+        <div class="campo"><label>Leito</label><div class="val">${f.leito||'—'}</div></div>
+        <div class="campo"><label>Data da Solicitação</label><div class="val">${f.data?_fmtDataCurta(f.data):'—'}</div></div>
+        <div class="campo"><label>Hospital Dia</label><div class="val">${f.hospitalDia==='sim'?'SIM':'NÃO'}</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="secao">
+    <div class="secao-titulo">Infecção</div>
+    <div class="secao-corpo">
+      <div class="grid2" style="margin-bottom:8px;">
+        <div class="campo"><label>Origem</label><div class="val">${f.origem==='comunitaria'?'☑ Comunitária  ☐ Hospitalar':'☐ Comunitária  ☑ Hospitalar'}</div></div>
+        <div class="campo"><label>Uso</label><div class="val">${f.uso==='profilatico'?'☑ Profilático  ☐ Terapêutico':'☐ Profilático  ☑ Terapêutico'}</div></div>
+      </div>
+      <div class="campo"><label>Diagnóstico infeccioso provável</label>
+        <div class="val" style="min-height:20px;">${diagTxt.toUpperCase()}</div>
+      </div>
+    </div>
+  </div>
+  <div class="secao">
+    <div class="secao-titulo">Exame Microbiológico</div>
+    <div class="secao-corpo">
+      <div class="grid2">
+        <div class="campo"><label>Data</label><div class="val">${f.microData?_fmtDataCurta(f.microData):'—'}</div></div>
+        <div class="campo"><label>Material</label><div class="val">${(f.microMat||'—').toUpperCase()}</div></div>
+      </div>
+      <div class="campo"><label>Sensibilidade / Resultado</label><div class="val">${(f.microSens||'—').toUpperCase()}</div></div>
+    </div>
+  </div>
+  <div class="secao">
+    <div class="secao-titulo">Antimicrobiano Solicitado</div>
+    <div class="secao-corpo">
+      <table>
+        <tr><th>Antimicrobiano</th><th>Via</th><th>Posologia</th><th>D0</th><th>Duração</th></tr>
+        ${atbsHtml}
+      </table>
+    </div>
+  </div>
+  <div class="assin-wrap"><div class="assin">___________________________<br>Médico prescritor<br>${perfilUsuario&&perfilUsuario.crm?'CRM '+perfilUsuario.crm:''}</div></div>
+  <div style="height:14px;"></div>
+  <div class="secao secao-ccih">
+    <div class="secao-titulo">Uso exclusivo da CCIH</div>
+    <div class="secao-corpo">
+      <table>
+        <tr><th>Antimicrobiano</th><th>Autorização</th><th>Alteração</th><th>Via</th><th>Posologia sugerida</th><th>Duração</th></tr>
+        ${ccihHtml}
+      </table>
+      <div class="campo" style="margin-top:8px;"><label>Sugestão</label><div class="val" style="min-height:20px;">${f.ccihSug||''}</div></div>
+      <div class="assin-wrap"><div class="assin">___________________________<br>Médico(a) — assinatura/carimbo</div></div>
+    </div>
+  </div>
+  <div class="secao secao-farm">
+    <div class="secao-titulo">Uso pelo Farmacêutico</div>
+    <div class="secao-corpo">
+      <table>
+        <tr><th>Antimicrobiano</th><th>Quantidade necessária</th><th>Dose/posologia sugerida</th><th>Ajuste dose renal</th></tr>
+        ${(f.atbs||[]).map(a=>`<tr>
+          <td style="font-weight:700;">${(a.atb||'').toUpperCase()}</td>
+          <td>&nbsp;<br>&nbsp;</td><td>&nbsp;</td>
+          <td>☐ SIM  ☐ NÃO</td>
+        </tr>`).join('')}
+      </table>
+      <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:flex-end;">
+        <div class="campo"><label>Recebido na farmácia</label><div class="val" style="min-width:120px;">&nbsp;</div></div>
+        <div class="assin">___________________________<br>Farmacêutico(a) — assinatura/carimbo<br>Data: ___/___/______</div>
+      </div>
+    </div>
+  </div>
+  <script>window.onload=()=>{window.print();window.onafterprint=()=>window.close();}<\/script>
+  </body></html>`;
+
+  const w=window.open('','_blank','width=820,height=900');
+  if(w){ w.document.write(html); w.document.close(); }
+  else toast('Popup bloqueado — permita popups para imprimir.',true);
+}
+
+// D-dia automático na obs — substitui "informar D0" pelo D calculado
+function _rxAtualizarDdias(){
+  const hoje_=gf('f-data')||hoje();
+  _rxItens.forEach(it=>{
+    if(it._cat!=='ATB') return;
+    if(!it.ddInicio) return;
+    const diff=Math.floor((new Date(hoje_+'T00:00:00')-new Date(it.ddInicio+'T00:00:00'))/86400000);
+    // Atualiza obs: substitui "informar D0" ou "D0" pelo D real
+    if(it.obs) it.obs=it.obs.replace(/\binformar D0\b|\bD0\b(?=\s|$)/gi, `D${diff}`);
+    it._ddia=diff;
+  });
 }
