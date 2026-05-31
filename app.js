@@ -3316,21 +3316,35 @@ async function _renderGuiasFichas(){
   const w=$('guias-fichas-lista'); if(!w) return;
   w.innerHTML='<span style="font-size:.8rem;color:var(--muted);">Carregando...</span>';
   try{
-    const atbs  = await dbListByPrefix(`uti_med_atb_ficha_${leitoAtual}_`);
-    const hemos = await dbListByPrefix(`uti_med_hemo_ficha_${leitoAtual}_`);
+    const atbs   = await dbListByPrefix(`uti_med_atb_ficha_${leitoAtual}_`);
+    const hemos  = await dbListByPrefix(`uti_med_hemo_ficha_${leitoAtual}_`);
+    const termos = await dbListByPrefix(`uti_med_termo_${leitoAtual}_`);
     const arr=[
       ...Object.entries(atbs).map(([k,v])=>({key:k,...v, _tipo:'atb'})),
-      ...Object.entries(hemos).map(([k,v])=>({key:k,...v, _tipo:'hemo'}))
-    ].filter(x=>x.pac||x.nome).sort((a,b)=>(b.salvadoEm||'').localeCompare(a.salvadoEm||''));
+      ...Object.entries(hemos).map(([k,v])=>({key:k,...v, _tipo:'hemo'})),
+      ...Object.entries(termos).map(([k,v])=>({key:k,...v, _tipo:'termo'}))
+    ].filter(x=>x.pac||x.nome||x.resp).sort((a,b)=>(b.salvadoEm||'').localeCompare(a.salvadoEm||''));
     if(!arr.length){ w.innerHTML='<span style="font-size:.8rem;color:var(--muted);">Nenhuma ficha salva.</span>'; return; }
     w.innerHTML=arr.map(f=>{
-      const icon  = f._tipo==='hemo'?'🩸':'🦠';
-      const titulo = f._tipo==='hemo'
-        ? `Hemoterápicos: ${(f.pedidos||[]).filter(p=>p.selecionado).map(p=>p.label.split(' ').slice(0,2).join(' ')).join(', ')||'—'}`
-        : `ATB: ${(f.atbs||[]).map(a=>a.atb).filter(Boolean).join(', ')||'—'}`;
+      let icon, titulo, edit, impr;
+      if(f._tipo==='hemo'){
+        icon='🩸';
+        titulo=`Hemoterápicos: ${(f.pedidos||[]).filter(p=>p.selecionado).map(p=>p.label.split(' ').slice(0,2).join(' ')).join(', ')||'—'}`;
+        edit=`_abrirHemoExistente('${f.key}')`;
+        impr=`_imprimirHemoChave('${f.key}')`;
+      } else if(f._tipo==='termo'){
+        icon='📋';
+        const nomeTermo = f.tipo==='paliativo'?'Cuidados Paliativos':f.tipo==='traqueo'?'Autorização de Traqueostomia':'Termo';
+        titulo=`Termo: ${nomeTermo}`;
+        edit=`_abrirTermoExistente('${f.key}')`;
+        impr=`_imprimirTermoChave('${f.key}')`;
+      } else {
+        icon='🦠';
+        titulo=`ATB: ${(f.atbs||[]).map(a=>a.atb).filter(Boolean).join(', ')||'—'}`;
+        edit=`_abrirFichaExistente('${f.key}')`;
+        impr=`_imprimirFichaChave('${f.key}')`;
+      }
       const dataf = _fmtDataCurta(f.data)||'?';
-      const edit  = f._tipo==='hemo' ? `_abrirHemoExistente('${f.key}')` : `_abrirFichaExistente('${f.key}')`;
-      const impr  = f._tipo==='hemo' ? `_imprimirHemoChave('${f.key}')` : `_imprimirFichaChave('${f.key}')`;
       return `<div style="border:1px solid var(--borda);border-radius:9px;padding:10px 12px;margin-bottom:6px;background:var(--bg2);display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
         <div style="flex:1;">
           <strong style="color:var(--vinho);">${icon} ${titulo}</strong><br>
@@ -3388,7 +3402,8 @@ function _detectarATBsNovos(){
 
 function _mostrarModalATBNovos(atbs){
   const nomes=atbs.map(a=>`${a.motivo==='novo'?'🆕':'✏️'} ${a.farm}`).join('<br>');
-  // Usa um confirm customizado simples via toast/modal inline
+  // Guarda os ATBs num campo global para evitar problemas com aspas no onclick
+  window._atbsPendentes = atbs.map(a=>a.farm);
   const el=document.createElement('div');
   el.className='modal show'; el.id='modal-atb-prompt';
   el.innerHTML=`<div class="modal-box" style="max-width:480px;">
@@ -3401,7 +3416,7 @@ function _mostrarModalATBNovos(atbs){
       </div>
       <p style="font-size:.86rem;margin-bottom:14px;">Deseja preencher a ficha de solicitação de antimicrobiano agora?</p>
       <div style="display:flex;gap:8px;justify-content:flex-end;">
-        <button class="btn btn-pri" onclick="document.getElementById('modal-atb-prompt').remove();abrirFichaATBComATBs(${JSON.stringify(atbs.map(a=>a.farm))})">✓ Sim, preencher ficha</button>
+        <button class="btn btn-pri" onclick="document.getElementById('modal-atb-prompt').remove();abrirFichaATBComATBs(window._atbsPendentes||[])">✓ Sim, preencher ficha</button>
         <button class="btn" onclick="document.getElementById('modal-atb-prompt').remove()">Agora não</button>
       </div>
     </div>
@@ -3932,4 +3947,245 @@ async function _imprimirHemoChave(key){
   showLoading('Carregando ficha...');
   try{ const f=await dbGet(key); hideLoading(); if(f) _imprimirFichaHemoObj(f); }
   catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   TERMOS DE CONSENTIMENTO (TCLE)
+   ─ Cuidados Paliativos e Autorização de Traqueostomia
+   ────────────────────────────────────────────────────────────────────────── */
+
+function abrirTermos(tipo){
+  // Preenche dados do paciente
+  sf('termo-pac',   gf('f-pac')||'');
+  sf('termo-dn',    gf('f-dn')||'');
+  sf('termo-leito', gf('f-leito')||'');
+  sf('termo-data',  hoje());
+  if(tipo){ sf('termo-tipo', tipo); _termoMudar(); }
+  $('modal-termo').classList.add('show');
+}
+
+function fecharTermo(){ $('modal-termo').classList.remove('show'); }
+
+function _termoMudar(){
+  const t=gf('termo-tipo');
+  // Testemunhas só aparecem para paliativo
+  $('termo-testemunhas').style.display = (t==='paliativo') ? '' : 'none';
+}
+
+function _coletarTermo(){
+  return {
+    tipo:gf('termo-tipo'),
+    pac:gf('termo-pac'), dn:gf('termo-dn'), leito:gf('termo-leito'),
+    data:gf('termo-data'),
+    resp:gf('termo-resp'), cpf:gf('termo-cpf'),
+    vinculo:gf('termo-vinculo'), tel:gf('termo-tel'),
+    t1Nome:gf('termo-t1-nome'), t1Cpf:gf('termo-t1-cpf'),
+    t2Nome:gf('termo-t2-nome'), t2Cpf:gf('termo-t2-cpf'),
+    autor:usuarioEmail, autorNome:perfilUsuario?perfilUsuario.nome:'',
+    medCrm:perfilUsuario?perfilUsuario.crm:'',
+    salvadoEm:new Date().toISOString()
+  };
+}
+
+async function salvarTermo(){
+  if(!leitoAtual){ toast('Abra o prontuário de um paciente.',true); return; }
+  if(!gf('termo-tipo')){ toast('Selecione o tipo de termo.',true); return; }
+  if(!gf('termo-resp')){ toast('Informe o nome do responsável.',true); return; }
+  showLoading('Salvando termo...');
+  try{
+    const t=_coletarTermo();
+    const key=`uti_med_termo_${leitoAtual}_${t.data}_${Date.now()}`;
+    await dbSet(key,t);
+    hideLoading(); toast('✓ Termo salvo.');
+    _renderGuiasFichas();
+  }catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
+}
+
+function imprimirTermo(){
+  const t=_coletarTermo();
+  if(!t.tipo){ toast('Selecione o tipo de termo.',true); return; }
+  if(t.tipo==='paliativo') _imprimirTermoPaliativo(t);
+  else if(t.tipo==='traqueo') _imprimirTermoTraqueostomia(t);
+}
+
+async function _imprimirTermoChave(key){
+  showLoading('Carregando termo...');
+  try{
+    const t=await dbGet(key); hideLoading();
+    if(!t){ toast('Termo não encontrado.',true); return; }
+    if(t.tipo==='paliativo') _imprimirTermoPaliativo(t);
+    else if(t.tipo==='traqueo') _imprimirTermoTraqueostomia(t);
+  }catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
+}
+
+async function _abrirTermoExistente(key){
+  showLoading('Carregando termo...');
+  try{
+    const t=await dbGet(key); hideLoading();
+    if(!t){ toast('Termo não encontrado.',true); return; }
+    sf('termo-tipo',t.tipo||''); _termoMudar();
+    sf('termo-pac',t.pac||''); sf('termo-dn',t.dn||''); sf('termo-leito',t.leito||'');
+    sf('termo-data',t.data||hoje());
+    sf('termo-resp',t.resp||''); sf('termo-cpf',t.cpf||'');
+    sf('termo-vinculo',t.vinculo||''); sf('termo-tel',t.tel||'');
+    sf('termo-t1-nome',t.t1Nome||''); sf('termo-t1-cpf',t.t1Cpf||'');
+    sf('termo-t2-nome',t.t2Nome||''); sf('termo-t2-cpf',t.t2Cpf||'');
+    $('modal-termo').classList.add('show');
+  }catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
+}
+
+/* ── Cabeçalho institucional comum aos termos ─────────────────────────── */
+function _termoCabecalho(){
+  return `<div class="cab">
+    <p style="font-size:8pt;color:#555;">SECRETARIA MUNICIPAL DE SAÚDE</p>
+    <h1 style="font-size:13pt;color:#7a1020;font-weight:800;margin-top:2px;">HOSPITAL DOS PESCADORES</h1>
+  </div>`;
+}
+
+function _termoEstilos(){
+  return `<style>
+    *{box-sizing:border-box;margin:0;padding:0;font-family:'Arial',sans-serif;}
+    @page{size:A4 portrait;margin:1.5cm}
+    body{font-size:10pt;color:#000;line-height:1.55;text-align:justify;}
+    .cab{text-align:center;border-bottom:2px solid #7a1020;padding-bottom:8px;margin-bottom:14px;}
+    h2.titulo{text-align:center;font-size:11pt;font-weight:800;margin:14px 0 10px;text-transform:uppercase;letter-spacing:.04em;}
+    p{margin-bottom:8px;}
+    .item{margin-bottom:7px;text-align:justify;}
+    .item b{display:inline-block;min-width:18px;}
+    .linha-dados{margin:10px 0;line-height:1.9;}
+    .campo{display:inline-block;border-bottom:1px solid #555;padding:0 4px;min-width:120px;}
+    .campo-grande{display:inline-block;border-bottom:1px solid #555;padding:0 4px;min-width:280px;}
+    .assin{margin-top:24px;text-align:center;}
+    .assin .linha{border-top:1px solid #555;display:inline-block;min-width:280px;padding-top:3px;font-size:9pt;}
+    .duas-assin{display:flex;justify-content:space-between;gap:20px;margin-top:20px;}
+    .duas-assin > div{flex:1;text-align:center;}
+    .duas-assin .linha{border-top:1px solid #555;padding-top:3px;font-size:9pt;}
+    @media print{body{margin:0;}}
+  </style>`;
+}
+
+function _imprimirTermoPaliativo(t){
+  const dia=t.data?_fmtDataCurta(t.data):'____';
+  // Quebra a data em dia/mês/ano
+  let d='____', m='____________', y='____';
+  if(t.data){
+    const dt=new Date(t.data+'T00:00:00');
+    d=dt.getDate().toString().padStart(2,'0');
+    m=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'][dt.getMonth()];
+    y=dt.getFullYear();
+  }
+
+  const html=`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+  <title>TCLE Cuidados Paliativos — ${t.pac||''}</title>
+  ${_termoEstilos()}</head><body>
+  ${_termoCabecalho()}
+  <h2 class="titulo">TERMO DE CONSENTIMENTO LIVRE E ESCLARECIDO PARA ADOÇÃO DE MEDIDAS DE CUIDADOS PALIATIVOS</h2>
+
+  <p style="font-size:9.5pt;"><b>Definição:</b> Segundo a Organização Mundial de Saúde "cuidados paliativos consistem na assistência promovida por uma equipe multidisciplinar, que objetiva a melhoria da qualidade de vida do paciente e seus familiares, diante de uma doença que ameace a vida, por meio da prevenção e alívio do sofrimento, da identificação precoce, avaliação impecável e tratamento de dor e demais sintomas físicos, sociais, psicológicos e espirituais."</p>
+
+  <p style="margin-top:10px;"><b>Declaro que:</b></p>
+
+  <div class="item"><b>1.</b> Fui esclarecido(a) que no suporte de Cuidados Paliativos há a oferta de uma estrutura assistencial especialmente destinada aos pacientes que se encontram em situações clínicas irreversíveis e terminais.</div>
+  <div class="item"><b>2.</b> Estou ciente que nas medidas/assistência de Cuidados Paliativos o paciente receberá cuidados clínicos integrados aos aspectos psicológicos, sociais e espirituais. Neste tipo de assistência não há suporte de Terapia Intensiva, nem a realização de procedimentos invasivos e tratamentos que sejam desnecessários, sob a ótica médica, no estágio em que se encontra a doença.</div>
+  <div class="item"><b>3.</b> Fui esclarecido(a) que a assistência ocorrerá de forma coordenada e por uma equipe multidisciplinar, composta de médicos, enfermeiros, psicólogo ou assistente social, além de outros profissionais, que sejam importantes para a promoção do conforto, alívio da dor e qualidade de vida do paciente.</div>
+  <div class="item"><b>4.</b> Confirmo que recebi todas as informações necessárias quanto aos riscos, benefícios de não realizar nenhuma atitude terapêutica diante da natureza da(s) enfermidade(s) diagnosticada(s), bem como, que será respeitada a autonomia e desejo do paciente ou seu representante legal, nas decisões sobre os tratamentos, procedimentos e plano de cuidados.</div>
+  <div class="item"><b>5.</b> Fui esclarecido(a) que a adesão às medidas de Cuidados Paliativos é voluntária e, que o paciente pode, a qualquer momento, sair deste modelo assistencial ou mesmo recusar um determinado tratamento ou serviço, sem que implique em prejuízo ao tratamento convencional.</div>
+  <div class="item"><b>6.</b> Foram observadas todas as orientações necessárias para o procedimento/tratamento, bem como foram fornecidas as informações sobre o estado de saúde do paciente, incluindo doenças, medicações, alergias, medicações em uso contínuo ou eventual.</div>
+  <div class="item"><b>7.</b> Tive a oportunidade de fazer perguntas, que foram respondidas de maneira satisfatória, incluindo o direito de revogação do consentimento dado, desde que seja feito antes do início da realização do procedimento/tratamento.</div>
+
+  <p style="margin-top:10px;">Desta forma, diante da compreensão do alcance dos benefícios, riscos, alternativas e pleno conhecimento do inteiro teor deste termo, <b>AUTORIZO</b> a adoção de medidas de cuidados paliativos para o(a) paciente <b>${(t.pac||'').toUpperCase()}</b>${t.dn?', nascido(a) em '+_fmtDataCurta(t.dn):''}${t.leito?', leito '+t.leito:''}.</p>
+
+  <div class="linha-dados">
+    NATAL-RN, <span class="campo">${d}</span> de <span class="campo">${m}</span> de <span class="campo">${y}</span>.
+  </div>
+
+  <h3 style="font-size:10pt;margin-top:14px;text-decoration:underline;">Preenchimento Obrigatório pelo Paciente ou Representante Legal</h3>
+  <div class="linha-dados">
+    Nome legível: <span class="campo-grande">${(t.resp||'').toUpperCase()}</span><br>
+    Grau de parentesco/vínculo: <span class="campo-grande">${(t.vinculo||'').toUpperCase()}</span><br>
+    CPF: <span class="campo">${t.cpf||''}</span> &nbsp;&nbsp; Telefone: <span class="campo">${t.tel||''}</span><br>
+    Assinatura: <span class="campo-grande">&nbsp;</span>
+  </div>
+
+  <h3 style="font-size:10pt;margin-top:14px;text-decoration:underline;">Preenchimento Obrigatório pela Equipe Médica</h3>
+  <p style="font-size:9.5pt;">Expliquei o procedimento ao qual o paciente acima referido está sujeito, ao próprio paciente ou seu representante legal, sobre os benefícios, riscos e alternativas, tendo respondido às perguntas formuladas. De acordo com o meu entendimento, o paciente e/ou seu representante legal, está em condições de compreender o que lhes foi informado.</p>
+
+  <div class="assin">
+    <div class="linha">${(t.autorNome||'').toUpperCase()}<br>Assinatura e carimbo do Médico${t.medCrm?' — CRM '+t.medCrm:''}</div>
+  </div>
+
+  <h3 style="font-size:10pt;margin-top:16px;text-decoration:underline;">Testemunhas</h3>
+  <div class="duas-assin">
+    <div>
+      Nome: <span class="campo-grande">${(t.t1Nome||'').toUpperCase()}</span><br>
+      CPF: <span class="campo">${t.t1Cpf||''}</span><br>
+      <div class="linha" style="margin-top:14px;">Assinatura</div>
+    </div>
+    <div>
+      Nome: <span class="campo-grande">${(t.t2Nome||'').toUpperCase()}</span><br>
+      CPF: <span class="campo">${t.t2Cpf||''}</span><br>
+      <div class="linha" style="margin-top:14px;">Assinatura</div>
+    </div>
+  </div>
+
+  <div style="margin-top:16px;font-size:9pt;">
+    Revogação: <span class="campo">________________</span>, <span class="campo">____</span> de <span class="campo">________________</span> de <span class="campo">______</span><br>
+    <div class="assin" style="margin-top:8px;"><div class="linha">Paciente ou Representante Legal</div></div>
+  </div>
+
+  <script>window.onload=()=>{window.print();window.onafterprint=()=>window.close();}<\/script>
+  </body></html>`;
+
+  const w=window.open('','_blank','width=820,height=950');
+  if(w){ w.document.write(html); w.document.close(); }
+  else toast('Popup bloqueado — permita popups para imprimir.',true);
+}
+
+function _imprimirTermoTraqueostomia(t){
+  let d='____', m='____', y='____';
+  if(t.data){
+    const dt=new Date(t.data+'T00:00:00');
+    d=dt.getDate().toString().padStart(2,'0');
+    m=(dt.getMonth()+1).toString().padStart(2,'0');
+    y=dt.getFullYear().toString().slice(-2);
+  }
+
+  const html=`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+  <title>Termo Traqueostomia — ${t.pac||''}</title>
+  ${_termoEstilos()}</head><body>
+  ${_termoCabecalho()}
+  <h2 class="titulo">TERMO DE CONSENTIMENTO INFORMADO<br>AUTORIZAÇÃO PARA TRAQUEOSTOMIA</h2>
+
+  <p style="margin-top:14px;line-height:2;">
+    EU, <span class="campo-grande">${(t.resp||'').toUpperCase()}</span>, RG/CPF <span class="campo">${t.cpf||''}</span>,<br>
+    GRAU DE PARENTESCO <span class="campo">${(t.vinculo||'').toUpperCase()}</span>,<br>
+    DA(O) PACIENTE <span class="campo-grande">${(t.pac||'').toUpperCase()}</span>, DN: <span class="campo">${t.dn?_fmtDataCurta(t.dn):''}</span>,<br>
+    INTERNADA(O) NA UTI-HOSPESC, LEITO <span class="campo">${t.leito||''}</span>, <b>AUTORIZO A REALIZAÇÃO DA TRAQUEOSTOMIA</b> ESTANDO CIENTE DAS POSSÍVEIS COMPLICAÇÕES E SUAS INDICAÇÕES.
+  </p>
+
+  <p style="margin-top:14px;text-align:justify;">
+    É compreendido que durante o transcurso do procedimento, operação, exame e/ou tratamento pode ser necessário o uso de equipamentos / instrumentos invasivos. Foram explicados em detalhes os riscos e benefícios associados com esse tipo de monitoramento.
+  </p>
+  <p style="text-align:justify;">
+    Está claro e entendido que os medicamentos/materiais associados ao procedimento podem ocasionar complicações e provocar reações diversas, inclusive adversas no organismo do(a) paciente. Está claro que durante o procedimento podem surgir certas condições que requeiram a modificação ou extensão deste consentimento. Pode ser necessária a mudança da técnica cirúrgica proposta no presente termo, ou até a suspensão da cirurgia em razão de variantes surgidas no pré ou no transprocedimento, variantes essas que podem não ser detectadas na avaliação prévia, como, por exemplo, febre, jejum inadequado, complicações anestésicas, variações anatômicas, etc. Neste ato são autorizadas as modificações ou extensões a este consentimento segundo o juízo profissional do médico assistente, de acordo com as circunstâncias e as necessidades.
+  </p>
+
+  <div style="text-align:right;margin-top:24px;">
+    Natal-RN, <span class="campo">${d}</span>/<span class="campo">${m}</span>/<span class="campo">${y}</span> de 20<span class="campo">${y}</span>.
+  </div>
+
+  <div class="assin" style="margin-top:50px;">
+    <div class="linha">${(t.resp||'').toUpperCase()}<br>Assinatura do responsável</div>
+  </div>
+
+  <div class="assin" style="margin-top:30px;">
+    <div class="linha">${(t.autorNome||'').toUpperCase()}<br>Assinatura e carimbo do Médico${t.medCrm?' — CRM '+t.medCrm:''}</div>
+  </div>
+
+  <script>window.onload=()=>{window.print();window.onafterprint=()=>window.close();}<\/script>
+  </body></html>`;
+
+  const w=window.open('','_blank','width=820,height=950');
+  if(w){ w.document.write(html); w.document.close(); }
+  else toast('Popup bloqueado — permita popups para imprimir.',true);
 }
