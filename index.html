@@ -530,6 +530,14 @@
                   </div>
                   <div class="guia-acao">Preencher →</div>
                 </div>
+                <div class="guia-card" onclick="abrirTermos()">
+                  <div class="guia-icon">📋</div>
+                  <div class="guia-info">
+                    <div class="guia-titulo">Termos de Consentimento</div>
+                    <div class="guia-sub">Cuidados paliativos, traqueostomia e outros TCLEs</div>
+                  </div>
+                  <div class="guia-acao">Preencher →</div>
+                </div>
               </div>
               <!-- Lista de fichas salvas do paciente -->
               <div style="margin-top:16px;">
@@ -665,6 +673,76 @@
     </div>
   </div>
 </div>
+
+<!-- ══════════════ MODAL TERMOS DE CONSENTIMENTO ══════════════ -->
+<div class="modal" id="modal-termo">
+  <div class="modal-box" style="max-width:760px;max-height:94vh;overflow-y:auto;">
+    <div class="modal-head">
+      <h3>📋 Termos de Consentimento</h3>
+      <button class="modal-x" onclick="fecharTermo()">×</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Seletor de termo -->
+      <div class="secao">
+        <div class="secao-t">Selecione o termo</div>
+        <div class="secao-c">
+          <div class="fl"><label>Tipo de termo</label>
+            <select id="termo-tipo" onchange="_termoMudar()">
+              <option value="">— Selecione —</option>
+              <option value="paliativo">Cuidados Paliativos</option>
+              <option value="traqueo">Autorização de Traqueostomia</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dados do responsável -->
+      <div class="secao">
+        <div class="secao-t">Paciente e Responsável</div>
+        <div class="secao-c">
+          <div class="dc">
+            <div class="fl" style="flex:2"><label>Paciente</label><input type="text" id="termo-pac" readonly style="background:var(--bg2);"></div>
+            <div class="fl"><label>Data de Nasc.</label><input type="date" id="termo-dn" readonly style="background:var(--bg2);"></div>
+            <div class="fl"><label>Leito</label><input type="text" id="termo-leito" readonly style="background:var(--bg2);"></div>
+          </div>
+          <div class="dc">
+            <div class="fl" style="flex:2"><label>Nome do responsável</label><input type="text" id="termo-resp" style="text-transform:uppercase;"></div>
+            <div class="fl"><label>RG/CPF</label><input type="text" id="termo-cpf"></div>
+          </div>
+          <div class="dc">
+            <div class="fl"><label>Grau de parentesco</label><input type="text" id="termo-vinculo" style="text-transform:uppercase;" placeholder="Ex: ESPOSA, FILHO"></div>
+            <div class="fl"><label>Telefone</label><input type="text" id="termo-tel"></div>
+            <div class="fl"><label>Data do termo</label><input type="date" id="termo-data"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Testemunhas (apenas para paliativo) -->
+      <div class="secao" id="termo-testemunhas">
+        <div class="secao-t">Testemunhas (opcional)</div>
+        <div class="secao-c">
+          <div class="dc">
+            <div class="fl"><label>Nome testemunha 1</label><input type="text" id="termo-t1-nome" style="text-transform:uppercase;"></div>
+            <div class="fl"><label>CPF testemunha 1</label><input type="text" id="termo-t1-cpf"></div>
+          </div>
+          <div class="dc">
+            <div class="fl"><label>Nome testemunha 2</label><input type="text" id="termo-t2-nome" style="text-transform:uppercase;"></div>
+            <div class="fl"><label>CPF testemunha 2</label><input type="text" id="termo-t2-cpf"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ações -->
+      <div class="form-actions" style="margin-top:0;">
+        <button class="btn btn-pri" onclick="salvarTermo()">⌘ Salvar termo</button>
+        <button class="btn btn-sec" onclick="imprimirTermo()">🖨 Imprimir</button>
+        <button class="btn" onclick="fecharTermo()">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 
 <!-- ══════════════ MODAL SOLICITAÇÃO DE HEMOTERÁPICOS ══════════════ -->
 <div class="modal" id="modal-hemo-ficha">
