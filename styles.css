@@ -792,3 +792,28 @@ a:hover{text-decoration:underline}
   font-size:.86rem; cursor:pointer;
 }
 .radio-label input[type=radio]{ cursor:pointer; }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   FICHA DE HEMOTERÁPICOS
+   ════════════════════════════════════════════════════════════════════════════ */
+.hemo-secao-titulo{
+  text-align:center; font-weight:800; font-size:.9rem;
+  letter-spacing:.1em; background:var(--vinho); color:white;
+  padding:8px 12px; border-radius:8px 8px 0 0; margin-bottom:0;
+}
+.hemo-pedido-grid{
+  display:grid; grid-template-columns:1fr 1fr;
+  gap:6px 20px;
+}
+.hemo-item{
+  display:flex; align-items:center; gap:8px;
+}
+.hemo-item .check-label{ flex:1; font-size:.84rem; }
+.hemo-qtd{
+  width:90px; flex-shrink:0; padding:4px 7px;
+  border:1.5px solid var(--borda); border-radius:6px;
+  font-size:.82rem; text-transform:uppercase;
+}
+@media(max-width:640px){
+  .hemo-pedido-grid{ grid-template-columns:1fr; }
+}
