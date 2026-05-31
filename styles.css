@@ -54,7 +54,7 @@
   --sombra-2:0 12px 32px rgba(13,20,34,.18);
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{font-family:var(--font-sans);background:var(--bg);color:var(--tinta);font-size:14.5px;line-height:1.5;
+html,body{font-family:var(--font-sans);background:var(--bg);color:var(--tinta);font-size:16px;line-height:1.55;
   -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
 a{color:var(--vinho-2);text-decoration:none}
 a:hover{text-decoration:underline}
@@ -565,4 +565,192 @@ a:hover{text-decoration:underline}
   }
   .presc-table thead tr{ background:#333 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
   .presc-wrap{ overflow:visible !important; }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   AJUSTES DE LEGIBILIDADE — DESKTOP (≥768px)
+   ─ Aumenta as fontes do formulário e da prescrição mantendo o mobile compacto.
+   ════════════════════════════════════════════════════════════════════════════ */
+@media(min-width:768px){
+
+  /* ── HEADER ─────────────────────────────────────────────────────────────── */
+  .app-header h2{ font-size:1.1rem; }
+  .app-header small{ font-size:.8rem; }
+  .badge{ font-size:.78rem; padding:5px 14px; }
+
+  /* ── SIDEBAR DO PRONTUÁRIO ─────────────────────────────────────────────── */
+  .prontuario-nav{ width:160px; }
+  .pnav-pac{ font-size:.7rem; padding:8px 14px 12px; }
+  .pnav-btn{ padding:14px 8px; font-size:.74rem; gap:6px; }
+  .pnav-icon{ font-size:1.6rem; }
+
+  /* ── FORMULÁRIO (Evolução / Lab) ────────────────────────────────────────── */
+  .secao-t{ font-size:.82rem !important; padding:.8rem 1rem; letter-spacing:.06em; }
+  .secao-c{ padding:1.1rem; }
+  .fl{ margin-bottom:.85rem; }
+  .fl label{ font-size:.74rem !important; margin-bottom:.35rem; letter-spacing:.04em; }
+  .fl input, .fl select, .fl textarea{
+    padding:.6rem .8rem !important; font-size:.95rem !important;
+  }
+  .fl textarea{ line-height:1.55; }
+  .grid2{ gap:.85rem; }
+  .tip{ font-size:.84rem; padding:.7rem 1rem; line-height:1.5; }
+  .saps-num, .saps-mort{ font-size:3rem; }
+  .saps-lbl{ font-size:.74rem; }
+
+  /* ── BOTÕES ─────────────────────────────────────────────────────────────── */
+  .btn{ font-size:.9rem; padding:.62rem 1.1rem; }
+  .btn-sm{ font-size:.82rem; padding:.45rem .8rem; }
+
+  /* ── EXAMES LAB ─────────────────────────────────────────────────────────── */
+  .lab-grid .fl label{ font-size:.66rem; }
+  .lab-grid .fl input{ font-size:.88rem; padding:.45rem .6rem; }
+
+  /* ── CHIPS DE CULTURA ──────────────────────────────────────────────────── */
+  .cult-chip{ font-size:.84rem; padding:6px 12px; }
+
+  /* ════════════════════════════════════════════════════════════════════════
+     PRESCRIÇÃO — desktop com fontes maiores e mais espaço
+     ════════════════════════════════════════════════════════════════════════ */
+  .presc-header{ padding-bottom:14px; margin-bottom:16px; }
+  .presc-meta{ font-size:.95rem; }
+
+  .presc-table{ font-size:.94rem; min-width:900px; }
+  .presc-table th{
+    padding:11px 12px; font-size:.78rem; letter-spacing:.06em;
+  }
+  .presc-table td{ padding:8px 8px; }
+  .presc-num{ font-size:.86rem; }
+
+  .presc-table input[type=text],
+  .presc-table select{
+    padding:7px 10px !important; font-size:.94rem;
+  }
+  .presc-table input.rx-farm{ font-size:.96rem; }
+
+  /* Aumenta colunas para caber tudo bem */
+  .presc-th-num{ width:46px; }
+  .presc-th-farm{ min-width:280px; }
+  .presc-th-dose{ width:140px; }
+  .presc-th-via{ width:90px; }
+  .presc-th-freq{ width:130px; }
+  .presc-th-hor{ width:340px; }
+  .presc-th-obs{ min-width:140px; }
+  .presc-th-del{ width:42px; }
+
+  /* Chips de horário maiores */
+  .rx-hor-chip{
+    font-size:.78rem !important; padding:4px 9px !important;
+    border-radius:6px; border-width:1.5px;
+  }
+  .rx-hor-chip-snd, .rx-hor-chip-sn, .rx-hor-chip-acm, .rx-hor-chip-uso{
+    font-size:.74rem !important; padding:4px 11px !important; border-radius:12px;
+  }
+  .rx-horarios{ gap:5px; }
+
+  /* Autocomplete maior */
+  .rx-autocomplete{ min-width:380px !important; max-height:340px; }
+  .rx-ac-item{ padding:11px 16px; font-size:.92rem; }
+  .rx-ac-nome{ font-size:.96rem; }
+  .rx-ac-info{ font-size:.8rem; margin-top:3px; }
+
+  /* Botão deletar maior */
+  .presc-del{ font-size:1.25rem; padding:5px 9px; }
+
+  /* Alerta de alergia */
+  .presc-alerta{ font-size:.92rem; padding:11px 16px; }
+
+  /* ── INDICADORES ────────────────────────────────────────────────────────── */
+  .ind-card .v{ font-size:2.2rem; }
+  .ind-card .t{ font-size:.8rem; }
+  .ind-tabela{ font-size:.88rem; }
+  .ind-tabela th{ font-size:.78rem; padding:8px 10px; }
+  .ind-tabela td{ padding:8px 10px; }
+
+  /* ── LEITOS ─────────────────────────────────────────────────────────────── */
+  .leito-pac{ font-size:1rem; }
+  .leito-diag{ font-size:.8rem; }
+  .leito-num{ font-size:.74rem; }
+
+  /* ── MODAIS ─────────────────────────────────────────────────────────────── */
+  .modal-head h3{ font-size:1.1rem; }
+  .modal-body{ font-size:.94rem; }
+}
+
+/* Desktop grande (≥1280px) — mais espaço ainda */
+@media(min-width:1280px){
+  html,body{ font-size:16.5px; }
+  .card{ margin:1.2rem 1.5rem; padding:1.6rem; }
+  .prontuario-nav{ width:170px; }
+  .presc-table{ font-size:.98rem; }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   APOIO CLÍNICO — painel de cards no topo da prescrição
+   ════════════════════════════════════════════════════════════════════════════ */
+.presc-apoio{
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:8px; margin-bottom:14px;
+}
+.apoio-card{
+  background:#fff; border:1.5px solid var(--borda); border-radius:10px;
+  padding:9px 12px; font-size:.82rem; line-height:1.45;
+}
+.apoio-titulo{
+  font-family:var(--font-mono); font-size:.66rem; font-weight:700;
+  letter-spacing:.08em; color:var(--vinho); margin-bottom:5px;
+  text-transform:uppercase;
+}
+.apoio-item{ font-size:.8rem; padding:3px 0; }
+.apoio-item + .apoio-item{ border-top:1px dashed #eee; margin-top:3px; padding-top:5px; }
+.apoio-item b{ color:var(--tinta); }
+.apoio-item em{ color:var(--muted); font-style:italic; }
+
+.apoio-tfg{ border-color:var(--vinho-borda); background:#faf5f6; }
+.apoio-tfg-vals{ display:flex; gap:14px; align-items:baseline; flex-wrap:wrap; margin:2px 0 4px; }
+.apoio-tfg-vals > div{ display:flex; flex-direction:column; line-height:1; }
+.tfg-num{ font-size:1.6rem; font-weight:800; line-height:1; }
+.tfg-unit{ font-size:.62rem; color:var(--muted); margin-top:2px; font-family:var(--font-mono); text-transform:uppercase; }
+.apoio-sub{ font-size:.7rem; color:var(--muted); font-family:var(--font-mono); }
+
+.apoio-alerta{ border-color:#e57373; background:#fde8e6; }
+.apoio-alerta .apoio-titulo{ color:#b71c1c; }
+.apoio-item.apoio-alta b{ color:#b71c1c; }
+.apoio-item.apoio-media b{ color:#e65100; }
+
+.apoio-warn{ border-color:#ffb74d; background:#fff8e1; }
+.apoio-warn .apoio-titulo{ color:#e65100; }
+
+.apoio-info{ border-color:#90caf9; background:#e3f2fd; }
+.apoio-info .apoio-titulo{ color:#1565c0; }
+
+/* Badge D-dia ao lado do nome do ATB */
+.rx-ddia{
+  display:inline-block; font-family:var(--font-mono); font-size:.62rem;
+  font-weight:700; color:white; padding:2px 6px; border-radius:5px;
+  letter-spacing:.04em; flex-shrink:0;
+}
+
+/* Templates lista */
+.modal-body .tip{ font-size:.82rem; }
+
+
+/* ════════════════════════════════════════════════════════════════════════════
+   COLUNA APRESENTAÇÃO (qtd + apres) na prescrição
+   ════════════════════════════════════════════════════════════════════════════ */
+.presc-th-apres{ width:120px; }
+.rx-qtdapres{ display:flex; gap:3px; align-items:center; }
+.rx-qtd{ width:42px !important; text-align:center; flex-shrink:0; }
+.rx-apres{ flex:1; min-width:62px; font-size:.8rem !important; }
+.presc-table .rx-qtd, .presc-table .rx-apres{ padding:4px 5px !important; }
+
+@media(min-width:768px){
+  .presc-th-apres{ width:140px; }
+  .rx-qtd{ width:48px !important; }
+  .rx-apres{ font-size:.86rem !important; }
+}
+
+/* Impressão: a coluna apresentação some (fundida na dose) */
+@media print{
+  .presc-th-apres{ display:none; }
 }
