@@ -457,6 +457,11 @@ async function renderLeitos(){
         <div class="leito-pac">${L.pac}</div>
         <div class="leito-diag">${L.diag||'—'}</div>
         <div class="leito-tags">${sapsBadge}${L.adm?`<span class="leito-tag">UTI ${_fmtDataCurta(L.adm)}</span>`:''}</div>
+        <div class="leito-card-actions" style="margin-top:8px;display:flex;gap:4px;width:100%;z-index:10;" onclick="event.stopPropagation();">
+          <button class="btn btn-sm" style="flex:1;font-size:0.62rem;padding:2px 4px;border-radius:4px;background:rgba(122,16,32,0.1);border:1px solid var(--vinho);color:var(--vinho);" onclick="abrirFormularioDirect(${i},'evolucao')">📋 Evolução</button>
+          <button class="btn btn-sm" style="flex:1;font-size:0.62rem;padding:2px 4px;border-radius:4px;background:rgba(122,16,32,0.1);border:1px solid var(--vinho);color:var(--vinho);" onclick="abrirFormularioDirect(${i},'prescricao')">💊 Presc.</button>
+          <button class="btn btn-sm" style="flex:1;font-size:0.62rem;padding:2px 4px;border-radius:4px;background:rgba(122,16,32,0.1);border:1px solid var(--vinho);color:var(--vinho);" onclick="abrirFormularioDirect(${i},'guias')">📄 Guias</button>
+        </div>
       </div>`;
     } else {
       h+=`<div class="leito-card vazio" onclick="abrirModalAdmissaoNovo(${i})">
@@ -738,6 +743,11 @@ async function abrirFormulario(leito){
     hideLoading();
     mostrarTela('t-form');
   }catch(e){ hideLoading(); console.error('abrirFormulario:',e); toast('Erro ao abrir: '+(e.message||e),true); }
+}
+
+async function abrirFormularioDirect(leito, aba){
+  await abrirFormulario(leito);
+  mudarAba(aba);
 }
 
 function _limparFormulario(){
@@ -2355,8 +2365,65 @@ function _rxFocusUltimo(){
 
 function _rxRemover(id){ _rxItens=_rxItens.filter(i=>i.id!==id); _renderPrescricao(); }
 
-function _rxSetField(id, campo, val){
-  const it=_rxItens.find(i=>i.id===id); if(it) it[campo]=val;
+// Detecta categoria do medicamento digitado manualmente
+function _rxDetectarCategoria(nome) {
+  if (!nome) return 'Medicação Geral';
+  const q = nome.trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  // 1. Tenta correspondência com a primeira palavra no banco de medicamentos
+  const match = RX_BANCO.find(m => {
+    const n = m.nome.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const primeiraM = n.split(/\s+/)[0];
+    const primeiraQ = q.split(/\s+/)[0];
+    return primeiraQ === primeiraM;
+  });
+  if (match && match.cat) return match.cat;
+
+  // 2. Fallbacks por termos comuns
+  if (/(AMPICILINA|SULBACTAM|AMOXICILINA|CLAVULANATO|ACICLOVIR|AZITROMICINA|BENZILPENICILINA|CEFALOTINA|CEFAZOLINA|CEFEPIMA|CEFOTAXIMA|CEFTAZIDIMA|CEFTRIAXONA|CIPROFLOXACINO|CLARITROMICINA|CLINDAMICINA|CLORANFENICOL|COLISTINA|ERTAPENEM|FLUCONAZOL|GENTAMICINA|AMICACINA|IVERMECTINA|LEVOFLOXACINO|LINEZOLIDA|MEROPENEM|METRONIDAZOL|MICAFUNGINA|MOXIFLOXACINO|NISTATINA|OSELTAMIVIR|OXACILINA|PIPERACILINA|TAZOBACTAM|POLIMIXINA|TEICOPLANINA|TIGECICLINA|VANCOMICINA|ALBENDAZOL|ATB|TEICO|TENTIN|MERONEM|CEFTRAX)/.test(q)) {
+    return 'ATB';
+  }
+  if (/(NORADRENALINA|NOREPINEFRINA|DOBUTAMINA|VASOPRESSINA|NIPRIDE|NITROPRUSSIATO|TRIDIL|NITROGLICERINA|AMIODARONA|DVA|NORA|DOBUTA)/.test(q)) {
+    return 'Droga Vasoativa';
+  }
+  if (/(FENTANIL|MIDAZOLAM|PROPOFOL|DEXMEDETOMIDINA|KETAMINA|MORFINA|TRAMADOL|DIPIRONA|PARACETAMOL|SEDA|PRECEDEX|DORMIDID)/.test(q)) {
+    return 'Sedação';
+  }
+  if (/(DIETA|JEJUM|RESTRIÇÃO)/.test(q)) {
+    return 'Dieta';
+  }
+  if (/(INSULINA|HGT|GLICOSE)/.test(q)) {
+    return 'Protocolo';
+  }
+  if (/(SSVV|CCGG|CABECEIRA|DECÚBITO|SVD|DIURESE|BH|FISIOTERAPIA|CURATIVO)/.test(q)) {
+    return 'Cuidados';
+  }
+  if (/(SF 0,9%|SG 5%|RINGER|SORO|JELCO)/.test(q)) {
+    return 'Hidratação';
+  }
+
+  return 'Medicação Geral';
+}
+
+function _rxDetectarTipo(cat) {
+  if (cat === 'Dieta') return 'dieta';
+  if (cat === 'Protocolo') return 'sn';
+  if (cat === 'Cuidados') return 'cuidados';
+  return 'normal';
+}
+
+function _rxSetField(id, campo, val) {
+  const it = _rxItens.find(i => i.id === id);
+  if (it) {
+    it[campo] = val;
+    if (campo === 'farm') {
+      it._cat = _rxDetectarCategoria(val);
+      it.tipo = _rxDetectarTipo(it._cat);
+      if (it._cat === 'ATB' && !it.ddInicio) {
+        it.ddInicio = gf('f-data') || hoje();
+      }
+    }
+  }
 }
 function _rxToggleHor(id, hor){
   const it=_rxItens.find(i=>i.id===id); if(!it) return;
@@ -2420,7 +2487,7 @@ function _renderPrescricao(){
           <input type="text" class="rx-farm" value="${it.farm||''}" placeholder="FÁRMACO / ITEM"
             style="text-transform:uppercase;flex:1;"
             oninput="_rxSetField(${it.id},'farm',this.value.toUpperCase());_rxAcInput(this,${it.id})"
-            onblur="_rxAcFechar()" onkeydown="_rxAcKey(event,${it.id})">
+            onblur="setTimeout(_rxAcFechar, 150)" onkeydown="_rxAcKey(event,${it.id})">
           ${_rxBadgeDdia(it)}
         </div>
       </td>
@@ -3084,27 +3151,37 @@ function _coletarFichaATB(){
   };
 }
 
-// Listar fichas salvas na aba Guias
+// Listar fichas salvas na aba Guias (ATB + Hemoterápicos)
 async function _renderGuiasFichas(){
   const w=$('guias-fichas-lista'); if(!w) return;
   w.innerHTML='<span style="font-size:.8rem;color:var(--muted);">Carregando...</span>';
   try{
-    const todas=await dbListByPrefix(`uti_med_atb_ficha_${leitoAtual}_`);
-    const arr=Object.entries(todas).map(([k,v])=>({key:k,...v})).filter(x=>x.pac);
-    arr.sort((a,b)=>(b.salvadoEm||'').localeCompare(a.salvadoEm||''));
+    const atbs  = await dbListByPrefix(`uti_med_atb_ficha_${leitoAtual}_`);
+    const hemos = await dbListByPrefix(`uti_med_hemo_ficha_${leitoAtual}_`);
+    const arr=[
+      ...Object.entries(atbs).map(([k,v])=>({key:k,...v, _tipo:'atb'})),
+      ...Object.entries(hemos).map(([k,v])=>({key:k,...v, _tipo:'hemo'}))
+    ].filter(x=>x.pac||x.nome).sort((a,b)=>(b.salvadoEm||'').localeCompare(a.salvadoEm||''));
     if(!arr.length){ w.innerHTML='<span style="font-size:.8rem;color:var(--muted);">Nenhuma ficha salva.</span>'; return; }
-    w.innerHTML=arr.map(f=>`
-      <div style="border:1px solid var(--borda);border-radius:9px;padding:10px 12px;margin-bottom:6px;background:var(--bg2);display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+    w.innerHTML=arr.map(f=>{
+      const icon  = f._tipo==='hemo'?'🩸':'🦠';
+      const titulo = f._tipo==='hemo'
+        ? `Hemoterápicos: ${(f.pedidos||[]).filter(p=>p.selecionado).map(p=>p.label.split(' ').slice(0,2).join(' ')).join(', ')||'—'}`
+        : `ATB: ${(f.atbs||[]).map(a=>a.atb).filter(Boolean).join(', ')||'—'}`;
+      const dataf = _fmtDataCurta(f.data)||'?';
+      const edit  = f._tipo==='hemo' ? `_abrirHemoExistente('${f.key}')` : `_abrirFichaExistente('${f.key}')`;
+      const impr  = f._tipo==='hemo' ? `_imprimirHemoChave('${f.key}')` : `_imprimirFichaChave('${f.key}')`;
+      return `<div style="border:1px solid var(--borda);border-radius:9px;padding:10px 12px;margin-bottom:6px;background:var(--bg2);display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
         <div style="flex:1;">
-          <strong style="color:var(--vinho);">🦠 ${(f.atbs||[]).map(a=>a.atb).filter(Boolean).join(', ')||'ATB'}</strong><br>
-          <span style="font-size:.74rem;color:var(--muted);">${_fmtDataCurta(f.data)||'?'} · ${f.uso||'terapêutico'} · ${f.autorNome||f.autor||'?'}</span>
+          <strong style="color:var(--vinho);">${icon} ${titulo}</strong><br>
+          <span style="font-size:.74rem;color:var(--muted);">${dataf} · ${f.autorNome||f.autor||'?'}</span>
         </div>
         <div style="display:flex;gap:4px;">
-          <button class="btn btn-sm" onclick="_abrirFichaExistente('${f.key}')">✎ Editar</button>
-          <button class="btn btn-sm" onclick="_imprimirFichaChave('${f.key}')">🖨 Imprimir</button>
+          <button class="btn btn-sm" onclick="${edit}">✎ Editar</button>
+          <button class="btn btn-sm" onclick="${impr}">🖨 Imprimir</button>
         </div>
-      </div>
-    `).join('');
+      </div>`;
+    }).join('');
   }catch(e){ w.innerHTML='<span style="font-size:.8rem;color:var(--vermelho);">Erro ao carregar fichas.</span>'; }
 }
 
@@ -3215,47 +3292,41 @@ function _imprimirFichaObj(f){
   const ccihHtml=(f.atbs||[]).map((a,i)=>`
     <tr>
       <td style="font-weight:700;">${(a.atb||'').toUpperCase()}</td>
-      <td>
-        <label style="margin-right:8px;"><input type="radio" name="p-aut-${i}" checked> SIM</label>
-        <label><input type="radio" name="p-aut-${i}"> NÃO</label>
-      </td>
-      <td>
-        <label style="margin-right:8px;"><input type="radio" name="p-alt-${i}"> SIM</label>
-        <label><input type="radio" name="p-alt-${i}" checked> NÃO</label>
-      </td>
-      <td></td><td></td><td></td>
+      <td style="white-space:nowrap;">☐ SIM &nbsp; ☐ NÃO</td>
+      <td style="white-space:nowrap;">☐ SIM &nbsp; ☐ NÃO</td>
+      <td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
     </tr>`).join('');
 
   const html=`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
   <title>Ficha ATB — ${f.pac||''}</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0;font-family:'Arial Narrow',Arial,sans-serif;}
-    @page{size:A4 portrait;margin:1.2cm}
-    body{font-size:9.5pt;color:#111;padding:0;}
-    .logo-wrap{text-align:center;border-bottom:2px solid #7a1020;padding-bottom:8px;margin-bottom:10px;}
-    .logo-wrap h1{font-size:13pt;color:#7a1020;font-weight:800;}
-    .logo-wrap h2{font-size:10pt;font-weight:700;letter-spacing:.04em;margin-top:2px;}
-    .logo-wrap p{font-size:8pt;color:#555;}
-    .secao{margin-bottom:10px;border:1px solid #ccc;border-radius:4px;overflow:hidden;}
-    .secao-titulo{background:#7a1020;color:white;padding:4px 10px;font-size:8pt;font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
-    .secao-corpo{padding:8px 10px;font-size:9pt;line-height:1.6;}
-    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-    .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;}
-    .campo{margin-bottom:4px;}
-    .campo label{font-size:7.5pt;font-weight:700;color:#7a1020;display:block;margin-bottom:1px;text-transform:uppercase;}
-    .campo .val{border-bottom:1px solid #aaa;min-height:16px;font-size:9pt;padding:1px 0;}
-    .diag-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px 10px;font-size:8.5pt;}
+    @page{size:A4 portrait;margin:0.9cm 1.1cm}
+    html,body{font-size:8.8pt;color:#111;padding:0;max-height:100%;overflow:hidden;}
+    .logo-wrap{text-align:center;border-bottom:2px solid #7a1020;padding-bottom:5px;margin-bottom:6px;}
+    .logo-wrap h1{font-size:12pt;color:#7a1020;font-weight:800;}
+    .logo-wrap h2{font-size:9.5pt;font-weight:700;letter-spacing:.04em;margin-top:1px;}
+    .logo-wrap p{font-size:7.5pt;color:#555;}
+    .secao{margin-bottom:5px;border:1px solid #ccc;border-radius:3px;overflow:hidden;page-break-inside:avoid;}
+    .secao-titulo{background:#7a1020;color:white;padding:2px 8px;font-size:7.5pt;font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
+    .secao-corpo{padding:5px 8px;font-size:8.5pt;line-height:1.4;}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+    .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;}
+    .campo{margin-bottom:2px;}
+    .campo label{font-size:7pt;font-weight:700;color:#7a1020;display:block;margin-bottom:1px;text-transform:uppercase;}
+    .campo .val{border-bottom:1px solid #aaa;min-height:14px;font-size:8.5pt;padding:0;}
+    .diag-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px 8px;font-size:8pt;}
     .check-item{display:flex;align-items:center;gap:4px;}
-    table{width:100%;border-collapse:collapse;font-size:8.5pt;}
-    th{background:#7a1020;color:white;padding:4px 6px;text-align:left;font-size:7.5pt;font-weight:700;text-transform:uppercase;}
-    td{border:1px solid #ddd;padding:4px 6px;vertical-align:middle;}
+    table{width:100%;border-collapse:collapse;font-size:8pt;}
+    th{background:#7a1020;color:white;padding:2px 5px;text-align:left;font-size:7pt;font-weight:700;text-transform:uppercase;}
+    td{border:1px solid #ddd;padding:2px 5px;vertical-align:middle;}
     .secao-ccih{border-color:#d0a020;}
     .secao-ccih .secao-titulo{background:#8a6a10;}
     .secao-farm{border-color:#336;}
     .secao-farm .secao-titulo{background:#223;}
-    .assin{border-top:1px solid #555;margin-top:24px;text-align:center;padding-top:4px;font-size:8pt;color:#555;width:240px;display:inline-block;}
-    .assin-wrap{margin-top:14px;text-align:right;}
-    @media print{body{padding:0}}
+    .assin{border-top:1px solid #555;margin-top:14px;text-align:center;padding-top:2px;font-size:7.5pt;color:#555;width:200px;display:inline-block;}
+    .assin-wrap{margin-top:6px;text-align:right;}
+    @media print{body{padding:0;}*{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
   </style></head><body>
   <div class="logo-wrap">
     <p>PREFEITURA DO NATAL · SECRETARIA MUNICIPAL DE SAÚDE</p>
@@ -3308,7 +3379,7 @@ function _imprimirFichaObj(f){
     </div>
   </div>
   <div class="assin-wrap"><div class="assin">___________________________<br>Médico prescritor<br>${perfilUsuario&&perfilUsuario.crm?'CRM '+perfilUsuario.crm:''}</div></div>
-  <div style="height:14px;"></div>
+  <div style="height:6px;"></div>
   <div class="secao secao-ccih">
     <div class="secao-titulo">Uso exclusivo da CCIH</div>
     <div class="secao-corpo">
@@ -3678,40 +3749,7 @@ function _imprimirFichaHemoObj(f){
   else toast('Popup bloqueado — permita popups para imprimir.',true);
 }
 
-// Atualiza _renderGuiasFichas para incluir fichas de hemoterápicos
-const _renderGuiasFichasOriginal = _renderGuiasFichas;
-_renderGuiasFichas = async function(){
-  const w=$('guias-fichas-lista'); if(!w) return;
-  w.innerHTML='<span style="font-size:.8rem;color:var(--muted);">Carregando...</span>';
-  try{
-    const atbs  = await dbListByPrefix(`uti_med_atb_ficha_${leitoAtual}_`);
-    const hemos = await dbListByPrefix(`uti_med_hemo_ficha_${leitoAtual}_`);
-    const arr=[
-      ...Object.entries(atbs).map(([k,v])=>({key:k,...v, _tipo:'atb'})),
-      ...Object.entries(hemos).map(([k,v])=>({key:k,...v, _tipo:'hemo'}))
-    ].filter(x=>x.pac||x.nome).sort((a,b)=>(b.salvadoEm||'').localeCompare(a.salvadoEm||''));
-    if(!arr.length){ w.innerHTML='<span style="font-size:.8rem;color:var(--muted);">Nenhuma ficha salva.</span>'; return; }
-    w.innerHTML=arr.map(f=>{
-      const icon = f._tipo==='hemo'?'🩸':'🦠';
-      const titulo = f._tipo==='hemo'
-        ? `Hemoterápicos: ${(f.pedidos||[]).filter(p=>p.selecionado).map(p=>p.label.split(' ').slice(0,2).join(' ')).join(', ')||'—'}`
-        : `ATB: ${(f.atbs||[]).map(a=>a.atb).filter(Boolean).join(', ')||'—'}`;
-      const dataf = _fmtDataCurta(f.data)||'?';
-      const edit  = f._tipo==='hemo' ? `_abrirHemoExistente('${f.key}')` : `_abrirFichaExistente('${f.key}')`;
-      const impr  = f._tipo==='hemo' ? `_imprimirHemoChave('${f.key}')` : `_imprimirFichaChave('${f.key}')`;
-      return `<div style="border:1px solid var(--borda);border-radius:9px;padding:10px 12px;margin-bottom:6px;background:var(--bg2);display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-        <div style="flex:1;">
-          <strong style="color:var(--vinho);">${icon} ${titulo}</strong><br>
-          <span style="font-size:.74rem;color:var(--muted);">${dataf} · ${f.autorNome||f.autor||'?'}</span>
-        </div>
-        <div style="display:flex;gap:4px;">
-          <button class="btn btn-sm" onclick="${edit}">✎ Editar</button>
-          <button class="btn btn-sm" onclick="${impr}">🖨 Imprimir</button>
-        </div>
-      </div>`;
-    }).join('');
-  }catch(e){ w.innerHTML='<span style="font-size:.8rem;color:var(--vermelho);">Erro ao carregar fichas.</span>'; }
-};
+// _renderGuiasFichas já unificada acima (ATB + Hemoterápicos)
 
 async function _abrirHemoExistente(key){
   showLoading('Carregando ficha...');
