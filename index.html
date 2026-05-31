@@ -196,6 +196,9 @@
       <button class="pnav-btn" id="pnav-laboratorio" onclick="mudarAba('laboratorio')">
         <span class="pnav-icon">🧪</span><span class="pnav-lbl">Exames Lab.</span>
       </button>
+      <button class="pnav-btn" id="pnav-guias" onclick="mudarAba('guias')">
+        <span class="pnav-icon">📄</span><span class="pnav-lbl">Guias</span>
+      </button>
       <div class="pnav-sep"></div>
       <button class="pnav-btn pnav-sec" onclick="voltarLeitos()">
         <span class="pnav-icon">↩</span><span class="pnav-lbl">Leitos</span>
@@ -504,12 +507,159 @@
         </div>
       </div><!-- /aba-laboratorio -->
 
+      <!-- ══ ABA: GUIAS ══ -->
+      <div class="aba-panel" id="aba-guias" style="display:none;">
+        <div class="card">
+          <div class="secao">
+            <div class="secao-t">📄 Guias do Paciente</div>
+            <div class="secao-c">
+              <div class="tip i" style="margin-bottom:12px;">Preencha e imprima as guias institucionais do paciente internado.</div>
+              <div class="guias-lista">
+                <div class="guia-card" onclick="abrirFichaATB()">
+                  <div class="guia-icon">🦠</div>
+                  <div class="guia-info">
+                    <div class="guia-titulo">Ficha de Solicitação de Antimicrobiano</div>
+                    <div class="guia-sub">Solicitação, autorização CCIH e uso pelo farmacêutico</div>
+                  </div>
+                  <div class="guia-acao">Preencher →</div>
+                </div>
+              </div>
+              <!-- Lista de fichas salvas do paciente -->
+              <div style="margin-top:16px;">
+                <div class="ind-sec-titulo">Fichas salvas</div>
+                <div id="guias-fichas-lista"><span style="font-size:.8rem;color:var(--muted);">Nenhuma ficha salva.</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div><!-- /aba-guias -->
+
     </div><!-- /prontuario-content -->
   </div><!-- /prontuario-layout -->
 </div><!-- /t-form -->
 
+<!-- ══════════════ MODAL FICHA DE ANTIMICROBIANO ══════════════ -->
+<div class="modal" id="modal-atb-ficha">
+  <div class="modal-box" style="max-width:760px;max-height:92vh;overflow-y:auto;">
+    <div class="modal-head">
+      <h3>🦠 Ficha de Solicitação de Antimicrobiano</h3>
+      <button class="modal-x" onclick="fecharFichaATB()">×</button>
+    </div>
+    <div class="modal-body" id="ficha-atb-body">
+      <!-- Cabeçalho institucional -->
+      <div style="text-align:center;border-bottom:2px solid var(--vinho);padding-bottom:10px;margin-bottom:14px;">
+        <div style="font-size:.72rem;color:var(--muted);font-weight:700;">PREFEITURA DO NATAL · SECRETARIA MUNICIPAL DE SAÚDE</div>
+        <div style="font-weight:800;color:var(--vinho);font-size:1rem;margin:2px 0;">HOSPITAL DOS PESCADORES</div>
+        <div style="font-size:.78rem;font-weight:700;letter-spacing:.06em;">FICHA DE SOLICITAÇÃO DE ANTIMICROBIANO</div>
+      </div>
 
-<!-- ══════════════ TELA USUÁRIOS ══════════════ -->
+      <!-- Dados do paciente (preenchidos automaticamente) -->
+      <div class="secao">
+        <div class="secao-t">Identificação</div>
+        <div class="secao-c">
+          <div class="dc">
+            <div class="fl"><label>Paciente</label><input type="text" id="fatb-pac" readonly style="background:var(--bg2);"></div>
+            <div class="fl"><label>Data de Nasc.</label><input type="date" id="fatb-dn" readonly style="background:var(--bg2);"></div>
+          </div>
+          <div class="dc">
+            <div class="fl"><label>Leito</label><input type="text" id="fatb-leito" readonly style="background:var(--bg2);"></div>
+            <div class="fl"><label>Data da solicitação</label><input type="date" id="fatb-data"></div>
+          </div>
+          <div class="fl"><label>Hospital Dia</label>
+            <div style="display:flex;gap:16px;margin-top:4px;">
+              <label class="radio-label"><input type="radio" name="fatb-hdia" value="sim"> Sim</label>
+              <label class="radio-label"><input type="radio" name="fatb-hdia" value="nao" checked> Não</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tipo de infecção -->
+      <div class="secao">
+        <div class="secao-t">Infecção</div>
+        <div class="secao-c">
+          <div class="dc">
+            <div class="fl"><label>Origem</label>
+              <div style="display:flex;gap:16px;margin-top:4px;flex-wrap:wrap;">
+                <label class="radio-label"><input type="radio" name="fatb-origem" value="comunitaria"> Comunitária</label>
+                <label class="radio-label"><input type="radio" name="fatb-origem" value="hospitalar"> Hospitalar</label>
+              </div>
+            </div>
+            <div class="fl"><label>Uso</label>
+              <div style="display:flex;gap:16px;margin-top:4px;flex-wrap:wrap;">
+                <label class="radio-label"><input type="radio" name="fatb-uso" value="profilatico"> Profilático</label>
+                <label class="radio-label"><input type="radio" name="fatb-uso" value="terapeutico" checked> Terapêutico</label>
+              </div>
+            </div>
+          </div>
+          <div class="fl"><label>Diagnóstico infeccioso provável</label>
+            <div class="fatb-checks" id="fatb-diag-checks">
+              <label class="check-label"><input type="checkbox" id="fatb-d-bact"> Bacteremia primária sem foco</label>
+              <label class="check-label"><input type="checkbox" id="fatb-d-cateter"> Infecção associada à cateter</label>
+              <label class="check-label"><input type="checkbox" id="fatb-d-neutro"> Neutropenia febril</label>
+              <label class="check-label"><input type="checkbox" id="fatb-d-itu"> ITU</label>
+              <label class="check-label"><input type="checkbox" id="fatb-d-pneumo"> Pneumonia</label>
+              <label class="check-label"><input type="checkbox" id="fatb-d-pele"> Pele / partes moles</label>
+              <label class="check-label"><input type="checkbox" id="fatb-d-cirurg"> Infecção de sítio cirúrgico</label>
+              <label class="check-label"><input type="checkbox" id="fatb-d-sepse"> Sepse</label>
+              <label class="check-label"><input type="checkbox" id="fatb-d-digest"> Trato digestivo</label>
+              <label class="check-label"><input type="checkbox" id="fatb-d-outro"> Outro:</label>
+              <input type="text" id="fatb-d-outro-txt" placeholder="especificar" style="flex:1;min-width:140px;padding:4px 8px;border:1.5px solid var(--borda);border-radius:6px;font-size:.8rem;">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Exame microbiológico -->
+      <div class="secao">
+        <div class="secao-t">Exame Microbiológico</div>
+        <div class="secao-c">
+          <div class="dc">
+            <div class="fl"><label>Data da coleta</label><input type="date" id="fatb-micro-data"></div>
+            <div class="fl"><label>Material</label><input type="text" id="fatb-micro-mat" placeholder="Hemocultura, Urocultura, LBA..."></div>
+          </div>
+          <div class="fl"><label>Sensibilidade / Resultado</label>
+            <textarea id="fatb-micro-sens" rows="2" placeholder="Ex: K. pneumoniae KPC — R: meropenem, carbapenêmicos; S: colistina"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Antimicrobiano solicitado -->
+      <div class="secao">
+        <div class="secao-t">Antimicrobiano Solicitado</div>
+        <div class="secao-c" id="fatb-atbs-wrap">
+          <!-- linhas geradas por JS -->
+        </div>
+        <div style="padding:0 1rem 1rem;">
+          <button class="btn btn-sec btn-sm" onclick="_fatbAddLinha()">+ Adicionar antimicrobiano</button>
+        </div>
+      </div>
+
+      <!-- Seção CCIH -->
+      <div class="secao" style="background:#fdf2dd;">
+        <div class="secao-t" style="color:#6b4a06;">🏥 Uso exclusivo da CCIH</div>
+        <div class="secao-c">
+          <div id="fatb-ccih-linhas"></div>
+          <div class="fl" style="margin-top:8px;"><label>Sugestão da CCIH</label>
+            <textarea id="fatb-ccih-sug" rows="2" placeholder="Sugestão / orientação da CCIH"></textarea>
+          </div>
+          <div class="fl"><label>Médico(a) — assinatura / carimbo</label>
+            <input type="text" id="fatb-ccih-med" placeholder="Nome, CRM">
+          </div>
+        </div>
+      </div>
+
+      <!-- Ações -->
+      <div class="form-actions" style="margin-top:0;">
+        <button class="btn btn-pri" onclick="salvarFichaATB()">⌘ Salvar ficha</button>
+        <button class="btn btn-sec" onclick="imprimirFichaATB()">🖨 Imprimir</button>
+        <button class="btn" onclick="fecharFichaATB()">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
 <div id="t-usuarios" class="tela" style="display:none;">
   <div class="app-header">
     <div><h2>Gerenciar Médicos</h2><small>Cadastro e acesso</small></div>
