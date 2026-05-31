@@ -3357,3 +3357,392 @@ function _rxAtualizarDdias(){
     it._ddia=diff;
   });
 }
+
+
+/* ════════════════════════════════════════════════════════════════════════════
+   SOLICITAÇÃO DE HEMOTERÁPICOS — HEMONORTE
+   Replica o modelo oficial do Hospital dos Pescadores
+   ════════════════════════════════════════════════════════════════════════════ */
+
+// IDs dos campos de hemocomponentes (id, labelImpressão)
+const HEMO_COMPS = [
+  ['ch',      'CONC. HEMÁCIAS'],
+  ['chpl',    'CONC. HEMÁCIAS POBRE EM LEUCÓCITOS'],
+  ['chl',     'CONC. HEMÁCIAS LEUCOTIZADO'],
+  ['chlav',   'CONC. HEMÁCIAS LAVADAS'],
+  ['plaqconv','CONCENTRADO DE PLAQUETAS CONVENCIONAIS (1UI/10KG)'],
+  ['pool',    'POOL DE PLAQUETAS'],
+  ['plaqaf',  'CONC. PLAQUETAS DE AFÉRESE'],
+  ['pfc',     'PLASMA FRESCO CONGELADO'],
+  ['crio',    'CRIOPRECIPITADO'],
+  ['fat',     'CONCENTRADO DE FATOR VIII / IX'],
+];
+
+function abrirFichaHemo(){
+  // Preenche dados do paciente automaticamente
+  const peso = parseFloat(gf('f-peso'))||null;
+  sf('fhemo-nome',  (gf('f-pac')||'').toUpperCase());
+  sf('fhemo-dn',    gf('f-dn')||'');
+  sf('fhemo-leito', gf('f-leito')||'');
+  sf('fhemo-cns',   gf('f-cns')||'');
+  sf('fhemo-data',  gf('f-data')||hoje());
+  // Hora atual
+  const agora = new Date();
+  sf('fhemo-hora',  agora.getHours().toString().padStart(2,'0')+':'+agora.getMinutes().toString().padStart(2,'0'));
+  // Diagnóstico e CID da evolução
+  sf('fhemo-diag',  (gf('f-diag')||'').toUpperCase());
+  sf('fhemo-cid',   (gf('f-cid')||'').toUpperCase());
+  // Sexo
+  const sexoEl = $('fhemo-sexo');
+  if(sexoEl){
+    const s=(gf('f-sexo')||'').toUpperCase();
+    sexoEl.value = s.includes('FEM')?'FEMININO':s.includes('MAS')?'MASCULINO':'';
+  }
+  // Médico prescritor
+  if(perfilUsuario){
+    sf('fhemo-med', (perfilUsuario.nome||'').toUpperCase());
+    sf('fhemo-crm', perfilUsuario.crm||'');
+  }
+  // Exames da última linha lab
+  _hemoAutoExames();
+  // Sugestão de plaquetas por peso
+  if(peso){
+    const ui = Math.round(peso/10);
+    sf('fhemo-plaqconv-qtd', ui+' UNIDADES');
+  }
+  $('modal-hemo-ficha').classList.add('show');
+}
+
+function fecharFichaHemo(){ $('modal-hemo-ficha').classList.remove('show'); }
+
+// Preenche Hb, Ht e plaquetas do último lab
+function _hemoAutoExames(){
+  if(!_labLinhas||!_labLinhas.length) return;
+  const ord=[..._labLinhas].filter(l=>l.data).sort((a,b)=>(a.data||'').localeCompare(b.data||''));
+  const ult = ord[ord.length-1];
+  if(!ult||!ult.valores) return;
+  if(ult.valores.hb)  sf('fhemo-hb',  ult.valores.hb);
+  if(ult.valores.ht)  sf('fhemo-htc', ult.valores.ht);
+  if(ult.valores.plaq) sf('fhemo-plaq', ult.valores.plaq);
+}
+
+function _coletarFichaHemo(){
+  const prio = document.querySelector('input[name="fhemo-prio"]:checked');
+  const transf = document.querySelector('input[name="fhemo-transf"]:checked');
+  const reac   = document.querySelector('input[name="fhemo-reac"]:checked');
+  const pedidos = HEMO_COMPS.map(([id, label])=>({
+    id, label,
+    selecionado: $('fhemo-'+id)&&$('fhemo-'+id).checked,
+    qtd: gf('fhemo-'+id+'-qtd')||''
+  }));
+  const outrosSel = $('fhemo-outros')&&$('fhemo-outros').checked;
+  if(outrosSel) pedidos.push({id:'outros', label:'OUTROS', selecionado:true, qtd:gf('fhemo-outros-txt')||''});
+  return {
+    nome:gf('fhemo-nome'), sexo:gf('fhemo-sexo'), mae:gf('fhemo-mae'),
+    dn:gf('fhemo-dn'), cns:gf('fhemo-cns'), natur:gf('fhemo-natur'),
+    end:gf('fhemo-end'), hosp:gf('fhemo-hosp'), diag:gf('fhemo-diag'),
+    cid:gf('fhemo-cid'), reg:gf('fhemo-reg'), conv:gf('fhemo-conv'),
+    leito:gf('fhemo-leito'), grupo:gf('fhemo-grupo'), rh:gf('fhemo-rh'),
+    jaTransfundido:transf?transf.value:'nao', houvReacao:reac?reac.value:'nao',
+    hb:gf('fhemo-hb'), htc:gf('fhemo-htc'), plaq:gf('fhemo-plaq'),
+    outrosExam:gf('fhemo-outros-exam'),
+    prioridade:prio?prio.value:'urgencia', preop:$('fhemo-preop')&&$('fhemo-preop').checked,
+    justif:gf('fhemo-justif'),
+    pedidos, data:gf('fhemo-data'), hora:gf('fhemo-hora'),
+    med:gf('fhemo-med'), crm:gf('fhemo-crm'),
+    autor:usuarioEmail, autorNome:perfilUsuario?perfilUsuario.nome:'',
+    salvadoEm:new Date().toISOString(), tipo:'hemo'
+  };
+}
+
+async function salvarFichaHemo(){
+  if(!leitoAtual){ toast('Abra o prontuário de um paciente.',true); return; }
+  showLoading('Salvando ficha...');
+  try{
+    const f=_coletarFichaHemo();
+    const key=`uti_med_hemo_ficha_${leitoAtual}_${f.data}_${Date.now()}`;
+    await dbSet(key,f);
+    hideLoading(); toast('✓ Ficha de hemoterápicos salva.');
+    _renderGuiasFichas();
+  }catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
+}
+
+function imprimirFichaHemo(){ _imprimirFichaHemoObj(_coletarFichaHemo()); }
+
+function _imprimirFichaHemoObj(f){
+  const prio = f.prioridade==='emergencia'?'EMERGÊNCIA':f.prioridade==='rotina'?'ROTINA':'URGÊNCIA';
+  const prioMarca = {
+    urgencia:   ['(X)','( )','( )'],
+    emergencia: ['( )','(X)','( )'],
+    rotina:     ['( )','( )','(X)'],
+  }[f.prioridade]||['(X)','( )','( )'];
+
+  const pedidosHtml = HEMO_COMPS.map(([id, label])=>{
+    const p=f.pedidos.find(x=>x.id===id)||{};
+    const marca = p.selecionado ? '( X )' : '(  )';
+    return `<tr>
+      <td style="padding:3px 6px;">${marca} ${label}</td>
+      <td style="padding:3px 6px;font-weight:700;text-align:right;">${p.selecionado&&p.qtd?p.qtd.toUpperCase():''}</td>
+    </tr>`;
+  }).join('');
+  const outro=f.pedidos.find(x=>x.id==='outros');
+  const outroHtml=`<tr>
+    <td style="padding:3px 6px;">${outro&&outro.selecionado?'( X )':'(  )'} OUTROS${outro&&outro.qtd?' — '+outro.qtd:''}</td>
+    <td></td>
+  </tr>`;
+
+  const plaqconv = f.pedidos.find(x=>x.id==='plaqconv')||{};
+  const pfc      = f.pedidos.find(x=>x.id==='pfc')||{};
+  const crio     = f.pedidos.find(x=>x.id==='crio')||{};
+  const ch       = f.pedidos.find(x=>x.id==='ch')||{};
+
+  const html=`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+  <title>Solicitação Hemoterápicos — ${f.nome||''}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;font-family:'Arial Narrow',Arial,sans-serif;font-size:9pt;}
+    @page{size:A4 portrait;margin:1cm 1.2cm}
+    body{color:#000;}
+    .topo{display:flex;justify-content:space-between;align-items:center;border:1.5px solid #000;padding:6px 10px;margin-bottom:0;}
+    .topo-logo{display:flex;align-items:center;gap:8px;}
+    .topo-logo .sangue{font-size:1.6rem;color:#c00;}
+    .topo-logo .hemo{font-size:11pt;font-weight:800;color:#c00;letter-spacing:.04em;}
+    table.principal{width:100%;border-collapse:collapse;border:1.5px solid #000;}
+    table.principal td, table.principal th{border:1px solid #000;padding:3px 6px;vertical-align:middle;}
+    .titulo-central{text-align:center;font-weight:800;font-size:11pt;letter-spacing:.06em;padding:6px!important;}
+    .label-cel{font-weight:700;font-size:7.5pt;color:#000;}
+    .val-cel{font-size:9pt;font-weight:700;}
+    .pedido-table{width:100%;border-collapse:collapse;}
+    .pedido-table td{border:1px solid #000;vertical-align:top;}
+    .th-pedido{background:#000;color:white;text-align:center;font-weight:800;font-size:9pt;padding:3px 6px;}
+    .nota-final{font-size:7pt;padding:4px 6px;border:1px solid #000;border-top:none;font-style:italic;}
+    .sep{border-top:3px dashed #000;margin:10px 0;}
+    .comp-titulo{text-align:center;font-weight:800;font-size:10pt;padding:5px;border:1.5px solid #000;border-bottom:none;}
+    .assin-linha{border-top:1px solid #000;display:inline-block;min-width:200px;text-align:center;padding-top:2px;font-size:8pt;}
+    @media print{body{margin:0;}}
+  </style></head><body>
+
+  <!-- CABEÇALHO HEMONORTE -->
+  <div class="topo">
+    <div class="topo-logo">
+      <div class="sangue">🩸</div>
+      <div><div class="hemo">HEMONORTE</div><div style="font-size:7pt;color:#555;">Centro de Hematologia e Hemoterapia do RN</div></div>
+    </div>
+    <div style="text-align:right;font-size:8pt;"></div>
+  </div>
+
+  <!-- TABELA PRINCIPAL -->
+  <table class="principal">
+    <tr><td colspan="6" class="titulo-central">SOLICITAÇÃO DE HEMOTERÁPICOS</td></tr>
+    <tr>
+      <td colspan="4"><span class="label-cel">NOME: </span><span class="val-cel">${(f.nome||'').toUpperCase()}</span></td>
+      <td colspan="2"><span class="label-cel">SEXO: </span>${(f.sexo||'').toUpperCase()}</td>
+    </tr>
+    <tr>
+      <td colspan="6"><span class="label-cel">NOME DA MÃE: </span>${(f.mae||'').toUpperCase()}</td>
+    </tr>
+    <tr>
+      <td colspan="2"><span class="label-cel">DATA DE NASC: </span>${f.dn?_fmtDataCurta(f.dn):'________'}</td>
+      <td colspan="2"><span class="label-cel">Nº CARTÃO SUS: </span><strong>${f.cns||''}</strong></td>
+      <td colspan="2"><span class="label-cel">NATURALIDADE: </span>${(f.natur||'NATAL - RN').toUpperCase()}</td>
+    </tr>
+    <tr>
+      <td colspan="6"><span class="label-cel">ENDEREÇO DO PACIENTE: </span>${(f.end||'').toUpperCase()}</td>
+    </tr>
+    <tr>
+      <td colspan="2"><span class="label-cel">HOSPITAL: </span>${(f.hosp||'HOSPESC').toUpperCase()}</td>
+      <td colspan="3"><span class="label-cel">DIAGNÓSTICO: </span>${(f.diag||'').toUpperCase()}</td>
+      <td><span class="label-cel">CID: </span>${f.cid||''}</td>
+    </tr>
+    <tr>
+      <td><span class="label-cel">REGISTRO: </span>${f.reg||''}</td>
+      <td colspan="2"><span class="label-cel">CONVÊNIO: </span>${(f.conv||'SUS').toUpperCase()}</td>
+      <td colspan="3"><span class="label-cel">LEITO: </span>${f.leito||''}</td>
+    </tr>
+    <tr>
+      <td colspan="2"><span class="label-cel">GRUPO SANGUÍNEO: </span>${f.grupo||'(OPCIONAL)'} ${f.rh||''}</td>
+      <td colspan="4"><span class="label-cel">JÁ RECEBEU TRANSFUSÃO? </span>
+        ${f.jaTransfundido==='sim'?'(X)':'( )'} SIM &nbsp; ${f.jaTransfundido!=='sim'?'(X)':'( )'} NÃO &nbsp;&nbsp;&nbsp;
+        <span class="label-cel">HOUVE REAÇÃO?</span>
+        ${f.houvReacao==='sim'?'(X)':'( )'} SIM &nbsp; ${f.houvReacao!=='sim'?'(X)':'( )'} NÃO
+      </td>
+    </tr>
+    <tr>
+      <td colspan="2" style="font-size:8pt;"><span class="label-cel">Resultados de Exames:</span></td>
+      <td><span class="label-cel">Hb (g/dL): </span>${f.hb||'___'}</td>
+      <td><span class="label-cel">Ht (%): </span>${f.htc||'___'}</td>
+      <td><span class="label-cel">Plaquetas (/mm³): </span>${f.plaq?Number(f.plaq).toLocaleString('pt-BR'):'___'}</td>
+      <td><span class="label-cel">Outros: </span>${f.outrosExam||''}</td>
+    </tr>
+    <tr>
+      <td colspan="2"><span class="label-cel">URGÊNCIA </span>${prioMarca[0]}&nbsp;
+        <span class="label-cel">EMERGÊNCIA </span>${prioMarca[1]}&nbsp;
+        <span class="label-cel">ROTINA </span>${prioMarca[2]}&nbsp; Deverá ser atendida em 24h
+      </td>
+      <td colspan="2"><span class="label-cel">PRÉ-OPERATÓRIO </span>${f.preop?'(X)':'( )'}&nbsp;</td>
+      <td colspan="2"><span class="label-cel">Data: </span>${f.data?_fmtDataCurta(f.data):''}</td>
+    </tr>
+    ${f.justif?`<tr><td colspan="6" style="font-size:8.5pt;font-style:italic;">${f.justif.toUpperCase()}</td></tr>`:''}
+  </table>
+
+  <!-- PEDIDO -->
+  <table class="pedido-table" style="margin-top:-1px;">
+    <tr>
+      <td class="th-pedido" style="width:75%;">PEDIDO</td>
+      <td class="th-pedido" style="width:25%;text-align:right;">QUANTIDADE</td>
+    </tr>
+    ${pedidosHtml}
+    ${outroHtml}
+    <tr>
+      <td colspan="2" style="padding:4px 6px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:6px;margin-top:2px;">
+          <div><span class="label-cel">DATA: </span>${f.data?_fmtDataCurta(f.data):''} &nbsp;&nbsp;
+               <span class="label-cel">HORA: </span>${f.hora||''} &nbsp;&nbsp;
+               <span class="label-cel">MÉDICO: </span><strong>${(f.med||'').toUpperCase()}</strong> &nbsp;&nbsp;
+               <span class="label-cel">CRM: </span>${f.crm||''}</div>
+        </div>
+        <div style="margin-top:4px;"><span class="label-cel">CONVÊNIO: </span>${(f.conv||'SUS').toUpperCase()}</div>
+        <div style="margin-top:8px;display:flex;justify-content:space-between;font-size:8pt;">
+          <div>Responsável pelo recebimento: _________________________ Data: ________ Hora: ________</div>
+        </div>
+        <div style="margin-top:6px;font-size:8pt;">Assinatura do cliente ou responsável: _____________________________________________</div>
+        <div style="margin-top:6px;display:flex;justify-content:space-between;font-size:8pt;">
+          <div>Auditoria do convênio &nbsp; Assinatura e carimbo do Auditor: ________________________</div>
+          <div>( ) Autorizado &nbsp;&nbsp; ( ) Não Autorizado</div>
+        </div>
+      </td>
+    </tr>
+  </table>
+  <div class="nota-final">
+    QUALQUER ANORMALIDADE VERIFICADA NA INFUSÃO DESTE PRODUTO COMUNICAR IMEDIATAMENTE AO HEMONORTE, DEVOLVENDO A BOLSA,
+    JUNTAMENTE COM 1 AMOSTRA DE SANGUE DO PACIENTE (5ml sem AC) E RELATÓRIO DA INTERCORRÊNCIA.
+  </div>
+
+  <!-- SEPARADOR -->
+  <div class="sep"></div>
+
+  <!-- COMPROVANTE DE ENTREGA -->
+  <div class="comp-titulo">COMPROVANTE DE ENTREGA (PREENCHIMENTO OBRIGATÓRIO PELA UNIDADE REQUISITANTE)</div>
+  <table class="principal">
+    <tr>
+      <td colspan="4"><span class="label-cel">Hospital: </span>HOSPITAL DOS PESCADORES</td>
+      <td colspan="2"><span class="label-cel">Data: </span>${f.data?_fmtDataCurta(f.data):''} &nbsp; <span class="label-cel">HORA: </span>${f.hora||''}</td>
+    </tr>
+    <tr>
+      <td colspan="4"><span class="label-cel">Paciente (legível): </span><strong>${(f.nome||'').toUpperCase()}</strong></td>
+      <td colspan="2"><span class="label-cel">Data Nasc.: </span>${f.dn?_fmtDataCurta(f.dn):''}</td>
+    </tr>
+    <tr>
+      <td class="th-pedido" style="width:28%;">Produto</td>
+      <td class="th-pedido" style="width:22%;">Nº unidades ou volume (ml)</td>
+      <td class="th-pedido" colspan="4">Processo de modificação a ser realizado no hemocomponente</td>
+    </tr>
+    <tr>
+      <td>${ch.selecionado?'(X)':'( )'} CONCENTRADO DE HEMÁCIAS</td>
+      <td>${ch.selecionado?ch.qtd||'':''}</td>
+      <td colspan="2">( ) Aliquotagem &nbsp; ( ) Irradiação &nbsp; ( ) Lavagem</td>
+      <td colspan="2"></td>
+    </tr>
+    <tr>
+      <td>${pfc.selecionado?'(X)':'( )'} PLASMA FRESCO</td>
+      <td>${pfc.selecionado?pfc.qtd||'':''}</td>
+      <td colspan="2">( ) Aliquotagem</td>
+      <td colspan="2"></td>
+    </tr>
+    <tr>
+      <td>${plaqconv.selecionado?'(X)':'( )'} CONCENTRADO DE PLAQUETAS</td>
+      <td>${plaqconv.selecionado?plaqconv.qtd||'':''}</td>
+      <td>( ) Aliquotagem</td>
+      <td>( ) Irradiação</td>
+      <td colspan="2" style="text-align:center;font-weight:700;font-size:8pt;background:#eee;">Campo destinado ao Hemocentro</td>
+    </tr>
+    <tr>
+      <td>${crio.selecionado?'(X)':'( )'} CRIOPRECIPITADO</td>
+      <td>${crio.selecionado?crio.qtd||'':''}</td>
+      <td colspan="2"></td>
+      <td colspan="2" style="background:#eee;"></td>
+    </tr>
+    <tr>
+      <td colspan="2" style="font-size:8pt;">Responsável pelo preenchimento: ${(f.med||'').toUpperCase()}</td>
+      <td style="font-size:8pt;">Resp. Rec.</td>
+      <td style="font-size:8pt;">Data:</td>
+      <td style="font-size:8pt;">Hora:</td>
+      <td style="font-size:8pt;"></td>
+    </tr>
+  </table>
+
+  <script>window.onload=()=>{window.print();window.onafterprint=()=>window.close();}<\/script>
+  </body></html>`;
+
+  const w=window.open('','_blank','width=850,height=950');
+  if(w){ w.document.write(html); w.document.close(); }
+  else toast('Popup bloqueado — permita popups para imprimir.',true);
+}
+
+// Atualiza _renderGuiasFichas para incluir fichas de hemoterápicos
+const _renderGuiasFichasOriginal = _renderGuiasFichas;
+_renderGuiasFichas = async function(){
+  const w=$('guias-fichas-lista'); if(!w) return;
+  w.innerHTML='<span style="font-size:.8rem;color:var(--muted);">Carregando...</span>';
+  try{
+    const atbs  = await dbListByPrefix(`uti_med_atb_ficha_${leitoAtual}_`);
+    const hemos = await dbListByPrefix(`uti_med_hemo_ficha_${leitoAtual}_`);
+    const arr=[
+      ...Object.entries(atbs).map(([k,v])=>({key:k,...v, _tipo:'atb'})),
+      ...Object.entries(hemos).map(([k,v])=>({key:k,...v, _tipo:'hemo'}))
+    ].filter(x=>x.pac||x.nome).sort((a,b)=>(b.salvadoEm||'').localeCompare(a.salvadoEm||''));
+    if(!arr.length){ w.innerHTML='<span style="font-size:.8rem;color:var(--muted);">Nenhuma ficha salva.</span>'; return; }
+    w.innerHTML=arr.map(f=>{
+      const icon = f._tipo==='hemo'?'🩸':'🦠';
+      const titulo = f._tipo==='hemo'
+        ? `Hemoterápicos: ${(f.pedidos||[]).filter(p=>p.selecionado).map(p=>p.label.split(' ').slice(0,2).join(' ')).join(', ')||'—'}`
+        : `ATB: ${(f.atbs||[]).map(a=>a.atb).filter(Boolean).join(', ')||'—'}`;
+      const dataf = _fmtDataCurta(f.data)||'?';
+      const edit  = f._tipo==='hemo' ? `_abrirHemoExistente('${f.key}')` : `_abrirFichaExistente('${f.key}')`;
+      const impr  = f._tipo==='hemo' ? `_imprimirHemoChave('${f.key}')` : `_imprimirFichaChave('${f.key}')`;
+      return `<div style="border:1px solid var(--borda);border-radius:9px;padding:10px 12px;margin-bottom:6px;background:var(--bg2);display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <div style="flex:1;">
+          <strong style="color:var(--vinho);">${icon} ${titulo}</strong><br>
+          <span style="font-size:.74rem;color:var(--muted);">${dataf} · ${f.autorNome||f.autor||'?'}</span>
+        </div>
+        <div style="display:flex;gap:4px;">
+          <button class="btn btn-sm" onclick="${edit}">✎ Editar</button>
+          <button class="btn btn-sm" onclick="${impr}">🖨 Imprimir</button>
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){ w.innerHTML='<span style="font-size:.8rem;color:var(--vermelho);">Erro ao carregar fichas.</span>'; }
+};
+
+async function _abrirHemoExistente(key){
+  showLoading('Carregando ficha...');
+  try{
+    const f=await dbGet(key); hideLoading();
+    if(!f){ toast('Ficha não encontrada.',true); return; }
+    // Preenche todos os campos do modal
+    ['nome','sexo','mae','dn','cns','natur','end','hosp','diag','cid','reg','conv','leito',
+     'grupo','rh','hb','htc','plaq','outros-exam','justif','data','hora','med','crm'].forEach(c=>{
+      const el=$('fhemo-'+c);
+      if(el) el.value=f[c.replace('-','_')]||f[c]||'';
+    });
+    // Radios
+    ['transf','reac','prio'].forEach(r=>{
+      const val = r==='prio'?f.prioridade:r==='transf'?f.jaTransfundido:f.houvReacao;
+      const el=document.querySelector(`input[name="fhemo-${r}"][value="${val}"]`);
+      if(el) el.checked=true;
+    });
+    if($('fhemo-preop')) $('fhemo-preop').checked=!!f.preop;
+    // Checkboxes de componentes
+    (f.pedidos||[]).forEach(p=>{
+      const cb=$('fhemo-'+p.id); const qtd=$('fhemo-'+p.id+'-qtd');
+      if(cb) cb.checked=!!p.selecionado;
+      if(qtd) qtd.value=p.qtd||'';
+    });
+    $('modal-hemo-ficha').classList.add('show');
+  }catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
+}
+
+async function _imprimirHemoChave(key){
+  showLoading('Carregando ficha...');
+  try{ const f=await dbGet(key); hideLoading(); if(f) _imprimirFichaHemoObj(f); }
+  catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
+}
