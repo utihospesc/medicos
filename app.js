@@ -2853,7 +2853,7 @@ function _bicCalc(){
 }
 
 
-async function salvarPrescricao(){
+async function _salvarPrescricaoCore(){
   if(!leitoAtual){ toast('Abra o prontuário de um paciente.',true); return; }
   // Valida: nenhum medicamento pode ter dose vazia
   const semDose=_rxItens.filter(it=>!_rxDispensaDose(it)&&(!it.dose||it.dose.trim()===''||it.dose.trim()==='—'));
@@ -2876,6 +2876,16 @@ async function salvarPrescricao(){
       salvadoEm:new Date().toISOString() });
     hideLoading(); toast('✓ Prescrição salva.');
   }catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
+}
+
+async function salvarPrescricao(){
+  const atbsNovos = _detectarATBsNovos();
+  await _salvarPrescricaoCore();
+  _snapshotRX();
+  if(atbsNovos.length){
+    await new Promise(r=>setTimeout(r,600));
+    _mostrarModalATBNovos(atbsNovos);
+  }
 }
 
 async function _carregarPrescricao(leito){
@@ -3224,18 +3234,7 @@ function _detectarATBsNovos(){
   return novos;
 }
 
-/* ── Wrapper do salvarPrescricao para interceptar ATBs novos ─────────── */
-const _salvarPrescricaoOriginal = salvarPrescricao;
-salvarPrescricao = async function(){
-  const atbsNovos=_detectarATBsNovos();
-  await _salvarPrescricaoOriginal();
-  _snapshotRX();
-  if(atbsNovos.length){
-    // Aguarda um tick para o toast desaparecer
-    await new Promise(r=>setTimeout(r,600));
-    _mostrarModalATBNovos(atbsNovos);
-  }
-};
+/* ── Detecção de ATBs novos/alterados — chamada dentro de salvarPrescricao ── */
 
 function _mostrarModalATBNovos(atbs){
   const nomes=atbs.map(a=>`${a.motivo==='novo'?'🆕':'✏️'} ${a.farm}`).join('<br>');
