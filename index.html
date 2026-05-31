@@ -251,6 +251,10 @@
                 <div class="fl"><label>Alergias</label><input type="text" id="f-alergia" placeholder="NEGA / especificar" data-adm-field></div>
                 <div class="fl"><label>Medicamentos de uso contínuo</label><input type="text" id="f-medcont" placeholder="Ex: furosemida, metoprolol..." data-adm-field></div>
               </div>
+              <div class="dc">
+                <div class="fl"><label>Peso (kg)</label><input type="number" step="0.1" id="f-peso" placeholder="ex: 72.5" oninput="_atualizarTFG()" data-adm-field></div>
+                <div class="fl"><label>Altura (cm)</label><input type="number" id="f-altura" placeholder="ex: 165" data-adm-field></div>
+              </div>
             </div>
           </div>
 
@@ -434,6 +438,10 @@
             <div class="presc-meta" id="presc-meta"></div>
             <div style="display:flex;gap:6px;flex-wrap:wrap;">
               <button class="btn btn-pri btn-sm" onclick="salvarPrescricao()">⌘ Salvar prescrição</button>
+              <button class="btn btn-sec btn-sm" onclick="importarPrescricaoOntem()">📋 Copiar de ontem</button>
+              <button class="btn btn-sec btn-sm" onclick="importarUsoContinuo()">⊕ Uso contínuo</button>
+              <button class="btn btn-sec btn-sm" onclick="abrirTemplates()">⭐ Templates</button>
+              <button class="btn btn-sec btn-sm" onclick="abrirCalcBIC()">⚗ Calc BIC</button>
               <button class="btn btn-sec btn-sm" onclick="_rxOrdenar()">↕ Reordenar</button>
               <button class="btn btn-sec btn-sm" onclick="imprimirPrescricao()">🖨 Imprimir</button>
             </div>
@@ -442,6 +450,9 @@
           <!-- ALERTAS (alergias) -->
           <div id="presc-alerta-alergia" style="display:none;"></div>
 
+          <!-- PAINEL DE APOIO CLÍNICO -->
+          <div id="presc-apoio" class="presc-apoio" style="display:none;"></div>
+
           <!-- TABELA DE ITENS -->
           <div class="presc-wrap">
             <table class="presc-table" id="presc-table">
@@ -449,6 +460,7 @@
                 <tr>
                   <th class="presc-th-num">#</th>
                   <th class="presc-th-farm">Fármaco / Item</th>
+                  <th class="presc-th-apres">Apresentação</th>
                   <th class="presc-th-dose">Dose</th>
                   <th class="presc-th-via">Via</th>
                   <th class="presc-th-freq">Frequência</th>
@@ -577,6 +589,45 @@
     <div style="position:relative;height:340px;margin-top:10px;"><canvas id="lab-chart"></canvas></div>
     <div id="grafico-vazio" style="display:none;text-align:center;color:var(--muted);padding:2rem;font-size:.84rem;font-family:var(--font-mono);">Sem dados laboratoriais registrados ainda.</div>
   </div></div>
+</div>
+
+<!-- ══════════════ MODAL TEMPLATES DE PRESCRIÇÃO ══════════════ -->
+<div class="modal" id="modal-tpl">
+  <div class="modal-box" style="max-width:680px;">
+    <div class="modal-head"><h3>⭐ Templates de Prescrição (compartilhados)</h3>
+      <button class="modal-x" onclick="document.getElementById('modal-tpl').classList.remove('show')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="tip i" style="margin-bottom:10px;">Templates são <strong>compartilhados entre todos os médicos</strong> da UTI. Use para condições típicas (ex: "Sepse abdominal", "Pós-PCR", "IAMCSST").</div>
+      <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;">
+        <input type="text" id="tpl-nome" placeholder="Nome do novo template" style="flex:1;padding:8px 10px;border:1.5px solid var(--borda);border-radius:8px;">
+        <button class="btn btn-pri btn-sm" onclick="salvarTemplateAtual()">⌘ Salvar atual como template</button>
+      </div>
+      <div id="tpl-lista"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ MODAL CALCULADORA BIC ══════════════ -->
+<div class="modal" id="modal-bic">
+  <div class="modal-box" style="max-width:560px;">
+    <div class="modal-head"><h3>⚗ Calculadora de Droga em BIC</h3>
+      <button class="modal-x" onclick="document.getElementById('modal-bic').classList.remove('show')">×</button>
+    </div>
+    <div class="modal-body" id="bic-body">
+      <!-- preenchido pelo abrirCalcBIC() -->
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ MODAL VER POR HORÁRIO ══════════════ -->
+<div class="modal" id="modal-horario">
+  <div class="modal-box" style="max-width:760px;">
+    <div class="modal-head"><h3>⏰ Prescrição organizada por horário</h3>
+      <button class="modal-x" onclick="document.getElementById('modal-horario').classList.remove('show')">×</button>
+    </div>
+    <div class="modal-body" id="horario-body"></div>
+  </div>
 </div>
 
 <!-- ══════════════ MODAL PREVIEW ══════════════ -->
