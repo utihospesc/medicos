@@ -938,3 +938,65 @@ a:hover{text-decoration:underline}
   font-size:.72rem; color:var(--muted);
   border-top:1px dashed var(--borda); padding-top:6px; margin-top:4px;
 }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   MODAL ROTINA DE EXAMES — grid de leitos com checkboxes
+   ════════════════════════════════════════════════════════════════════════════ */
+.rotina-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+  gap:10px;
+  max-height:55vh; overflow-y:auto;
+  padding:2px 4px;
+}
+.rotina-leito-card{
+  border:2px solid var(--borda); border-radius:10px;
+  padding:10px 12px; background:var(--bg2);
+  transition:.15s; display:flex; flex-direction:column; gap:4px;
+}
+.rotina-leito-card.selecionado{
+  border-color:var(--vinho); background:var(--vinho-claro);
+}
+.rotina-leito-card.desmarcado{
+  opacity:.5; filter:grayscale(.5);
+}
+.rotina-leito-header{
+  display:flex; align-items:center; gap:8px; margin-bottom:4px;
+}
+.rotina-check-label{
+  display:flex; align-items:center; gap:6px; cursor:pointer; flex-shrink:0;
+}
+.rotina-check-label input[type=checkbox]{ width:16px; height:16px; cursor:pointer; accent-color:var(--vinho); }
+.rotina-leito-num{
+  font-family:var(--font-mono); font-size:.72rem; font-weight:800;
+  color:var(--vinho); text-transform:uppercase; letter-spacing:.06em;
+  white-space:nowrap;
+}
+.rotina-leito-pac{
+  font-size:.76rem; font-weight:700; color:var(--tinta);
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  flex:1;
+}
+.rotina-leito-diag{
+  font-size:.7rem; color:var(--muted); font-style:italic;
+  margin-bottom:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.rotina-exames-lista{
+  display:flex; flex-wrap:wrap; gap:3px; margin-bottom:4px;
+}
+.rotina-exame-item{
+  display:flex; align-items:center; gap:2px;
+  background:white; border:1.5px solid var(--vinho-borda);
+  border-radius:20px; padding:1px 8px 1px 10px;
+  font-size:.68rem; font-weight:600; color:var(--vinho);
+}
+.rotina-exame-del{
+  background:none; border:none; cursor:pointer;
+  color:var(--vinho); font-size:.9rem; line-height:1;
+  padding:0 2px; opacity:.6;
+}
+.rotina-exame-del:hover{ opacity:1; }
+.rotina-add-input{
+  flex:1; padding:4px 8px; border:1.5px solid var(--borda);
+  border-radius:7px; font-size:.76rem; text-transform:uppercase;
+}
