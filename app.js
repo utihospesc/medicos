@@ -4189,3 +4189,258 @@ function _imprimirTermoTraqueostomia(t){
   if(w){ w.document.write(html); w.document.close(); }
   else toast('Popup bloqueado — permita popups para imprimir.',true);
 }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   SOLICITAÇÃO DE EXAMES LABORATORIAIS
+   ════════════════════════════════════════════════════════════════════════════ */
+
+// Exames de rotina UTI (conforme modelo da imagem)
+const SOL_ROTINA = [
+  'HEMOGRAMA','PCR','UREIA','CREATININA',
+  'SÓDIO','POTÁSSIO','CÁLCIO','MAGNÉSIO','TAP/TTPA/INR'
+];
+
+// Estado da solicitação atual
+let _solLinhas = []; // [{exame:'', indicacao:''}]
+let _solSalvas = []; // solicitações salvas do dia (para imprimir todas)
+
+function abrirSolicitacaoExames(){
+  sf('sol-pac',   (gf('f-pac')||'').toUpperCase());
+  sf('sol-leito', gf('f-leito')||'');
+  sf('sol-data',  gf('f-data')||hoje());
+  sf('sol-indicacao','');
+  if(!_solLinhas.length) _solLinhas=[{exame:''}];
+  _solRender();
+  $('modal-sol-exames').classList.add('show');
+}
+
+function fecharSolicitacaoExames(){ $('modal-sol-exames').classList.remove('show'); }
+
+function _solRender(){
+  const w=$('sol-exames-lista'); if(!w) return;
+  w.innerHTML=_solLinhas.map((l,i)=>`
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+      <input type="text" value="${l.exame||''}" placeholder="Nome do exame"
+        style="flex:1;text-transform:uppercase;padding:7px 10px;border:1.5px solid var(--borda);border-radius:8px;font-size:.9rem;"
+        oninput="_solLinhas[${i}].exame=this.value.toUpperCase()">
+      ${_solLinhas.length>1?`<button class="presc-del" onclick="_solLinhas.splice(${i},1);_solRender()" title="Remover">🗑</button>`:''}
+    </div>`).join('');
+}
+
+function _solAddLinha(){
+  _solLinhas.push({exame:''});
+  _solRender();
+}
+
+function _solLimpar(){
+  _solLinhas=[{exame:''}];
+  _solRender();
+  sf('sol-indicacao','');
+}
+
+function _solRotina(){
+  _solLinhas=SOL_ROTINA.map(e=>({exame:e}));
+  _solRender();
+  if(!gf('sol-indicacao')) sf('sol-indicacao','EXAMES DE ROTINA UTI');
+}
+
+function _coletarSolicitacao(){
+  return {
+    pac:gf('sol-pac'), leito:gf('sol-leito'), data:gf('sol-data'),
+    indicacao:gf('sol-indicacao'),
+    exames:_solLinhas.map(l=>l.exame).filter(Boolean),
+    medNome:perfilUsuario?perfilUsuario.nome:'',
+    medCrm:perfilUsuario?perfilUsuario.crm:'',
+    salvadoEm:new Date().toISOString()
+  };
+}
+
+async function salvarSolicitacaoExames(){
+  if(!leitoAtual){ toast('Abra o prontuário de um paciente.',true); return; }
+  const s=_coletarSolicitacao();
+  if(!s.exames.length){ toast('Adicione ao menos um exame.',true); return; }
+  showLoading('Salvando solicitação...');
+  try{
+    const key=`uti_med_sol_exam_${leitoAtual}_${s.data}_${Date.now()}`;
+    await dbSet(key, s);
+    // Adiciona à lista local para impressão futura
+    _solSalvas.push({key,...s});
+    hideLoading();
+    toast('✓ Solicitação salva. Clique em 🖨 Imprimir para gerar o documento.');
+    _solLinhas=[{exame:''}];
+    _solRender();
+    sf('sol-indicacao','');
+  }catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
+}
+
+function imprimirSolicitacaoAtual(){
+  const s=_coletarSolicitacao();
+  if(!s.exames.length){ toast('Adicione ao menos um exame.',true); return; }
+  _imprimirSolicitacaoObj(s);
+}
+
+// Imprime TODAS as solicitações salvas do leito+data atual
+async function imprimirSolicitacoesExames(){
+  if(!leitoAtual){ toast('Abra o prontuário de um paciente.',true); return; }
+  showLoading('Buscando solicitações...');
+  try{
+    const data=gf('f-data')||hoje();
+    const todas=await dbListByPrefix(`uti_med_sol_exam_${leitoAtual}_${data}`);
+    const arr=Object.values(todas).filter(s=>s&&s.exames&&s.exames.length);
+    hideLoading();
+    if(!arr.length){ toast('Nenhuma solicitação de exame salva para hoje.',true); return; }
+    // Imprime uma por página
+    arr.sort((a,b)=>(a.salvadoEm||'').localeCompare(b.salvadoEm||''));
+    const htmlPages=arr.map(s=>_htmlSolicitacao(s)).join('<div style="page-break-after:always;"></div>');
+    _abrirJanelaBranca(htmlPages, 'Solicitações de Exames');
+  }catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
+}
+
+function _imprimirSolicitacaoObj(s){ _abrirJanelaBranca(_htmlSolicitacao(s), 'Solicitação de Exames'); }
+
+function _htmlSolicitacao(s){
+  const itens=(s.exames||[]).map(e=>`<li style="padding:4px 0;font-size:11pt;letter-spacing:.02em;">${e.toUpperCase()}</li>`).join('');
+  return `
+  <div style="font-family:'Arial',sans-serif;max-width:800px;margin:0 auto;padding:0 10px;">
+    <!-- Cabeçalho -->
+    <div style="display:flex;align-items:center;gap:16px;border-bottom:3px solid #c00;padding-bottom:10px;margin-bottom:0;">
+      <img src="logo.png" alt="HOSPESC" style="height:60px;width:auto;" onerror="this.style.display='none'">
+      <div>
+        <div style="font-size:8pt;color:#555;text-transform:uppercase;letter-spacing:.06em;">Secretaria Municipal de Saúde</div>
+        <div style="font-size:14pt;font-weight:800;color:#003080;letter-spacing:.04em;">HOSPITAL DOS PESCADORES</div>
+        <div style="font-size:8pt;color:#555;">UTI Geral</div>
+      </div>
+    </div>
+    <!-- Dados do paciente -->
+    <table style="width:100%;border-collapse:collapse;margin-top:0;border:2px solid #000;">
+      <tr>
+        <td style="border:1px solid #000;padding:6px 10px;width:80px;font-weight:800;font-size:10pt;">NOME:</td>
+        <td style="border:1px solid #000;padding:6px 10px;font-size:11pt;font-weight:700;">${(s.pac||'').toUpperCase()}</td>
+      </tr>
+      <tr>
+        <td style="border:1px solid #000;padding:6px 10px;font-weight:800;font-size:10pt;">DATA&nbsp;${s.data?_fmtDataCurta(s.data).replace(/\//g,'/').slice(0,8):'____/____/____'}</td>
+        <td style="border:1px solid #000;padding:6px 10px;font-size:10pt;font-weight:700;text-align:right;">LEITO:&nbsp;${s.leito||'__'}</td>
+      </tr>
+    </table>
+    <!-- Corpo -->
+    <div style="margin-top:28px;">
+      <div style="font-weight:800;font-size:12pt;margin-bottom:16px;">SOLICITO:</div>
+      <ul style="list-style:none;padding:0;margin:0 0 0 20px;">
+        ${itens}
+      </ul>
+    </div>
+    ${s.indicacao?`<div style="margin-top:20px;font-size:9.5pt;"><strong>Indicação:</strong> ${s.indicacao.toUpperCase()}</div>`:''}
+    <!-- Assinatura -->
+    <div style="margin-top:50px;display:flex;justify-content:flex-end;">
+      <div style="text-align:center;">
+        <div style="border-top:1px solid #555;width:260px;padding-top:5px;font-size:9pt;">
+          ${s.medNome?s.medNome.toUpperCase()+'<br>':''}${s.medCrm?'CRM '+s.medCrm:'Médico Responsável'}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   IMPRESSÃO GERAL (exames + prescrição 2 vias + evolução)
+   ════════════════════════════════════════════════════════════════════════════ */
+
+// Abre janela de impressão com HTML passado
+function _abrirJanelaBranca(conteudo, titulo){
+  const estilo=`<style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    @page{size:A4 portrait;margin:1.2cm}
+    body{font-family:'Arial',sans-serif;font-size:10pt;color:#000;background:white;}
+    li{list-style-type:'- ';margin-left:20px;}
+    @media print{.no-print{display:none;}}
+  </style>`;
+  const w=window.open('','_blank','width=860,height:980');
+  if(!w){ toast('Popup bloqueado — permita popups para imprimir.',true); return; }
+  w.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+    <title>${titulo}</title>${estilo}</head><body>${conteudo}
+    <script>window.onload=()=>{window.print();window.onafterprint=()=>window.close();}<\/script>
+    </body></html>`);
+  w.document.close();
+}
+
+// Prescrição em 2 vias (A4, lado a lado ou página dupla)
+function imprimirPrescricaoDuasVias(){
+  if(!_rxItens.length){ toast('Nenhum item na prescrição.',true); return; }
+  const via=_gerarHtmlPrescricao();
+  // Duas vias separadas por page-break
+  _abrirJanelaBranca(via+'<div style="page-break-after:always;"></div>'+via, 'Prescrição — 2 vias');
+}
+
+// Gera HTML da prescrição (reutilizável)
+function _gerarHtmlPrescricao(){
+  const pac=gf('f-pac'), leito=gf('f-leito'), data=gf('f-data');
+  const med=perfilUsuario?perfilUsuario.nome:'', crm=perfilUsuario?perfilUsuario.crm||'':'';
+  const linhas=_rxItens.map((it,i)=>{
+    const dose=[it.qtd,(it.apres&&it.apres!=='—'?it.apres:''),(it.dose&&it.dose!=='—'?it.dose:'')]
+      .filter(Boolean).join(' ')||'—';
+    const hors=(it.hor||[]).join(' · ')||'—';
+    const bg = it.tipo==='dieta'?'#f0f7f0':it.tipo==='sn'?'#fffde7':it.tipo==='cuidados'?'#f5f5f5':'white';
+    return `<tr style="background:${bg};">
+      <td style="padding:4px 6px;border:1px solid #ccc;width:24px;color:#888;font-size:8pt;">${i+1}</td>
+      <td style="padding:4px 6px;border:1px solid #ccc;font-weight:600;">${(it.farm||'—').toUpperCase()}</td>
+      <td style="padding:4px 6px;border:1px solid #ccc;">${dose.toUpperCase()}</td>
+      <td style="padding:4px 6px;border:1px solid #ccc;">${(it.via||'—').toUpperCase()}</td>
+      <td style="padding:4px 6px;border:1px solid #ccc;">${(it.freq||'—').toUpperCase()}</td>
+      <td style="padding:4px 6px;border:1px solid #ccc;font-size:8pt;">${hors}</td>
+      <td style="padding:4px 6px;border:1px solid #ccc;font-size:8pt;">${(it.obs||'').toUpperCase()}</td>
+    </tr>`;
+  }).join('');
+
+  return `
+  <div style="font-family:'Arial Narrow',Arial,sans-serif;font-size:9pt;padding:0 4px;">
+    <!-- Cabeçalho -->
+    <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #7a1020;padding-bottom:8px;margin-bottom:8px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <img src="logo.png" alt="" style="height:48px;width:auto;" onerror="this.style.display='none'">
+        <div>
+          <div style="font-weight:800;color:#7a1020;font-size:12pt;">PRESCRIÇÃO MÉDICA — UTI GERAL</div>
+          <div style="font-size:8pt;color:#555;">HOSPITAL DOS PESCADORES · NATAL/RN</div>
+        </div>
+      </div>
+      <div style="text-align:right;font-size:8.5pt;color:#444;">
+        <strong>DATA:</strong> ${_fmtDataCurta(data)||'—'}&nbsp;&nbsp;<strong>LEITO:</strong> ${leito||'?'}
+      </div>
+    </div>
+    <!-- Paciente -->
+    <div style="margin-bottom:8px;font-size:9.5pt;">
+      <strong>Paciente:</strong> ${(pac||'').toUpperCase()}
+    </div>
+    <!-- Tabela -->
+    <table style="width:100%;border-collapse:collapse;font-size:8.5pt;">
+      <thead>
+        <tr style="background:#7a1020;color:white;">
+          <th style="padding:5px 6px;text-align:left;font-size:7.5pt;">#</th>
+          <th style="padding:5px 6px;text-align:left;font-size:7.5pt;">FÁRMACO / ITEM</th>
+          <th style="padding:5px 6px;text-align:left;font-size:7.5pt;">DOSE/APRES</th>
+          <th style="padding:5px 6px;text-align:left;font-size:7.5pt;">VIA</th>
+          <th style="padding:5px 6px;text-align:left;font-size:7.5pt;">FREQ</th>
+          <th style="padding:5px 6px;text-align:left;font-size:7.5pt;">HORÁRIOS</th>
+          <th style="padding:5px 6px;text-align:left;font-size:7.5pt;">OBS</th>
+        </tr>
+      </thead>
+      <tbody>${linhas}</tbody>
+    </table>
+    <!-- Assinatura -->
+    <div style="margin-top:30px;display:flex;justify-content:flex-end;">
+      <div style="text-align:center;">
+        <div style="border-top:1px solid #555;width:240px;padding-top:4px;font-size:8.5pt;">
+          ${med?med.toUpperCase()+'<br>':''}${crm?'CRM '+crm:'Médico Responsável'}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// Imprime evolução em 1 via (reutiliza imprimirEvolucao mas com wrapper)
+function imprimirTudo(){
+  if(!leitoAtual){ toast('Abra o prontuário de um paciente.',true); return; }
+  // Abre as três impressões em sequência com delay
+  setTimeout(()=>imprimirSolicitacoesExames(), 0);
+  setTimeout(()=>imprimirPrescricaoDuasVias(), 800);
+  setTimeout(()=>imprimirEvolucao(), 1600);
+}
