@@ -1000,3 +1000,47 @@ a:hover{text-decoration:underline}
   flex:1; padding:4px 8px; border:1.5px solid var(--borda);
   border-radius:7px; font-size:.76rem; text-transform:uppercase;
 }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   HISTÓRICO: ROTINA COLAPSÁVEL + CULTURAS
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* Card de rotina — colapsável com <details> */
+.sol-hist-card-rotina{
+  border-color:#c5d8f0; background:#f0f6ff;
+}
+.sol-hist-rotina-sum{
+  display:flex; align-items:center; gap:8px; cursor:pointer;
+  list-style:none; padding:0;
+}
+.sol-hist-rotina-sum::-webkit-details-marker{ display:none; }
+.sol-hist-rotina-sum::before{
+  content:'▶'; font-size:.62rem; color:var(--vinho); transition:.15s; flex-shrink:0;
+}
+details[open] .sol-hist-rotina-sum::before{ content:'▼'; }
+.sol-hist-rotina-badge{
+  background:#1565c0; color:white; border-radius:20px;
+  padding:1px 10px; font-size:.68rem; font-weight:700;
+  letter-spacing:.04em; white-space:nowrap;
+}
+
+/* Card de cultura */
+.sol-hist-card-cult{
+  border-color:#d0b0f0; background:#f9f2ff;
+}
+.sol-hist-chip-cult{
+  background:white; border:1.5px solid #c580f0;
+  color:#6b21a8; border-radius:20px;
+  padding:1px 8px; font-size:.7rem; font-weight:600;
+}
+
+/* Modal de culturas */
+.cult-grupo{ margin-bottom:6px; }
+.cult-item{ margin-bottom:3px; margin-left:2px; }
+.cult-sub-opts{
+  display:flex; flex-wrap:wrap; gap:4px 14px;
+  margin:4px 0 4px 22px;
+  padding:6px 10px; background:var(--bg2);
+  border-left:3px solid var(--vinho-borda); border-radius:0 6px 6px 0;
+}
+.cult-pai{ font-weight:600; }
