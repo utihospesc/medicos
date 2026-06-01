@@ -4532,3 +4532,255 @@ function imprimirTudo(){
   setTimeout(()=>imprimirPrescricaoDuasVias(), 800);
   setTimeout(()=>imprimirEvolucao(), 1600);
 }
+
+
+/* ════════════════════════════════════════════════════════════════════════════
+   ROTINA DE EXAMES — TODOS OS LEITOS
+   Modal com checkboxes + exames editáveis + impressão 4 por folha A4 paisagem
+   ════════════════════════════════════════════════════════════════════════════ */
+
+// Estado do modal de rotina
+let _rotinaLeitos = []; // [{num, pac, diag, selecionado, exames:[]}]
+
+async function abrirRotinaExames(){
+  showLoading('Carregando leitos...');
+  try{
+    const ld = await _getLeitos();
+    const data = hoje();
+    sf('rotina-data', data);
+
+    // Monta array de leitos ocupados, pré-marcados com rotina
+    _rotinaLeitos = [];
+    for(let i=1; i<=TOTAL_LEITOS; i++){
+      const L = ld[i]||{};
+      if(!L.ocupado || !L.pac) continue;
+      _rotinaLeitos.push({
+        num: i,
+        pac: L.pac||'',
+        diag: L.diag||'',
+        selecionado: true,
+        exames: [...SOL_ROTINA] // cópia da rotina padrão
+      });
+    }
+    hideLoading();
+    if(!_rotinaLeitos.length){ toast('Nenhum leito ocupado no momento.',true); return; }
+    _rotinaRenderGrid();
+    $('modal-rotina-exames').classList.add('show');
+  }catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
+}
+
+function fecharRotinaExames(){ $('modal-rotina-exames').classList.remove('show'); }
+
+function _rotinaMarcarTodos(v){
+  _rotinaLeitos.forEach(l=>l.selecionado=v);
+  _rotinaRenderGrid();
+}
+
+function _rotinaResetarExames(){
+  _rotinaLeitos.forEach(l=>l.exames=[...SOL_ROTINA]);
+  _rotinaRenderGrid();
+}
+
+function _rotinaRenderGrid(){
+  const wrap=$('rotina-leitos-grid'); if(!wrap) return;
+  wrap.innerHTML=_rotinaLeitos.map((l,idx)=>`
+    <div class="rotina-leito-card ${l.selecionado?'selecionado':'desmarcado'}">
+      <div class="rotina-leito-header">
+        <label class="rotina-check-label">
+          <input type="checkbox" ${l.selecionado?'checked':''}
+            onchange="_rotinaLeitos[${idx}].selecionado=this.checked;this.closest('.rotina-leito-card').className='rotina-leito-card '+(this.checked?'selecionado':'desmarcado')">
+          <span class="rotina-leito-num">Leito ${pad(l.num)}</span>
+        </label>
+        <span class="rotina-leito-pac" title="${l.pac}">${l.pac}</span>
+      </div>
+      ${l.diag?`<div class="rotina-leito-diag">${l.diag}</div>`:''}
+      <div class="rotina-exames-lista" id="rotina-lista-${idx}">
+        ${l.exames.map((e,ei)=>`
+          <div class="rotina-exame-item">
+            <span class="rotina-exame-txt">${e}</span>
+            <button class="rotina-exame-del" onclick="_rotinaRemoverExame(${idx},${ei})" title="Remover">×</button>
+          </div>`).join('')}
+      </div>
+      <div style="display:flex;gap:4px;margin-top:6px;">
+        <input type="text" class="rotina-add-input" id="rotina-add-${idx}"
+          placeholder="+ exame adicional" style="text-transform:uppercase;"
+          onkeydown="if(event.key==='Enter'){_rotinaAddExame(${idx});event.preventDefault();}">
+        <button class="btn btn-sm" style="padding:3px 8px;font-size:.72rem;" onclick="_rotinaAddExame(${idx})">+</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function _rotinaRemoverExame(lIdx, eIdx){
+  _rotinaLeitos[lIdx].exames.splice(eIdx,1);
+  // Re-renderiza só o card afetado
+  const wrap=$(`rotina-lista-${lIdx}`); if(!wrap) return;
+  wrap.innerHTML=_rotinaLeitos[lIdx].exames.map((e,ei)=>`
+    <div class="rotina-exame-item">
+      <span class="rotina-exame-txt">${e}</span>
+      <button class="rotina-exame-del" onclick="_rotinaRemoverExame(${lIdx},${ei})" title="Remover">×</button>
+    </div>`).join('');
+}
+
+function _rotinaAddExame(lIdx){
+  const inp=$(`rotina-add-${lIdx}`); if(!inp) return;
+  const v=(inp.value||'').trim().toUpperCase();
+  if(!v) return;
+  _rotinaLeitos[lIdx].exames.push(v);
+  inp.value='';
+  const wrap=$(`rotina-lista-${lIdx}`); if(!wrap) return;
+  wrap.innerHTML=_rotinaLeitos[lIdx].exames.map((e,ei)=>`
+    <div class="rotina-exame-item">
+      <span class="rotina-exame-txt">${e}</span>
+      <button class="rotina-exame-del" onclick="_rotinaRemoverExame(${lIdx},${ei})" title="Remover">×</button>
+    </div>`).join('');
+  inp.focus();
+}
+
+// Salva no Firebase e depois imprime
+async function salvarESimprimirRotina(){
+  const data=gf('rotina-data')||hoje();
+  const selecionados=_rotinaLeitos.filter(l=>l.selecionado&&l.exames.length);
+  if(!selecionados.length){ toast('Selecione ao menos um leito.',true); return; }
+  showLoading('Salvando...');
+  try{
+    const med=perfilUsuario?perfilUsuario.nome:'';
+    const crm=perfilUsuario?perfilUsuario.crm||'':'';
+    await Promise.all(selecionados.map(l=>{
+      const key=`uti_med_sol_exam_${l.num}_${data}_${Date.now()}_${l.num}`;
+      return dbSet(key,{
+        pac:l.pac, leito:pad(l.num), data,
+        exames:l.exames, indicacao:'EXAMES DE ROTINA UTI',
+        medNome:med, medCrm:crm,
+        salvadoEm:new Date().toISOString()
+      });
+    }));
+    hideLoading();
+    toast(`✓ ${selecionados.length} solicitações salvas.`);
+    imprimirRotinaExames();
+  }catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
+}
+
+// Imprime A4 paisagem, 4 leitos por folha (2×2)
+function imprimirRotinaExames(){
+  const data=gf('rotina-data')||hoje();
+  const selecionados=_rotinaLeitos.filter(l=>l.selecionado&&l.exames.length);
+  if(!selecionados.length){ toast('Selecione ao menos um leito.',true); return; }
+  const med=(perfilUsuario?perfilUsuario.nome:'').toUpperCase();
+  const crm=perfilUsuario?perfilUsuario.crm||'':'';
+  const dataFmt=_fmtDataCurta(data)||data;
+
+  // Gera um bloco HTML para cada leito
+  function blocoLeito(l){
+    const itens=l.exames.map(e=>`<li>${e}</li>`).join('');
+    return `
+      <div class="bloco">
+        <div class="bloco-cab">
+          <div class="bloco-logo-wrap">
+            <img src="logo.png" class="bloco-logo" alt="" onerror="this.style.display='none'">
+          </div>
+          <div class="bloco-id">
+            <table class="id-table">
+              <tr>
+                <td class="id-lbl">NOME:</td>
+                <td class="id-val"><strong>${l.pac.toUpperCase()}</strong></td>
+              </tr>
+              <tr>
+                <td class="id-lbl">DATA&nbsp;${dataFmt}</td>
+                <td class="id-val" style="text-align:right;"><strong>LEITO: ${pad(l.num)}</strong></td>
+              </tr>
+            </table>
+          </div>
+        </div>
+        <div class="bloco-body">
+          <div class="solicito">SOLICITO:</div>
+          <ul class="exames-ul">${itens}</ul>
+        </div>
+        <div class="bloco-assin">
+          <div class="assin-linha">${med}${crm?' — CRM '+crm:''}</div>
+        </div>
+      </div>`;
+  }
+
+  // Agrupa em páginas de 4 (2×2)
+  const paginas=[];
+  for(let i=0;i<selecionados.length;i+=4) paginas.push(selecionados.slice(i,i+4));
+
+  const paginasHtml=paginas.map((grupo,pi)=>{
+    // Sempre 4 células (preenche com vazio se precisar)
+    const celulas=Array.from({length:4},(_, ci)=>
+      ci<grupo.length ? blocoLeito(grupo[ci]) : '<div class="bloco bloco-vazio"></div>'
+    );
+    const pageBreak=pi<paginas.length-1?'page-break-after:always;':'';
+    return `<div class="pagina" style="${pageBreak}">
+      <div class="grid2x2">
+        ${celulas[0]}${celulas[1]}
+        ${celulas[2]}${celulas[3]}
+      </div>
+    </div>`;
+  }).join('');
+
+  const html=`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+  <title>Rotina de Exames — ${dataFmt}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    @page{size:A4 landscape;margin:.7cm}
+    body{font-family:'Arial Narrow',Arial,sans-serif;font-size:9pt;background:white;color:#000;}
+    .pagina{width:100%;height:100%;}
+    .grid2x2{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      grid-template-rows:1fr 1fr;
+      gap:6px;
+      width:100%; height:100%;
+    }
+    .bloco{
+      border:1.5px solid #000;
+      display:flex; flex-direction:column;
+      padding:6px 8px; overflow:hidden;
+      min-height:0;
+    }
+    .bloco-vazio{ border:1.5px dashed #ccc; }
+    /* Cabeçalho do bloco */
+    .bloco-cab{
+      display:flex; align-items:flex-start; gap:8px;
+      border-bottom:2px solid #c00; padding-bottom:5px; margin-bottom:5px;
+    }
+    .bloco-logo-wrap{ flex-shrink:0; }
+    .bloco-logo{ height:36px; width:auto; }
+    .bloco-id{ flex:1; }
+    .id-table{ width:100%; border-collapse:collapse; }
+    .id-table td{ padding:2px 3px; }
+    .id-lbl{ font-weight:800; font-size:8pt; width:50px; }
+    .id-val{ font-size:9pt; border-left:1px solid #999; padding-left:5px; }
+    /* Corpo */
+    .bloco-body{ flex:1; padding:4px 0; overflow:hidden; }
+    .solicito{ font-weight:800; font-size:9pt; margin-bottom:4px; }
+    .exames-ul{
+      list-style:none; padding:0; margin:0 0 0 8px;
+      columns:2; column-gap:12px;
+    }
+    .exames-ul li{
+      font-size:9pt; padding:1px 0; break-inside:avoid;
+      display:flex; align-items:baseline; gap:4px;
+    }
+    .exames-ul li::before{ content:"—"; color:#555; flex-shrink:0; }
+    /* Assinatura */
+    .bloco-assin{
+      border-top:1px solid #999; margin-top:4px; padding-top:3px;
+      text-align:right; font-size:7.5pt; color:#555;
+    }
+    .assin-linha{ display:inline-block; }
+    @media print{
+      .pagina{ page-break-after:always; }
+      .pagina:last-child{ page-break-after:avoid; }
+    }
+  </style></head><body>
+  ${paginasHtml}
+  <script>window.onload=()=>{window.print();window.onafterprint=()=>window.close();}<\/script>
+  </body></html>`;
+
+  const w=window.open('','_blank','width=1100,height=800');
+  if(w){ w.document.write(html); w.document.close(); }
+  else toast('Popup bloqueado — permita popups para imprimir.',true);
+}
