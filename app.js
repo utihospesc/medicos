@@ -1976,6 +1976,7 @@ const RX_BANCO = [
   {nome:'HGT 6/6H // INSULINA REGULAR SE HGT > 200', qtd:'', apres:'—', dose:'', diluicao:'', via:'—', freq:'6/6H', hor:['06','12','18','24'], cat:'Protocolo', obs:''},
   {nome:'HGT 6/6H // INSULINA REGULAR SE HGT > 250', qtd:'', apres:'—', dose:'', diluicao:'', via:'—', freq:'6/6H', hor:['06','12','18','24'], cat:'Protocolo', obs:''},
   {nome:'HGT 6/6H // INSULINA REGULAR CONFORME PROTOCOLO', qtd:'', apres:'—', dose:'', diluicao:'', via:'—', freq:'6/6H', hor:['06','12','18','24'], cat:'Protocolo', obs:''},
+  {nome:'HGT 1/1H ENQUANTO BOMBA DE INSULINA', qtd:'', apres:'—', dose:'', diluicao:'', via:'—', freq:'1/1H', hor:['20','21','22','23','24','01','02','03','04','05','06','07','08','09','10','11','12','13','14','15','16','17','18','19'], cat:'Protocolo', obs:'controle glicêmico BIC'},
   {nome:'HGT ANTES CAFÉ/ALMOÇO/JANTAR/22H + INSULINA REG PROTOCOLO', qtd:'', apres:'—', dose:'', diluicao:'', via:'—', freq:'SND', hor:['SND'], cat:'Protocolo', obs:''},
   {nome:'HGT ANTES CAFÉ/ALMOÇO/JANTAR/22H // IR PROTOCOLO SE HGT > 250', qtd:'', apres:'—', dose:'', diluicao:'', via:'—', freq:'SND', hor:['SND'], cat:'Protocolo', obs:''},
   {nome:'GLICOSE 50% SE HGT < 70 | REPETIR HGT 30MIN', qtd:'40', apres:'ML', dose:'50%', diluicao:'', via:'EV', freq:'SN', hor:['SN'], cat:'Protocolo', obs:'se HGT < 70'},
@@ -2162,7 +2163,7 @@ const RX_BANCO = [
 let _rxItens = [];   // array de itens da prescrição atual
 let _rxAcTarget = null; // input do autocomplete ativo
 
-const RX_HORAS = ['01','02','04','06','08','10','12','14','16','18','20','22','24'];
+const RX_HORAS = ['20','22','24','02','04','06','08','10','12','14','16','18'];
 const RX_VIAS  = ['VO','EV','SC','IM','SL','IN','SNE','SNG','OF','ORAL','TD','INH','BIC','INF','—'];
 const RX_FREQS = ['BIC ACM','24/24H','12/12H','8/8H','6/6H','4/4H','2/2H','1/1H','1X/DIA','SN','6/6H SN','8/8H SN','ACM','ACM NOITE','SND','—'];
 const RX_APRES = ['—','COMP','CAP','FA','AMP','ML','GTS','PUFF','JATO','SPRAY','SACHE','ADESIVO','UI','BOLSA','SER','FR','BISN','MEQ'];
@@ -3153,58 +3154,50 @@ function imprimirPrescricao(){
   <title>${document.title}</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0;text-transform:uppercase;}
-    @page{size:A4 landscape;margin:.8cm 1cm}
-    body{font-family:'Arial Narrow',Arial,sans-serif;font-size:9.5pt;color:#111;}
-    .cabecalho{display:flex;justify-content:space-between;align-items:flex-start;
-      border-bottom:2px solid #7a1020;padding-bottom:6px;margin-bottom:6px;}
-    .cab-centro{text-align:center;flex:1;}
-    .cab-titulo{font-size:13pt;font-weight:800;color:#7a1020;letter-spacing:.04em;}
-    .cab-sub{font-size:8pt;color:#555;margin-top:1px;}
-    .cab-logo{width:80px;text-align:right;font-size:7.5pt;color:#888;}
-    .meta-linha{display:flex;gap:6px;margin-bottom:5px;flex-wrap:wrap;}
-    .meta-box{border:1px solid #bbb;padding:4px 8px;border-radius:3px;font-size:8.5pt;flex:1;min-width:120px;}
+    @page{size:A4 landscape;margin:.4cm .7cm}
+    body{font-family:'Arial Narrow',Arial,sans-serif;font-size:8pt;color:#111;}
+    .cab{display:flex;align-items:center;gap:8px;border-bottom:2px solid #7a1020;padding-bottom:3px;margin-bottom:3px;}
+    .cab img{height:32px;width:auto;}
+    .cab-c{flex:1;text-align:center;line-height:1.1;}
+    .cab-titulo{font-size:10.5pt;font-weight:800;color:#7a1020;letter-spacing:.04em;}
+    .cab-sub{font-size:6.5pt;color:#666;}
+    .cab-dir{font-size:7pt;color:#555;text-align:right;white-space:nowrap;line-height:1.5;}
+    .meta{display:flex;gap:3px;margin-bottom:2px;flex-wrap:wrap;}
+    .meta-box{border:1px solid #ccc;padding:1.5px 5px;border-radius:2px;font-size:7pt;flex:1;min-width:80px;}
     .meta-box strong{color:#7a1020;}
-    .alerta{background:#fde8e6;border:1.5px solid #e57373;padding:4px 10px;border-radius:3px;
-      font-size:9pt;color:#7a1020;font-weight:700;margin-bottom:5px;}
-    table{width:100%;border-collapse:collapse;font-size:9pt;}
+    .alerta{background:#fde8e6;border:1.5px solid #e57373;padding:1.5px 6px;border-radius:2px;font-size:7pt;color:#7a1020;font-weight:700;margin-bottom:2px;}
+    table{width:100%;border-collapse:collapse;font-size:7.5pt;}
     thead tr{background:#7a1020;color:white;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-    th{padding:5px 6px;text-align:left;font-size:8pt;font-weight:700;border:1px solid #5c0a18;}
-    td{border:1px solid #ccc;padding:4px 6px;vertical-align:middle;}
+    th{padding:2.5px 4px;text-align:left;font-size:6.8pt;font-weight:700;border:1px solid #5c0a18;}
+    td{border:1px solid #ccc;padding:2px 4px;vertical-align:middle;line-height:1.25;}
     tr:nth-child(even) td{background:#faf5f6;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     .tr-dieta td{background:#e6f4ec!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     .tr-sn td{background:#fdf2dd!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     .tr-cuidado td{background:#f0f4ff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-    .n{text-align:center;font-weight:700;color:#7a1020;width:22px;}
+    .n{text-align:center;font-weight:700;color:#7a1020;width:16px;font-size:7pt;}
     .farm{font-weight:700;}
-    .th-num{width:22px;}.th-farm{min-width:220px;}.th-dose{width:85px;}.th-via{width:45px;}
-    .th-freq{width:80px;}.th-hor{width:170px;}.th-obs{min-width:90px;}
-    .assin{margin-top:18px;display:flex;justify-content:flex-end;}
-    .assin-box{border-top:1px solid #555;text-align:center;padding-top:4px;min-width:260px;font-size:8.5pt;}
-    .rodape{margin-top:8px;font-size:7.5pt;color:#888;text-align:center;border-top:1px solid #eee;padding-top:4px;}
+    .th-num{width:16px;}.th-farm{min-width:180px;}.th-dose{width:72px;}.th-via{width:34px;}
+    .th-freq{width:62px;}.th-hor{width:140px;}.th-obs{min-width:75px;}
+    .assin{margin-top:4px;display:flex;justify-content:flex-end;}
+    .assin-box{border-top:1px solid #555;text-align:center;padding-top:2px;min-width:220px;font-size:7pt;}
+    .rodape{margin-top:2px;font-size:6pt;color:#aaa;text-align:center;border-top:1px solid #eee;padding-top:1px;}
   </style></head><body>
-  <div class="cabecalho">
-    <div style="width:100px;text-align:center;">
-      <img src="logo.png" alt="" style="max-height:56px;max-width:90px;width:auto;height:auto;"
-        onerror="this.style.display='none'">
-    </div>
-    <div class="cab-centro">
+  <div class="cab">
+    <img src="logo.png" alt="" onerror="this.style.display='none'">
+    <div class="cab-c">
       <div class="cab-titulo">PRESCRIÇÃO MÉDICA — UTI GERAL</div>
       <div class="cab-sub">HOSPITAL DOS PESCADORES · NATAL/RN</div>
     </div>
-    <div style="width:100px;text-align:right;font-size:7.5pt;color:#555;line-height:1.6;">
-      DATA: ${_fmtDataCurta(data)||'—'}<br>LEITO: ${leito||'?'}
-    </div>
+    <div class="cab-dir">DATA: ${_fmtDataCurta(data)||'—'}<br>LEITO: ${leito||'?'}</div>
   </div>
-
-  <div class="meta-linha">
+  <div class="meta">
     <div class="meta-box"><strong>PACIENTE:</strong> ${pac||'—'}</div>
     <div class="meta-box"><strong>LEITO:</strong> ${leito||'?'}</div>
     <div class="meta-box"><strong>DATA:</strong> ${_fmtDataCurta(data)||'—'}</div>
     <div class="meta-box"><strong>ADM UTI:</strong> ${_fmtDataCurta(adm)||'—'}</div>
+    ${diag?`<div class="meta-box" style="flex:2;"><strong>DIAGNÓSTICO:</strong> ${diag}</div>`:''}
   </div>
-  ${diag?`<div class="meta-linha"><div class="meta-box" style="flex:none;width:100%;"><strong>DIAGNÓSTICO:</strong> ${diag}</div></div>`:''}
   ${alergia&&!/^NEGA$/.test(alergia.trim())?`<div class="alerta">⚠ ALERGIA: ${alergia}</div>`:''}
-
   <table>
     <thead>
       <tr>
