@@ -423,7 +423,8 @@ a:hover{text-decoration:underline}
 }
 .pnav-btn.pnav-sec{ margin-top:auto; color:rgba(255,255,255,.45); font-size:.62rem; }
 .pnav-btn.pnav-sec:hover{ color:rgba(255,255,255,.8); }
-.pnav-icon{ font-size:1.3rem; line-height:1; }
+.pnav-icon{ font-size:1.3rem; line-height:1; display:flex; align-items:center; justify-content:center; }
+.pnav-icon svg{ width:22px; height:22px; flex-shrink:0; }
 .pnav-lbl{ line-height:1.2; }
 .pnav-sep{ height:1px; background:rgba(255,255,255,.1); margin:6px 10px; }
 
@@ -583,6 +584,7 @@ a:hover{text-decoration:underline}
   .pnav-pac{ font-size:.7rem; padding:8px 14px 12px; }
   .pnav-btn{ padding:14px 8px; font-size:.74rem; gap:6px; }
   .pnav-icon{ font-size:1.6rem; }
+  .pnav-icon svg{ width:26px; height:26px; }
 
   /* ── FORMULÁRIO (Evolução / Lab) ────────────────────────────────────────── */
   .secao-t{ font-size:.82rem !important; padding:.8rem 1rem; letter-spacing:.06em; }
@@ -766,7 +768,8 @@ a:hover{text-decoration:underline}
   transition:.15s;
 }
 .guia-card:hover{ background:var(--vinho-claro); border-color:var(--vinho); }
-.guia-icon{ font-size:2rem; flex-shrink:0; }
+.guia-icon{ font-size:2rem; flex-shrink:0; display:flex; align-items:center; justify-content:center; width:36px; }
+.guia-icon svg{ width:28px; height:28px; }
 .guia-info{ flex:1; }
 .guia-titulo{ font-weight:700; color:var(--vinho); font-size:.92rem; }
 .guia-sub{ font-size:.76rem; color:var(--muted); margin-top:2px; }
@@ -816,4 +819,16 @@ a:hover{text-decoration:underline}
 }
 @media(max-width:640px){
   .hemo-pedido-grid{ grid-template-columns:1fr; }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   SOLICITAÇÃO DE EXAMES + PAINEL DE IMPRESSÃO
+   ════════════════════════════════════════════════════════════════════════════ */
+.sol-exame-linha{
+  display:flex; gap:8px; align-items:center; margin-bottom:6px;
+}
+.sol-exame-linha input{
+  flex:1; text-transform:uppercase;
+  padding:7px 10px; border:1.5px solid var(--borda);
+  border-radius:8px; font-size:.9rem;
 }
