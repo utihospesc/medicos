@@ -882,7 +882,90 @@ function _setLabVal(i,k,v){
 }
 function _delLabLinha(i){ _labLinhas.splice(i,1); _renderLabLinhas(); }
 
-let _labCampoAtivo='hb';
+/* ── Aba Solicitações: renderiza histórico de solicitações + exames read-only ── */
+async function _renderAbasolicitacoes(){
+  _renderLabReadOnly();
+  await _renderHistoricoSolicitacoes();
+}
+
+// Exames registrados na evolução — somente leitura, sem inputs editáveis
+function _renderLabReadOnly(){
+  const wrap=$('lab-linhas-readonly'); if(!wrap) return;
+  if(!_labLinhas||!_labLinhas.length){
+    wrap.innerHTML='<div style="font-size:.8rem;color:var(--muted);padding:6px 0;">Nenhum resultado registrado. Alimente os exames na aba Evolução.</div>';
+    return;
+  }
+  const campLbl = Object.fromEntries(LAB_CAMPOS.map(c=>[c.k,c.l]));
+  wrap.innerHTML=_labLinhas.slice().reverse().map(lin=>{
+    const vals=Object.entries(lin.valores||{})
+      .filter(([,v])=>v!=null&&v!=='')
+      .map(([k,v])=>`<span class="lab-ro-item"><b>${campLbl[k]||k}</b> ${v}</span>`)
+      .join('');
+    return vals ? `<div class="lab-ro-linha">
+      <div class="lab-ro-data">${_fmtDataCurta(lin.data)||'?'}</div>
+      <div class="lab-ro-vals">${vals}</div>
+    </div>` : '';
+  }).filter(Boolean).join('') || '<div style="font-size:.8rem;color:var(--muted);">Nenhum valor registrado.</div>';
+}
+
+// Histórico de solicitações salvas no Firebase para este leito
+async function _renderHistoricoSolicitacoes(){
+  const wrap=$('sol-exames-historico'); if(!wrap) return;
+  if(!leitoAtual){
+    wrap.innerHTML='<div style="font-size:.8rem;color:var(--muted);">Abra o prontuário de um paciente para ver as solicitações.</div>';
+    return;
+  }
+  wrap.innerHTML='<div style="font-size:.8rem;color:var(--muted);">Carregando...</div>';
+  try{
+    const todas=await dbListByPrefix(`uti_med_sol_exam_${leitoAtual}_`);
+    const arr=Object.entries(todas)
+      .map(([k,v])=>({key:k,...v}))
+      .filter(s=>s&&s.exames&&s.exames.length)
+      .sort((a,b)=>(b.salvadoEm||'').localeCompare(a.salvadoEm||''));
+    if(!arr.length){
+      wrap.innerHTML='<div style="font-size:.8rem;color:var(--muted);padding:8px 0;">Nenhuma solicitação registrada para este paciente.</div>';
+      return;
+    }
+    // Agrupa por data
+    const porData={};
+    arr.forEach(s=>{ const d=s.data||'?'; if(!porData[d]) porData[d]=[]; porData[d].push(s); });
+    wrap.innerHTML=Object.entries(porData)
+      .sort((a,b)=>b[0].localeCompare(a[0]))
+      .map(([data,sols])=>`
+        <div class="sol-hist-data">
+          <div class="sol-hist-data-lbl">${_fmtDataCurta(data)||data}</div>
+          ${sols.map(s=>`
+            <div class="sol-hist-card">
+              <div class="sol-hist-exames">
+                ${s.exames.map(e=>`<span class="sol-hist-chip">${e}</span>`).join('')}
+              </div>
+              ${s.indicacao?`<div class="sol-hist-ind">📌 ${s.indicacao}</div>`:''}
+              <div class="sol-hist-meta">
+                ${s.medNome||s.autor||'?'}
+                <span style="margin-left:auto;display:flex;gap:4px;">
+                  <button class="btn btn-sm" style="font-size:.72rem;padding:3px 8px;"
+                    onclick="_imprimirSolChave('${s.key}')">🖨</button>
+                </span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `).join('');
+  }catch(e){
+    wrap.innerHTML='<div style="font-size:.8rem;color:var(--vermelho);">Erro ao carregar solicitações.</div>';
+  }
+}
+
+
+// Imprime solicitação diretamente pelo key Firebase
+async function _imprimirSolChave(key){
+  showLoading('Carregando...');
+  try{
+    const s=await dbGet(key); hideLoading();
+    if(s) _imprimirSolicitacaoObj(s);
+  }catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
+}
+
 function abrirGraficoLab(){
   if(!_labLinhas.length){ $('grafico-vazio').style.display='block'; }
   else { $('grafico-vazio').style.display='none'; }
@@ -1661,7 +1744,7 @@ function mudarAba(aba){
     if(btn){ btn.classList.toggle('ativo', id===aba); }
   });
   if(aba==='prescricao') _renderPrescricao();
-  if(aba==='laboratorio') _renderLabLinhas();
+  if(aba==='laboratorio') _renderAbasolicitacoes();
   if(aba==='guias') _renderGuiasFichas();
 }
 
