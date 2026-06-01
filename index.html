@@ -132,6 +132,7 @@
     <div><h2>UTI Geral — Mapa de Leitos</h2><small>Hospital dos Pescadores · Evolução Médica</small></div>
     <div class="header-right">
       <span class="badge" id="badge-turno-leitos"></span>
+      <button class="btn btn-pri btn-sm" onclick="abrirRotinaExames()" title="Solicitar exames de rotina para todos os pacientes">🧪 Rotina de exames</button>
       <button class="btn btn-sm" onclick="irIndicadores()">⌥ Indicadores</button>
       <button class="btn btn-sm" onclick="voltarTurno()">↩ Trocar plantão</button>
     </div>
@@ -1126,6 +1127,40 @@
 <div class="toast" id="toast"></div>
 
 <script src="app.js?v=glasscockpit1"></script>
+<!-- ══════════════ MODAL ROTINA DE EXAMES (todos os leitos) ══════════════ -->
+<div class="modal" id="modal-rotina-exames">
+  <div class="modal-box" style="max-width:820px;max-height:94vh;overflow-y:auto;">
+    <div class="modal-head">
+      <h3 style="display:flex;align-items:center;gap:8px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H15"></path><path d="M10 3V10L5 20H19L14 10V3"></path></svg>
+        Solicitação de Rotina — Todos os Leitos
+      </h3>
+      <button class="modal-x" onclick="fecharRotinaExames()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="tip i" style="margin-bottom:12px;">
+        Leitos ocupados pré-marcados com exames de rotina. Desmarque quem não precisa ou edite os exames individualmente antes de imprimir.
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center;">
+        <span style="font-size:.8rem;color:var(--muted);">Ações:</span>
+        <button class="btn btn-sm" onclick="_rotinaMarcarTodos(true)">☑ Marcar todos</button>
+        <button class="btn btn-sm" onclick="_rotinaMarcarTodos(false)">☐ Desmarcar todos</button>
+        <button class="btn btn-sm" onclick="_rotinaResetarExames()">↺ Restaurar rotina</button>
+        <div class="fl" style="margin:0;margin-left:auto;">
+          <label style="font-size:.74rem;">Data</label>
+          <input type="date" id="rotina-data" style="padding:4px 8px;border:1.5px solid var(--borda);border-radius:7px;font-size:.86rem;">
+        </div>
+      </div>
+      <div id="rotina-leitos-grid" class="rotina-grid"></div>
+      <div class="form-actions" style="margin-top:12px;">
+        <button class="btn btn-pri" onclick="imprimirRotinaExames()">🖨 Imprimir tudo (A4 paisagem)</button>
+        <button class="btn btn-sec" onclick="salvarESimprimirRotina()">⌘ Salvar + Imprimir</button>
+        <button class="btn" onclick="fecharRotinaExames()">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Autocomplete flutuante — deve ficar no body para não ser cortado por overflow -->
 <div id="rx-autocomplete" class="rx-autocomplete" style="display:none;position:fixed;z-index:9999;"></div>
 
