@@ -194,7 +194,7 @@
         <span class="pnav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 20.5 19 12a4.95 4.95 0 1 0-7-7L3.5 13.5a4.95 4.95 0 1 0 7 7Z"></path><path d="m8.5 8.5 7 7"></path></svg></span><span class="pnav-lbl">Prescrição</span>
       </button>
       <button class="pnav-btn" id="pnav-laboratorio" onclick="mudarAba('laboratorio')">
-        <span class="pnav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H15"></path><path d="M10 3V10L5 20H19L14 10V3"></path></svg></span><span class="pnav-lbl">Exames Lab.</span>
+        <span class="pnav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H15"></path><path d="M10 3V10L5 20H19L14 10V3"></path></svg></span><span class="pnav-lbl">Solicitações</span>
       </button>
       <button class="pnav-btn" id="pnav-guias" onclick="mudarAba('guias')">
         <span class="pnav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg></span><span class="pnav-lbl">Guias</span>
@@ -418,6 +418,18 @@
             </div>
           </div>
 
+          <!-- EXAMES LABORATORIAIS -->
+          <div class="secao">
+            <div class="secao-t">Exames Laboratoriais
+              <button class="btn btn-sm" style="margin-left:8px;font-size:.66rem;padding:3px 8px;" onclick="abrirGraficoLab()">⌬ Gráfico</button>
+            </div>
+            <div class="secao-c">
+              <div class="tip i" style="margin-bottom:8px;font-size:.76rem;">Registre os resultados por data. Ficam visíveis na aba Solicitações.</div>
+              <div id="lab-linhas"></div>
+              <button class="btn btn-sec btn-sm" style="margin-top:6px;" onclick="addLinhaLab()">+ Adicionar data de exames</button>
+            </div>
+          </div>
+
           <!-- CONDUTAS -->
           <div class="secao">
             <div class="secao-t">Condutas</div>
@@ -488,30 +500,46 @@
 
       <!-- ══ ABA: EXAMES LABORATORIAIS ══ -->
       <div class="aba-panel" id="aba-laboratorio" style="display:none;">
+
+        <!-- SOLICITAÇÕES DE EXAMES -->
         <div class="card">
           <div class="secao">
-            <div class="secao-t">Exames Laboratoriais
-              <button class="btn btn-sm" style="margin-left:8px;font-size:.66rem;padding:3px 8px;" onclick="abrirGraficoLab()">⌬ Visualizar gráfico</button>
+            <div class="secao-t" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+              <span style="display:flex;align-items:center;gap:8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H15"></path><path d="M10 3V10L5 20H19L14 10V3"></path></svg>
+                Solicitações de Exames
+              </span>
+              <button class="btn btn-pri btn-sm" onclick="abrirSolicitacaoExames()">+ Nova solicitação</button>
             </div>
             <div class="secao-c">
-              <div class="tip i" style="margin-bottom:8px;">Registre os exames por data. Acumulados ao longo da internação e visualizáveis em gráfico de tendência.</div>
-              <div id="lab-linhas"></div>
-              <button class="btn btn-sec btn-sm" style="margin-top:6px;" onclick="addLinhaLab()">+ Adicionar data de exames</button>
+              <div id="sol-exames-historico">
+                <div style="font-size:.8rem;color:var(--muted);padding:8px 0;">Carregando solicitações...</div>
+              </div>
             </div>
-          </div>
-          <div class="form-actions">
-            <button class="btn btn-pri" onclick="salvarEvolucao()">⌘ Salvar exames</button>
-            <button class="btn btn-sec" onclick="abrirSolicitacaoExames()">📋 Solicitar exames</button>
           </div>
         </div>
 
-        <!-- PAINEL DE IMPRESSÃO GERAL -->
+        <!-- EXAMES LABORATORIAIS REGISTRADOS (somente leitura) -->
+        <div class="card" style="margin-top:0;">
+          <div class="secao">
+            <div class="secao-t" style="display:flex;align-items:center;gap:8px;">
+              <span>Resultados de Exames Registrados</span>
+              <button class="btn btn-sm" style="font-size:.66rem;padding:3px 8px;" onclick="abrirGraficoLab()">⌬ Gráfico de tendência</button>
+            </div>
+            <div class="secao-c">
+              <div class="tip i" style="margin-bottom:8px;font-size:.78rem;">Exames alimentados na evolução médica. Edite na aba Evolução.</div>
+              <div id="lab-linhas-readonly"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- IMPRESSÃO -->
         <div class="card" style="margin-top:0;">
           <div class="secao">
             <div class="secao-t">Impressão</div>
             <div class="secao-c">
               <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-                <button class="btn btn-sec" onclick="imprimirSolicitacoesExames()">🖨 Exames (rotina)</button>
+                <button class="btn btn-sec" onclick="imprimirSolicitacoesExames()">🖨 Solicitações de exames</button>
                 <button class="btn btn-sec" onclick="imprimirPrescricaoDuasVias()">🖨 Prescrição (2 vias)</button>
                 <button class="btn btn-sec" onclick="imprimirEvolucao()">🖨 Evolução (1 via)</button>
                 <button class="btn btn-sec" onclick="imprimirTudo()">🖨 Imprimir tudo</button>
