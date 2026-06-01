@@ -1766,13 +1766,14 @@ const RX_BANCO = [
   {nome:'AMICACINA 500MG', qtd:'1', apres:'FA', dose:'500MG', diluicao:'+ 100ML SF 0,9%', via:'EV', freq:'24/24H', hor:['08'], cat:'ATB', obs:'dosar nível'},
   {nome:'ALBENDAZOL 4MG/ML 10ML', qtd:'10', apres:'ML', dose:'4MG/ML', diluicao:'', via:'VO', freq:'12/12H', hor:['08','20'], cat:'ATB', obs:'junto à refeição'},
   {nome:'PERMETRINA 5% LOÇÃO 60ML', qtd:'', apres:'FR', dose:'5%', diluicao:'', via:'TD', freq:'ACM', hor:['ACM'], cat:'ATB', obs:'lavar após 8-14h'},
-  {nome:'SF 0,9% 100ML EV EM BIC ~5ML/H', qtd:'120', apres:'ML', dose:'0,9%', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Hidratação', obs:''},
+  {nome:'SF 0,9% 120ML EV EM BIC ~5ML/H', qtd:'120', apres:'ML', dose:'0,9%', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Hidratação', obs:''},
   {nome:'SF 0,9% 250ML EV EM BIC', qtd:'250', apres:'ML', dose:'0,9%', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Hidratação', obs:''},
   {nome:'SF 0,9% 500ML EV EM BIC', qtd:'500', apres:'ML', dose:'0,9%', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Hidratação', obs:''},
   {nome:'SF 0,9% 1000ML EV EM BIC 42ML/H', qtd:'1000', apres:'ML', dose:'0,9%', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Hidratação', obs:''},
   {nome:'SG 5% 420ML + BICARBONATO DE SÓDIO 8,4% 80ML', qtd:'500', apres:'ML', dose:'5%', diluicao:'+ 80ML BIC 8,4%', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Hidratação', obs:'~84ML/H'},
-  {nome:'RINGER LACTATO ETAPA RÁPIDA', qtd:'500', apres:'ML', dose:'—', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Hidratação', obs:''},
-  {nome:'RINGER LACTATO EV EM BIC', qtd:'1500', apres:'ML', dose:'—', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Hidratação', obs:''},
+  {nome:'RINGER LACTATO 500ML ETAPA RÁPIDA', qtd:'500', apres:'ML', dose:'—', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Hidratação', obs:''},
+  {nome:'RINGER LACTATO 1500ML EV EM BIC ~63ML/H', qtd:'1500', apres:'ML', dose:'—', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Hidratação', obs:''},
+  {nome:'RINGER LACTATO 120ML EV EM BIC 5ML/H', qtd:'120', apres:'ML', dose:'—', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Hidratação', obs:''},
   {nome:'SORO FISIOLÓGICO 0,9% EV EM BIC A 4ML/H', qtd:'', apres:'ML', dose:'0,9%', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Hidratação', obs:''},
   {nome:'JELCO HIDRATADO', qtd:'', apres:'—', dose:'', diluicao:'', via:'EV', freq:'—', hor:[], cat:'Hidratação', obs:''},
   {nome:'NORADRENALINA (NOREPINEFRINA) 4MG/4ML', qtd:'4', apres:'AMP', dose:'4MG/4ML', diluicao:'+ 234ML SF 0,9%', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Droga Vasoativa', obs:'BIC — titular PAM'},
@@ -2616,7 +2617,7 @@ function _renderPrescricao(){
   // renderiza linhas
   const tbody=$('presc-tbody'); if(!tbody) return;
   if(!_rxItens.length){
-    tbody.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--muted);font-size:.84rem;">
+    tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--muted);font-size:.84rem;">
       Clique em "+ Adicionar item" para começar a prescrição.</td></tr>`;
     return;
   }
@@ -2625,13 +2626,12 @@ function _renderPrescricao(){
     const viaOpts=RX_VIAS.map(v=>`<option ${it.via===v?'selected':''}>${v}</option>`).join('');
     const freqOpts=RX_FREQS.map(f=>`<option ${it.freq===f?'selected':''}>${f}</option>`).join('');
     const apresOpts=RX_APRES.map(a=>`<option ${it.apres===a?'selected':''}>${a}</option>`).join('');
-    // Itens dispensados de dose não pintam de vermelho
     const dispensa=_rxDispensaDose(it);
     const dosePendente = !dispensa && (!it.dose || it.dose.trim()===''||it.dose==='—');
     const doseStyle = dosePendente ? 'border-color:#e53935!important;background:#fff5f5!important;' : '';
     return `<tr class="${rowCls}">
       <td class="presc-num">${i+1}</td>
-      <td>
+      <td class="td-farm">
         <div style="display:flex;align-items:center;gap:4px;">
           <input type="text" class="rx-farm" value="${it.farm||''}" placeholder="FÁRMACO / ITEM"
             style="text-transform:uppercase;flex:1;"
@@ -2639,12 +2639,10 @@ function _renderPrescricao(){
             onblur="setTimeout(_rxAcFechar, 150)" onkeydown="_rxAcKey(event,${it.id})">
           ${_rxBadgeDdia(it)}
         </div>
-      </td>
-      <td>
-        <div class="rx-qtdapres">
-          <input type="text" class="rx-qtd" value="${it.qtd||''}" placeholder="qtd"
+        <div class="rx-apres-inline">
+          <input type="text" class="rx-qtd-inline" value="${it.qtd||''}" placeholder="qtd"
             oninput="_rxSetField(${it.id},'qtd',this.value)">
-          <select class="rx-apres" onchange="_rxSetField(${it.id},'apres',this.value)">${apresOpts}</select>
+          <select class="rx-apres-sel" onchange="_rxSetField(${it.id},'apres',this.value)">${apresOpts}</select>
         </div>
       </td>
       <td>
@@ -2655,9 +2653,12 @@ function _renderPrescricao(){
       <td><select onchange="_rxSetField(${it.id},'via',this.value)">${viaOpts}</select></td>
       <td><select onchange="_rxSetField(${it.id},'freq',this.value)">${freqOpts}</select></td>
       <td data-rx-hor="${it.id}">${_rxHorariosHtml(it)}</td>
-      <td><input type="text" value="${it.obs||''}" placeholder="OBS."
-        style="text-transform:uppercase;"
-        oninput="_rxSetField(${it.id},'obs',this.value.toUpperCase())"></td>
+      <td class="td-obs">
+        <textarea class="rx-obs-area" rows="2"
+          placeholder="OBS."
+          oninput="_rxSetField(${it.id},'obs',this.value.toUpperCase());this.style.height='auto';this.style.height=this.scrollHeight+'px'"
+          style="text-transform:uppercase;">${it.obs||''}</textarea>
+      </td>
       <td>
         <button class="presc-del" onclick="_rxRemover(${it.id})" title="Excluir item">🗑</button>
       </td>
