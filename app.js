@@ -917,11 +917,14 @@ async function _renderHistoricoSolicitacoes(){
   }
   wrap.innerHTML='<div style="font-size:.8rem;color:var(--muted);">Carregando...</div>';
   try{
-    const todas=await dbListByPrefix(`uti_med_sol_exam_${leitoAtual}_`);
-    const arr=Object.entries(todas)
-      .map(([k,v])=>({key:k,...v}))
-      .filter(s=>s&&s.exames&&s.exames.length)
-      .sort((a,b)=>(b.salvadoEm||'').localeCompare(a.salvadoEm||''));
+    // Busca exames convencionais E culturas
+    const [todasExam, todasCult] = await Promise.all([
+      dbListByPrefix(`uti_med_sol_exam_${leitoAtual}_`),
+      dbListByPrefix(`uti_med_sol_cult_${leitoAtual}_`)
+    ]);
+    const arrExam = Object.entries(todasExam).map(([k,v])=>({key:k,...v,_tipo:'exam'})).filter(s=>s&&s.exames&&s.exames.length);
+    const arrCult = Object.entries(todasCult).map(([k,v])=>({key:k,...v,_tipo:'cult'})).filter(s=>s&&s.pac);
+    const arr=[...arrExam,...arrCult].sort((a,b)=>(b.salvadoEm||'').localeCompare(a.salvadoEm||''));
     if(!arr.length){
       wrap.innerHTML='<div style="font-size:.8rem;color:var(--muted);padding:8px 0;">Nenhuma solicitação registrada para este paciente.</div>';
       return;
@@ -929,31 +932,78 @@ async function _renderHistoricoSolicitacoes(){
     // Agrupa por data
     const porData={};
     arr.forEach(s=>{ const d=s.data||'?'; if(!porData[d]) porData[d]=[]; porData[d].push(s); });
+
     wrap.innerHTML=Object.entries(porData)
       .sort((a,b)=>b[0].localeCompare(a[0]))
-      .map(([data,sols])=>`
-        <div class="sol-hist-data">
-          <div class="sol-hist-data-lbl">${_fmtDataCurta(data)||data}</div>
-          ${sols.map(s=>`
-            <div class="sol-hist-card">
-              <div class="sol-hist-exames">
-                ${s.exames.map(e=>`<span class="sol-hist-chip">${e}</span>`).join('')}
+      .map(([data,sols])=>{
+        const cards=sols.map(s=>{
+          if(s._tipo==='cult'){
+            // Card de cultura — resumido
+            const exames=_cultResumir(s);
+            return `<div class="sol-hist-card sol-hist-card-cult">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                <span style="font-size:.7rem;font-weight:800;color:#8a2be2;letter-spacing:.04em;">🦠 CULTURA</span>
               </div>
+              <div class="sol-hist-exames">${exames.map(e=>`<span class="sol-hist-chip sol-hist-chip-cult">${e}</span>`).join('')}</div>
               ${s.indicacao?`<div class="sol-hist-ind">📌 ${s.indicacao}</div>`:''}
               <div class="sol-hist-meta">
                 ${s.medNome||s.autor||'?'}
-                <span style="margin-left:auto;display:flex;gap:4px;">
-                  <button class="btn btn-sm" style="font-size:.72rem;padding:3px 8px;"
-                    onclick="_imprimirSolChave('${s.key}')">🖨</button>
+                <span style="margin-left:auto;">
+                  <button class="btn btn-sm" style="font-size:.72rem;padding:3px 8px;" onclick="_imprimirCultChave('${s.key}')">🖨</button>
                 </span>
               </div>
+            </div>`;
+          }
+          // Card de exames convencionais — rotinas ficam agrupadas
+          const isRotina=_ehRotinaPadrao(s.exames);
+          if(isRotina){
+            return `<div class="sol-hist-card sol-hist-card-rotina">
+              <details>
+                <summary class="sol-hist-rotina-sum">
+                  <span class="sol-hist-rotina-badge">⭐ Rotina</span>
+                  <span style="font-size:.74rem;color:var(--muted);">${s.exames.length} exames${s.indicacao?' · '+s.indicacao:''}</span>
+                  <span style="margin-left:auto;display:flex;gap:4px;" onclick="event.stopPropagation()">
+                    <button class="btn btn-sm" style="font-size:.72rem;padding:3px 8px;" onclick="_imprimirSolChave('${s.key}')">🖨</button>
+                  </span>
+                </summary>
+                <div class="sol-hist-exames" style="margin-top:6px;">
+                  ${s.exames.map(e=>`<span class="sol-hist-chip">${e}</span>`).join('')}
+                </div>
+                <div class="sol-hist-meta" style="margin-top:6px;">${s.medNome||s.autor||'?'}</div>
+              </details>
+            </div>`;
+          }
+          // Card de exames especiais — exibe normalmente
+          return `<div class="sol-hist-card">
+            <div class="sol-hist-exames">${s.exames.map(e=>`<span class="sol-hist-chip">${e}</span>`).join('')}</div>
+            ${s.indicacao?`<div class="sol-hist-ind">📌 ${s.indicacao}</div>`:''}
+            <div class="sol-hist-meta">
+              ${s.medNome||s.autor||'?'}
+              <span style="margin-left:auto;">
+                <button class="btn btn-sm" style="font-size:.72rem;padding:3px 8px;" onclick="_imprimirSolChave('${s.key}')">🖨</button>
+              </span>
             </div>
-          `).join('')}
-        </div>
-      `).join('');
+          </div>`;
+        }).join('');
+
+        return `<div class="sol-hist-data">
+          <div class="sol-hist-data-lbl">${_fmtDataCurta(data)||data}</div>
+          ${cards}
+        </div>`;
+      }).join('');
   }catch(e){
     wrap.innerHTML='<div style="font-size:.8rem;color:var(--vermelho);">Erro ao carregar solicitações.</div>';
   }
+}
+
+// Verifica se a lista de exames é a rotina padrão (subconjunto exato)
+function _ehRotinaPadrao(exames){
+  if(!exames||exames.length<3) return false;
+  const s=new Set(exames.map(e=>e.toUpperCase()));
+  const rotinaSet=new Set(SOL_ROTINA.map(e=>e.toUpperCase()));
+  // Considera "rotina" se ≥70% dos exames são da lista padrão
+  const intersect=[...s].filter(e=>rotinaSet.has(e)).length;
+  return intersect/s.size>=0.7;
 }
 
 
@@ -4770,6 +4820,315 @@ function imprimirRotinaExames(){
   </body></html>`;
 
   const w=window.open('','_blank','width=1100,height=800');
+  if(w){ w.document.write(html); w.document.close(); }
+  else toast('Popup bloqueado — permita popups para imprimir.',true);
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   REQUISIÇÃO DE EXAMES MICROBIOLÓGICOS (CULTURAS)
+   ════════════════════════════════════════════════════════════════════════════ */
+
+function _cultToggleSub(cb, subId){
+  const el=$(subId); if(el) el.style.display=cb.checked?'':'none';
+}
+
+function abrirSolicitacaoCultura(){
+  // Auto-preenche dados do paciente
+  sf('cult-nome',  (gf('f-pac')||'').toUpperCase());
+  sf('cult-leito', gf('f-leito')||'');
+  // Idade calculada
+  const dn=gf('f-dn');
+  if(dn){ const a=Math.floor((new Date()-new Date(dn+'T00:00:00'))/31557600000); sf('cult-idade',a); }
+  // Sexo
+  const s=(gf('f-sexo')||'').toUpperCase();
+  const sel=$('cult-sexo');
+  if(sel) sel.value=s.includes('FEM')?'F':s.includes('MAS')?'M':'';
+  // Data/hora coleta
+  sf('cult-data-coleta', gf('f-data')||hoje());
+  const now=new Date();
+  sf('cult-hora-coleta', now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0'));
+  // Indicação clínica do diagnóstico
+  sf('cult-indicacao', (gf('f-diag')||'').toUpperCase());
+  // Limpar checkboxes
+  ['cult-uro','cult-copro','cult-hemo','cult-cateter','cult-sec','cult-liq',
+   'cult-frag','cult-bk','cult-fungos','cult-vig','cult-bordet','cult-virus',
+   'cult-fresco','cult-gram','cult-ziehl',
+   'cult-sec-traq','cult-sec-fo','cult-sec-up','cult-sec-abs','cult-sec-out',
+   'cult-liq-liquor','cult-liq-pleural','cult-liq-sinov','cult-liq-ascit',
+   'cult-vig-nasal','cult-vig-retal'].forEach(id=>{const e=$(id); if(e) e.checked=false;});
+  ['cult-uro-opts','cult-sec-opts','cult-liq-opts','cult-vig-opts','cult-atb-quais-wrap']
+    .forEach(id=>{const e=$(id); if(e) e.style.display='none';});
+  sf('cult-obs',''); sf('cult-reg',''); sf('cult-virus-txt','');
+  sf('cult-sec-out-txt',''); sf('cult-liq-out-txt',''); sf('cult-vig-out-txt',''); sf('cult-atb-quais','');
+  $('modal-cultura').classList.add('show');
+}
+
+function fecharSolicitacaoCultura(){ $('modal-cultura').classList.remove('show'); }
+
+function _coletarCultura(){
+  const intern=document.querySelector('input[name="cult-intern"]:checked');
+  const atb=document.querySelector('input[name="cult-atb"]:checked');
+  const transf=document.querySelector('input[name="cult-transf"]:checked');
+  const tipoInf=document.querySelector('input[name="cult-tipo-inf"]:checked');
+  const uroTp=document.querySelector('input[name="cult-uro-tp"]:checked');
+  const chk=id=>$(id)&&$(id).checked;
+  return {
+    pac:gf('cult-nome'), leito:gf('cult-leito'), registro:gf('cult-reg'),
+    idade:gf('cult-idade'), sexo:gf('cult-sexo')?.toUpperCase(),
+    ward:gf('cult-ward'), indicacao:gf('cult-indicacao'),
+    internado72h:intern?intern.value:'N',
+    atbUltimos10:atb?atb.value:'N', atbQuais:gf('cult-atb-quais'),
+    transferido:transf?transf.value:'N',
+    tipoInfeccao:tipoInf?tipoInf.value:'H',
+    dataColeta:gf('cult-data-coleta'), horaColeta:gf('cult-hora-coleta'),
+    obs:gf('cult-obs'),
+    // Exames selecionados
+    uro:chk('cult-uro'), uroTp:uroTp?uroTp.value:'',
+    copro:chk('cult-copro'), hemo:chk('cult-hemo'), cateter:chk('cult-cateter'),
+    sec:chk('cult-sec'),
+    secSubs:['traq','fo','up','abs'].filter(t=>chk('cult-sec-'+t)),
+    secOutros:gf('cult-sec-out-txt'),
+    liq:chk('cult-liq'),
+    liqSubs:['liquor','pleural','sinov','ascit'].filter(t=>chk('cult-liq-'+t)),
+    liqOutros:gf('cult-liq-out-txt'),
+    frag:chk('cult-frag'), bk:chk('cult-bk'), fungos:chk('cult-fungos'),
+    vig:chk('cult-vig'),
+    vigSubs:['nasal','retal'].filter(t=>chk('cult-vig-'+t)),
+    vigOutros:gf('cult-vig-out-txt'),
+    bordet:chk('cult-bordet'), virus:chk('cult-virus'), virusTxt:gf('cult-virus-txt'),
+    fresco:chk('cult-fresco'), gram:chk('cult-gram'), ziehl:chk('cult-ziehl'),
+    medNome:perfilUsuario?perfilUsuario.nome:'', medCrm:perfilUsuario?perfilUsuario.crm||'':'',
+    data:gf('cult-data-coleta')||hoje(), autor:usuarioEmail,
+    salvadoEm:new Date().toISOString()
+  };
+}
+
+// Resumo para o card do histórico
+function _cultResumir(c){
+  const lista=[];
+  if(c.uro) lista.push('Urocultura'+(c.uroTp?' ('+c.uroTp+')':''));
+  if(c.copro) lista.push('Coprocultura');
+  if(c.hemo) lista.push('Hemocultura');
+  if(c.cateter) lista.push('Ponta cateter');
+  if(c.sec){
+    const s=['Secreção'];
+    if(c.secSubs&&c.secSubs.length) s.push('('+c.secSubs.join(',').replace(/traq/,'Traqueal').replace(/fo/,'FO').replace(/up/,'UP').replace(/abs/,'Abs.')+')');
+    lista.push(s.join(' '));
+  }
+  if(c.liq){
+    const l=['Líq.Cavitário'];
+    if(c.liqSubs&&c.liqSubs.length) l.push('('+c.liqSubs.join(',')+')');
+    lista.push(l.join(' '));
+  }
+  if(c.frag) lista.push('Fragmento');
+  if(c.bk) lista.push('BK');
+  if(c.fungos) lista.push('Fungos');
+  if(c.vig) lista.push('Vigilância');
+  if(c.bordet) lista.push('Bordetella');
+  if(c.virus) lista.push('Vírus resp.');
+  if(c.gram) lista.push('GRAM');
+  if(c.fresco) lista.push('Microscopia fresco');
+  if(c.ziehl) lista.push('ZIEHL-NEELSEN');
+  return lista.length?lista:['Cultura'];
+}
+
+async function salvarSolicitacaoCultura(){
+  if(!leitoAtual){ toast('Abra o prontuário de um paciente.',true); return; }
+  const c=_coletarCultura();
+  showLoading('Salvando...');
+  try{
+    const key=`uti_med_sol_cult_${leitoAtual}_${c.data}_${Date.now()}`;
+    await dbSet(key,c);
+    hideLoading(); toast('✓ Requisição de cultura salva.');
+    fecharSolicitacaoCultura();
+    _renderHistoricoSolicitacoes();
+  }catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
+}
+
+function imprimirSolicitacaoCultura(){ _imprimirCulturaObj(_coletarCultura()); }
+
+async function _imprimirCultChave(key){
+  showLoading('Carregando...');
+  try{ const c=await dbGet(key); hideLoading(); if(c) _imprimirCulturaObj(c); }
+  catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
+}
+
+function _imprimirCulturaObj(c){
+  const X='(X)'; const _='( )';
+  const mk=(v)=>v?X:_;
+  const mkr=(v,opt)=>v===opt?'(X)':'( )';
+  // Monta lista de exames com checkboxes
+  const uroTpStr=c.uroTp==='jato'?'jato médio':c.uroTp==='svd'?'SVD':c.uroTp==='aliv'?'sonda vesical de alívio':'';
+  const secSubs=c.secSubs||[];
+  const liqSubs=c.liqSubs||[];
+  const vigSubs=c.vigSubs||[];
+  const dataFmt=c.dataColeta?_fmtDataCurta(c.dataColeta):'___/___/___';
+  const [dd,mm,yy]=dataFmt.split('/').concat(['','','']);
+  const tipoInfMap={'C':'Comunitária','H':'Hospital','?':'Não esclarecida'};
+
+  const html=`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+  <title>Requisição de Cultura — ${c.pac||''}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif;font-size:9.5pt;}
+    @page{size:A4 portrait;margin:1cm 1.2cm}
+    body{color:#000;}
+    /* Cabeçalho */
+    .cab{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;}
+    .cab-txt{font-size:8.5pt;line-height:1.5;}
+    .cab-txt b{font-size:9pt;}
+    .cab-logo{height:40px;width:auto;}
+    h1{text-align:center;font-size:11pt;font-weight:800;text-decoration:underline;margin-bottom:10px;}
+    /* Blocos */
+    .bloco{border:1px solid #000;padding:6px 8px;margin-bottom:6px;}
+    .bloco-titulo{font-weight:800;font-size:9pt;margin-bottom:5px;}
+    .campo-linha{display:flex;align-items:baseline;gap:6px;margin-bottom:3px;flex-wrap:wrap;}
+    .campo-lbl{font-weight:700;white-space:nowrap;font-size:9pt;}
+    .campo-val{border-bottom:1px solid #555;flex:1;min-width:60px;padding:0 2px;font-size:9pt;}
+    /* Checkboxes */
+    .chk-linha{margin:2px 0 2px 4px;font-size:9pt;line-height:1.6;}
+    .sub-linha{margin:1px 0 1px 24px;font-size:9pt;display:flex;gap:16px;flex-wrap:wrap;}
+    /* Rodapé */
+    .rodape{margin-top:10px;display:flex;justify-content:space-between;align-items:flex-end;}
+    .assin-linha{border-top:1px solid #555;text-align:center;min-width:240px;padding-top:2px;font-size:8.5pt;}
+    @media print{body{margin:0;}}
+  </style></head><body>
+
+  <!-- Cabeçalho -->
+  <div class="cab">
+    <div class="cab-txt">
+      <b>HOSPESC - HOSPITAL DOS PESCADORES</b><br>
+      Rua São João de Deus, 80 ROCAS — NATAL. RN - CEP:-59010-775<br>
+      FONE: 3232 4592 - <b>Email:</b> hospitaldospescadoresadm@gmail.com
+    </div>
+    <img src="logo.png" class="cab-logo" alt="" onerror="this.style.display='none'">
+  </div>
+
+  <h1>Requisição de Exames Microbiológicos</h1>
+
+  <!-- Dados do paciente -->
+  <div class="bloco">
+    <div class="bloco-titulo">DADOS DO PACIENTE:</div>
+    <div class="campo-linha">
+      <span class="campo-lbl">Nome:</span>
+      <span class="campo-val">${(c.pac||'').toUpperCase()}</span>
+      <span class="campo-lbl" style="margin-left:12px;">Registro:</span>
+      <span class="campo-val" style="max-width:80px;">${c.registro||''}</span>
+    </div>
+    <div class="campo-linha">
+      <span class="campo-lbl">Idade:</span>
+      <span class="campo-val" style="max-width:40px;">${c.idade||''}</span>
+      <span class="campo-lbl">Sexo M ${mkr(c.sexo,'M')} F ${mkr(c.sexo,'F')}</span>
+      <span class="campo-lbl" style="margin-left:12px;">Enfermaria/UTI:</span>
+      <span class="campo-val">${c.ward||'UTI-HOSPESC'}</span>
+      <span class="campo-lbl" style="margin-left:12px;">Leito:</span>
+      <span class="campo-val" style="max-width:40px;">${c.leito||''}</span>
+    </div>
+  </div>
+
+  <!-- Informações sobre o paciente -->
+  <div class="bloco">
+    <div class="bloco-titulo">INFORMAÇÕES SOBRE O PACIENTE</div>
+    <div class="campo-linha">
+      <span class="campo-lbl">Indicação clínica ou hipótese diagnóstica:</span>
+      <span class="campo-val">${(c.indicacao||'').toUpperCase()}</span>
+    </div>
+    <div class="campo-linha">
+      <span>Paciente esteve internado nas últimas 72h?</span>
+      <span style="margin-left:8px;">Sim ${mkr(c.internado72h,'S')} &nbsp; Não ${mkr(c.internado72h,'N')}</span>
+    </div>
+    <div class="campo-linha">
+      <span>Fez uso de antibióticos nos últimos 10 dias?</span>
+      <span style="margin-left:8px;">Sim ${mkr(c.atbUltimos10,'S')} &nbsp; Não ${mkr(c.atbUltimos10,'N')}</span>
+    </div>
+    ${c.atbUltimos10==='S'?`<div class="campo-linha"><span class="campo-lbl">Quais?</span><span class="campo-val">${(c.atbQuais||'').toUpperCase()}</span></div>`:''}
+    <div class="campo-linha">
+      <span>Paciente transferido de outro hospital, casas de apoio ou home care?</span>
+      <span style="margin-left:8px;">Sim ${mkr(c.transferido,'S')} &nbsp; Não ${mkr(c.transferido,'N')}</span>
+    </div>
+    <div class="campo-linha">
+      <span>Tipos de infecção:</span>
+      <span style="margin-left:8px;">
+        Comunitária ${mkr(c.tipoInfeccao,'C')} &nbsp;
+        Hospital ${mkr(c.tipoInfeccao,'H')} &nbsp;
+        Não esclarecida ${mkr(c.tipoInfeccao,'?')}
+      </span>
+    </div>
+    <div class="campo-linha">
+      <span class="campo-lbl">Data da coleta:</span>
+      <span style="font-size:9pt;">${dd}/${mm}/${yy}</span>
+      <span class="campo-lbl" style="margin-left:16px;">Hora da coleta:</span>
+      <span style="font-size:9pt;">${(c.horaColeta||'').replace(':',':')}</span>
+    </div>
+  </div>
+
+  <!-- Identificação do exame -->
+  <div class="bloco">
+    <div class="bloco-titulo">IDENTIFICAÇÃO DO EXAME</div>
+    <div class="chk-linha">${mk(c.uro)} Urocultura com antibiograma: &nbsp;
+      jato médio ${mkr(c.uroTp,'jato')} &nbsp;
+      SVD ${mkr(c.uroTp,'svd')} &nbsp;
+      sonda vesical de alívio ${mkr(c.uroTp,'aliv')}
+    </div>
+    <div class="chk-linha">${mk(c.copro)} Coprocultura</div>
+    <div class="chk-linha">${mk(c.hemo)} Hemocultura</div>
+    <div class="chk-linha">${mk(c.cateter)} Cultura de ponta de cateter</div>
+    <div class="chk-linha">${mk(c.sec)} Cultura de secreção:</div>
+    <div class="sub-linha">
+      ${mk(secSubs.includes('traq'))} Traqueal &nbsp;
+      ${mk(secSubs.includes('fo'))} Ferida operatória &nbsp;
+      ${mk(secSubs.includes('up'))} Úlcera de pressão
+    </div>
+    <div class="sub-linha">
+      ${mk(secSubs.includes('abs'))} Abscesso &nbsp;
+      ${mk(c.secOutros)} Outros: <span style="border-bottom:1px solid #555;min-width:120px;display:inline-block;">${c.secOutros||''}</span>
+    </div>
+    <div class="chk-linha">${mk(c.liq)} Cultura de líquidos cavitários</div>
+    <div class="sub-linha">
+      ${mk(liqSubs.includes('liquor'))} Líquor &nbsp;
+      ${mk(liqSubs.includes('pleural'))} Líquido pleural &nbsp;
+      ${mk(liqSubs.includes('sinov'))} Liq. sinovial &nbsp;
+      ${mk(liqSubs.includes('ascit'))} Líq. Ascítico
+    </div>
+    <div class="sub-linha">
+      Outros: <span style="border-bottom:1px solid #555;min-width:100px;display:inline-block;">${c.liqOutros||''}</span>
+    </div>
+    <div class="chk-linha">${mk(c.frag)} Cultura de fragmento de tecido</div>
+    <div class="chk-linha">${mk(c.bk)} Cultura para BK (Mycobacterium tuberculosis)</div>
+    <div class="chk-linha">${mk(c.fungos)} Cultura para fungos</div>
+    <div class="chk-linha">${mk(c.vig)} Cultura de vigilância</div>
+    <div class="sub-linha">
+      ${mk(vigSubs.includes('nasal'))} Swab nasal &nbsp;
+      ${mk(vigSubs.includes('retal'))} Swab retal &nbsp;
+      ${mk(c.vigOutros)} Outros: <span style="border-bottom:1px solid #555;min-width:120px;display:inline-block;">${c.vigOutros||''}</span>
+    </div>
+    <div class="chk-linha">${mk(c.bordet)} Cultura para Bordetella pertussis</div>
+    <div class="chk-linha">${mk(c.virus)} Cultura de vírus respiratório:
+      <span style="border-bottom:1px solid #555;min-width:180px;display:inline-block;">${c.virusTxt||''}</span>
+    </div>
+    <div class="chk-linha">${mk(c.fresco)} Exame microscópico a fresco</div>
+    <div class="chk-linha">${mk(c.gram)} Exame microscópico GRAM</div>
+    <div class="chk-linha">${mk(c.ziehl)} Exame microscópico ZIEHL-NEELSEN</div>
+  </div>
+
+  <!-- Observações e assinatura -->
+  <div class="bloco">
+    <div class="bloco-titulo">OBSERVAÇÕES:</div>
+    <div style="min-height:28px;padding:2px 0;font-size:9pt;">${(c.obs||'').toUpperCase()}</div>
+  </div>
+
+  <div class="rodape">
+    <div style="font-size:9pt;">
+      Data: ${dd} / ${mm} / ${yy}
+    </div>
+    <div class="assin-linha">
+      ${c.medNome?c.medNome.toUpperCase():''}${c.medCrm?' — CRM '+c.medCrm:''}<br>Médico / CRM
+    </div>
+  </div>
+
+  <script>window.onload=()=>{window.print();window.onafterprint=()=>window.close();}<\/script>
+  </body></html>`;
+
+  const w=window.open('','_blank','width=820,height:1000');
   if(w){ w.document.write(html); w.document.close(); }
   else toast('Popup bloqueado — permita popups para imprimir.',true);
 }
