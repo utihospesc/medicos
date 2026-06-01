@@ -488,11 +488,14 @@
             </table>
           </div>
 
-          <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+          <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
             <button class="btn btn-pri btn-sm" onclick="addItemPrescricao()">+ Adicionar item</button>
             <button class="btn btn-sec btn-sm" onclick="addItemPrescricaoEspecial('dieta')">+ Dieta</button>
             <button class="btn btn-sec btn-sm" onclick="addItemPrescricaoEspecial('sn')">+ Medicamento SN</button>
             <button class="btn btn-sec btn-sm" onclick="addItemPrescricaoEspecial('cuidados')">+ Cuidados gerais</button>
+            <div style="flex:1;"></div>
+            <button class="btn btn-pri btn-sm" onclick="salvarPrescricao()">⌘ Salvar prescrição</button>
+            <button class="btn btn-sec btn-sm" onclick="imprimirPrescricao()">🖨 Imprimir</button>
           </div>
 
           <!-- AUTOCOMPLETE movido para o body via JS -->
