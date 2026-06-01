@@ -2684,9 +2684,14 @@ function _rxAcInput(el, itId){
   const rect=el.getBoundingClientRect();
   const ac=$('rx-autocomplete');
   ac.style.display='block';
-  ac.style.top=(rect.bottom+window.scrollY+2)+'px';
-  ac.style.left=(rect.left+window.scrollX)+'px';
+  // O div está em position:fixed no body — rect já é relativo à viewport, sem somar scroll
+  ac.style.top=(rect.bottom+2)+'px';
+  ac.style.left=rect.left+'px';
   ac.style.minWidth=Math.max(rect.width,320)+'px';
+  // Garante que não sai pela borda direita da tela
+  const vw=window.innerWidth;
+  const dropW=Math.max(rect.width,320);
+  if(rect.left+dropW>vw) ac.style.left=Math.max(0,vw-dropW-8)+'px';
   const reQ=new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');
   ac.innerHTML=_rxAcResultados.map((m,i)=>{
     const nNorm=m.nome.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
