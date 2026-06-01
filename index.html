@@ -514,6 +514,7 @@
                 Solicitações de Exames
               </span>
               <button class="btn btn-pri btn-sm" onclick="abrirSolicitacaoExames()">+ Nova solicitação</button>
+              <button class="btn btn-sec btn-sm" onclick="abrirSolicitacaoCultura()">🦠 Solicitar Cultura</button>
             </div>
             <div class="secao-c">
               <div id="sol-exames-historico">
@@ -1159,6 +1160,150 @@
         <button class="btn btn-pri" onclick="imprimirRotinaExames()">🖨 Imprimir tudo (A4 paisagem)</button>
         <button class="btn btn-sec" onclick="salvarESimprimirRotina()">⌘ Salvar + Imprimir</button>
         <button class="btn" onclick="fecharRotinaExames()">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ MODAL REQUISIÇÃO DE CULTURAS ══════════════ -->
+<div class="modal" id="modal-cultura">
+  <div class="modal-box" style="max-width:700px;max-height:94vh;overflow-y:auto;">
+    <div class="modal-head">
+      <h3 style="display:flex;align-items:center;gap:8px;">🦠 Requisição de Exames Microbiológicos</h3>
+      <button class="modal-x" onclick="fecharSolicitacaoCultura()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="secao">
+        <div class="secao-t">Dados do Paciente</div>
+        <div class="secao-c">
+          <div class="dc">
+            <div class="fl" style="flex:3"><label>Nome</label><input type="text" id="cult-nome" readonly style="background:var(--bg2);font-weight:700;text-transform:uppercase;"></div>
+            <div class="fl"><label>Registro</label><input type="text" id="cult-reg"></div>
+          </div>
+          <div class="dc">
+            <div class="fl"><label>Idade</label><input type="number" id="cult-idade" readonly style="background:var(--bg2);"></div>
+            <div class="fl"><label>Sexo</label><select id="cult-sexo"><option value="">—</option><option value="M">M</option><option value="F">F</option></select></div>
+            <div class="fl"><label>Enf./UTI</label><input type="text" id="cult-ward" value="UTI-HOSPESC" style="text-transform:uppercase;"></div>
+            <div class="fl"><label>Leito</label><input type="text" id="cult-leito" readonly style="background:var(--bg2);"></div>
+          </div>
+        </div>
+      </div>
+      <div class="secao">
+        <div class="secao-t">Informações Clínicas</div>
+        <div class="secao-c">
+          <div class="fl"><label>Indicação clínica / hipótese diagnóstica</label>
+            <input type="text" id="cult-indicacao" style="text-transform:uppercase;" placeholder="Ex: SEPSE, PNEUMONIA, ITU..."></div>
+          <div class="dc">
+            <div class="fl"><label>Internado nas últimas 72h?</label>
+              <div style="display:flex;gap:12px;margin-top:4px;">
+                <label class="radio-label"><input type="radio" name="cult-intern" value="S"> Sim</label>
+                <label class="radio-label"><input type="radio" name="cult-intern" value="N" checked> Não</label>
+              </div>
+            </div>
+            <div class="fl"><label>ATB nos últimos 10 dias?</label>
+              <div style="display:flex;gap:12px;margin-top:4px;">
+                <label class="radio-label"><input type="radio" name="cult-atb" value="S" onclick="document.getElementById('cult-atb-quais-wrap').style.display=''"> Sim</label>
+                <label class="radio-label"><input type="radio" name="cult-atb" value="N" checked onclick="document.getElementById('cult-atb-quais-wrap').style.display='none'"> Não</label>
+              </div>
+            </div>
+          </div>
+          <div class="fl" id="cult-atb-quais-wrap" style="display:none;"><label>Quais ATBs?</label>
+            <input type="text" id="cult-atb-quais" style="text-transform:uppercase;"></div>
+          <div class="dc">
+            <div class="fl"><label>Transferido de outro serviço?</label>
+              <div style="display:flex;gap:12px;margin-top:4px;">
+                <label class="radio-label"><input type="radio" name="cult-transf" value="S"> Sim</label>
+                <label class="radio-label"><input type="radio" name="cult-transf" value="N" checked> Não</label>
+              </div>
+            </div>
+            <div class="fl"><label>Tipo de infecção</label>
+              <div style="display:flex;gap:12px;margin-top:4px;flex-wrap:wrap;">
+                <label class="radio-label"><input type="radio" name="cult-tipo-inf" value="C"> Comunitária</label>
+                <label class="radio-label"><input type="radio" name="cult-tipo-inf" value="H" checked> Hospitalar</label>
+                <label class="radio-label"><input type="radio" name="cult-tipo-inf" value="?"> Não esclarecida</label>
+              </div>
+            </div>
+          </div>
+          <div class="dc">
+            <div class="fl"><label>Data da coleta</label><input type="date" id="cult-data-coleta"></div>
+            <div class="fl"><label>Hora da coleta</label><input type="time" id="cult-hora-coleta"></div>
+          </div>
+        </div>
+      </div>
+      <div class="secao">
+        <div class="secao-t">Identificação do Exame</div>
+        <div class="secao-c">
+          <div class="cult-grupo">
+            <label class="check-label cult-pai"><input type="checkbox" id="cult-uro" onchange="_cultToggleSub(this,'cult-uro-opts')"> Urocultura com antibiograma</label>
+            <div class="cult-sub-opts" id="cult-uro-opts" style="display:none;">
+              <label class="radio-label"><input type="radio" name="cult-uro-tp" value="jato"> jato médio</label>
+              <label class="radio-label"><input type="radio" name="cult-uro-tp" value="svd"> SVD</label>
+              <label class="radio-label"><input type="radio" name="cult-uro-tp" value="aliv"> sonda vesical de alívio</label>
+            </div>
+          </div>
+          <label class="check-label cult-item"><input type="checkbox" id="cult-copro"> Coprocultura</label>
+          <label class="check-label cult-item"><input type="checkbox" id="cult-hemo"> Hemocultura</label>
+          <label class="check-label cult-item"><input type="checkbox" id="cult-cateter"> Cultura de ponta de cateter</label>
+          <div class="cult-grupo">
+            <label class="check-label cult-pai"><input type="checkbox" id="cult-sec" onchange="_cultToggleSub(this,'cult-sec-opts')"> Cultura de secreção</label>
+            <div class="cult-sub-opts" id="cult-sec-opts" style="display:none;">
+              <label class="check-label"><input type="checkbox" id="cult-sec-traq"> Traqueal</label>
+              <label class="check-label"><input type="checkbox" id="cult-sec-fo"> Ferida operatória</label>
+              <label class="check-label"><input type="checkbox" id="cult-sec-up"> Úlcera de pressão</label>
+              <label class="check-label"><input type="checkbox" id="cult-sec-abs"> Abscesso</label>
+              <div style="display:flex;align-items:center;gap:6px;margin-top:3px;">
+                <label class="check-label"><input type="checkbox" id="cult-sec-out"> Outros:</label>
+                <input type="text" id="cult-sec-out-txt" placeholder="especificar" style="flex:1;font-size:.8rem;padding:3px 6px;border:1.5px solid var(--borda);border-radius:6px;">
+              </div>
+            </div>
+          </div>
+          <div class="cult-grupo">
+            <label class="check-label cult-pai"><input type="checkbox" id="cult-liq" onchange="_cultToggleSub(this,'cult-liq-opts')"> Cultura de líquidos cavitários</label>
+            <div class="cult-sub-opts" id="cult-liq-opts" style="display:none;">
+              <label class="check-label"><input type="checkbox" id="cult-liq-liquor"> Líquor</label>
+              <label class="check-label"><input type="checkbox" id="cult-liq-pleural"> Líquido pleural</label>
+              <label class="check-label"><input type="checkbox" id="cult-liq-sinov"> Liq. sinovial</label>
+              <label class="check-label"><input type="checkbox" id="cult-liq-ascit"> Líq. Ascítico</label>
+              <div style="display:flex;align-items:center;gap:6px;margin-top:3px;">
+                <span style="font-size:.8rem;">Outros:</span>
+                <input type="text" id="cult-liq-out-txt" placeholder="especificar" style="flex:1;font-size:.8rem;padding:3px 6px;border:1.5px solid var(--borda);border-radius:6px;">
+              </div>
+            </div>
+          </div>
+          <label class="check-label cult-item"><input type="checkbox" id="cult-frag"> Cultura de fragmento de tecido</label>
+          <label class="check-label cult-item"><input type="checkbox" id="cult-bk"> Cultura para BK (Mycobacterium tuberculosis)</label>
+          <label class="check-label cult-item"><input type="checkbox" id="cult-fungos"> Cultura para fungos</label>
+          <div class="cult-grupo">
+            <label class="check-label cult-pai"><input type="checkbox" id="cult-vig" onchange="_cultToggleSub(this,'cult-vig-opts')"> Cultura de vigilância</label>
+            <div class="cult-sub-opts" id="cult-vig-opts" style="display:none;">
+              <label class="check-label"><input type="checkbox" id="cult-vig-nasal"> Swab nasal</label>
+              <label class="check-label"><input type="checkbox" id="cult-vig-retal"> Swab retal</label>
+              <div style="display:flex;align-items:center;gap:6px;margin-top:3px;">
+                <span style="font-size:.8rem;">Outros:</span>
+                <input type="text" id="cult-vig-out-txt" placeholder="especificar" style="flex:1;font-size:.8rem;padding:3px 6px;border:1.5px solid var(--borda);border-radius:6px;">
+              </div>
+            </div>
+          </div>
+          <label class="check-label cult-item"><input type="checkbox" id="cult-bordet"> Cultura para Bordetella pertussis</label>
+          <div style="display:flex;align-items:center;gap:8px;margin:4px 0;">
+            <label class="check-label"><input type="checkbox" id="cult-virus"> Cultura de vírus respiratório:</label>
+            <input type="text" id="cult-virus-txt" placeholder="especificar" style="flex:1;font-size:.8rem;padding:3px 6px;border:1.5px solid var(--borda);border-radius:6px;">
+          </div>
+          <label class="check-label cult-item"><input type="checkbox" id="cult-fresco"> Exame microscópico a fresco</label>
+          <label class="check-label cult-item"><input type="checkbox" id="cult-gram"> Exame microscópico GRAM</label>
+          <label class="check-label cult-item"><input type="checkbox" id="cult-ziehl"> Exame microscópico ZIEHL-NEELSEN</label>
+        </div>
+      </div>
+      <div class="secao">
+        <div class="secao-t">Observações</div>
+        <div class="secao-c">
+          <div class="fl"><textarea id="cult-obs" rows="2" placeholder="Observações adicionais..." style="text-transform:uppercase;"></textarea></div>
+        </div>
+      </div>
+      <div class="form-actions" style="margin-top:0;">
+        <button class="btn btn-pri" onclick="imprimirSolicitacaoCultura()">🖨 Imprimir</button>
+        <button class="btn btn-sec" onclick="salvarSolicitacaoCultura()">⌘ Salvar</button>
+        <button class="btn" onclick="fecharSolicitacaoCultura()">Fechar</button>
       </div>
     </div>
   </div>
