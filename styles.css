@@ -471,14 +471,14 @@ a:hover{text-decoration:underline}
   padding:8px 10px; text-align:left; font-size:.72rem;
   font-weight:700; letter-spacing:.03em; white-space:nowrap;
 }
-.presc-th-num{ width:36px; text-align:center; }
-.presc-th-farm{ min-width:220px; }
-.presc-th-dose{ width:110px; }
-.presc-th-via{ width:100px; }
-.presc-th-freq{ width:120px; }
-.presc-th-hor{ width:150px; }
-.presc-th-obs{ min-width:100px; }
-.presc-th-del{ width:36px; }
+.presc-th-num{ width:32px; text-align:center; }
+.presc-th-farm{ min-width:200px; }
+.presc-th-dose{ width:100px; }
+.presc-th-via{ width:74px; }
+.presc-th-freq{ width:100px; }
+.presc-th-hor{ width:170px; }
+.presc-th-obs{ min-width:140px; width:auto; }
+.presc-th-del{ width:32px; }
 
 .presc-table tbody tr{ border-bottom:1px solid var(--borda); transition:.12s; }
 .presc-table tbody tr:hover{ background:var(--vinho-claro); }
@@ -631,14 +631,14 @@ a:hover{text-decoration:underline}
   .presc-table input.rx-farm{ font-size:.96rem; }
 
   /* Aumenta colunas para caber tudo bem */
-  .presc-th-num{ width:46px; }
-  .presc-th-farm{ min-width:280px; }
-  .presc-th-dose{ width:140px; }
-  .presc-th-via{ width:90px; }
-  .presc-th-freq{ width:130px; }
-  .presc-th-hor{ width:340px; }
-  .presc-th-obs{ min-width:140px; }
-  .presc-th-del{ width:42px; }
+  .presc-th-num{ width:38px; }
+  .presc-th-farm{ min-width:250px; max-width:300px; }
+  .presc-th-dose{ width:120px; }
+  .presc-th-via{ width:80px; }
+  .presc-th-freq{ width:115px; }
+  .presc-th-hor{ width:240px; }
+  .presc-th-obs{ min-width:180px; width:auto; }
+  .presc-th-del{ width:36px; }
 
   /* Chips de horário maiores */
   .rx-hor-chip{
@@ -740,21 +740,44 @@ a:hover{text-decoration:underline}
 /* ════════════════════════════════════════════════════════════════════════════
    COLUNA APRESENTAÇÃO (qtd + apres) na prescrição
    ════════════════════════════════════════════════════════════════════════════ */
-.presc-th-apres{ width:120px; }
-.rx-qtdapres{ display:flex; gap:3px; align-items:center; }
-.rx-qtd{ width:42px !important; text-align:center; flex-shrink:0; }
-.rx-apres{ flex:1; min-width:62px; font-size:.8rem !important; }
-.presc-table .rx-qtd, .presc-table .rx-apres{ padding:4px 5px !important; }
+/* Qtd+Apres integrados embaixo do nome do fármaco */
+.rx-apres-inline{
+  display:flex; gap:4px; align-items:center; margin-top:4px;
+}
+.rx-qtd-inline{
+  width:38px !important; text-align:center; flex-shrink:0;
+  padding:3px 4px !important; font-size:.78rem !important;
+  border:1px solid var(--borda); border-radius:5px; background:var(--bg2);
+}
+.rx-apres-sel{
+  flex:1; min-width:58px; font-size:.78rem !important;
+  padding:3px 4px !important; border:1px solid var(--borda);
+  border-radius:5px; background:var(--bg2); color:var(--muted);
+}
+/* Obs como textarea que cresce */
+.td-obs{ vertical-align:top !important; min-width:160px; }
+.rx-obs-area{
+  width:100%; min-width:150px; resize:vertical;
+  min-height:38px; padding:5px 8px;
+  border:1.5px solid var(--borda); border-radius:7px;
+  font-size:.86rem; font-family:inherit;
+  text-transform:uppercase; line-height:1.4;
+  background:white; color:var(--tinta);
+  transition:border-color .15s;
+}
+.rx-obs-area:focus{ border-color:var(--vinho); outline:none; }
+.rx-obs-area::placeholder{ color:#bbb; font-weight:400; text-transform:none; }
+.td-farm{ vertical-align:top !important; }
 
 @media(min-width:768px){
-  .presc-th-apres{ width:140px; }
+  /* .presc-th-apres removido — coluna integrada ao fármaco */
   .rx-qtd{ width:48px !important; }
   .rx-apres{ font-size:.86rem !important; }
 }
 
 /* Impressão: a coluna apresentação some (fundida na dose) */
 @media print{
-  .presc-th-apres{ display:none; }
+
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
@@ -831,4 +854,34 @@ a:hover{text-decoration:underline}
   flex:1; text-transform:uppercase;
   padding:7px 10px; border:1.5px solid var(--borda);
   border-radius:8px; font-size:.9rem;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   PRESCRIÇÃO — OBS VISÍVEL, LAYOUT MELHORADO
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* Tabela usa layout automático para Obs crescer */
+.presc-table{ table-layout:auto; }
+
+/* Obs: área de texto cresce conforme conteúdo */
+@media(min-width:768px){
+  .rx-obs-area{
+    font-size:.88rem; min-height:42px;
+  }
+  .rx-qtd-inline{ width:42px !important; font-size:.82rem !important; }
+  .rx-apres-sel{ font-size:.82rem !important; }
+  .td-farm{ min-width:220px; }
+  .td-obs{ min-width:200px; }
+}
+@media(min-width:1280px){
+  .td-obs{ min-width:240px; }
+}
+
+/* Impressão: obs usa o espaço todo, não precisa da coluna de apres inline */
+@media print{
+  .rx-apres-inline{ display:none; }
+  .rx-obs-area{
+    border:none; padding:0; font-size:8.5pt;
+    resize:none; background:transparent;
+  }
 }
