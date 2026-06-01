@@ -188,16 +188,16 @@
     <nav class="prontuario-nav">
       <div class="pnav-pac" id="pnav-pac"></div>
       <button class="pnav-btn ativo" id="pnav-evolucao"   onclick="mudarAba('evolucao')">
-        <span class="pnav-icon">📋</span><span class="pnav-lbl">Evolução</span>
+        <span class="pnav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg></span><span class="pnav-lbl">Evolução</span>
       </button>
       <button class="pnav-btn" id="pnav-prescricao" onclick="mudarAba('prescricao')">
-        <span class="pnav-icon">💊</span><span class="pnav-lbl">Prescrição</span>
+        <span class="pnav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 20.5 19 12a4.95 4.95 0 1 0-7-7L3.5 13.5a4.95 4.95 0 1 0 7 7Z"></path><path d="m8.5 8.5 7 7"></path></svg></span><span class="pnav-lbl">Prescrição</span>
       </button>
       <button class="pnav-btn" id="pnav-laboratorio" onclick="mudarAba('laboratorio')">
-        <span class="pnav-icon">🧪</span><span class="pnav-lbl">Exames Lab.</span>
+        <span class="pnav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H15"></path><path d="M10 3V10L5 20H19L14 10V3"></path></svg></span><span class="pnav-lbl">Exames Lab.</span>
       </button>
       <button class="pnav-btn" id="pnav-guias" onclick="mudarAba('guias')">
-        <span class="pnav-icon">📄</span><span class="pnav-lbl">Guias</span>
+        <span class="pnav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg></span><span class="pnav-lbl">Guias</span>
       </button>
       <div class="pnav-sep"></div>
       <button class="pnav-btn pnav-sec" onclick="voltarLeitos()">
@@ -502,6 +502,22 @@
           </div>
           <div class="form-actions">
             <button class="btn btn-pri" onclick="salvarEvolucao()">⌘ Salvar exames</button>
+            <button class="btn btn-sec" onclick="abrirSolicitacaoExames()">📋 Solicitar exames</button>
+          </div>
+        </div>
+
+        <!-- PAINEL DE IMPRESSÃO GERAL -->
+        <div class="card" style="margin-top:0;">
+          <div class="secao">
+            <div class="secao-t">Impressão</div>
+            <div class="secao-c">
+              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                <button class="btn btn-sec" onclick="imprimirSolicitacoesExames()">🖨 Exames (rotina)</button>
+                <button class="btn btn-sec" onclick="imprimirPrescricaoDuasVias()">🖨 Prescrição (2 vias)</button>
+                <button class="btn btn-sec" onclick="imprimirEvolucao()">🖨 Evolução (1 via)</button>
+                <button class="btn btn-sec" onclick="imprimirTudo()">🖨 Imprimir tudo</button>
+              </div>
+            </div>
           </div>
         </div>
       </div><!-- /aba-laboratorio -->
@@ -510,12 +526,12 @@
       <div class="aba-panel" id="aba-guias" style="display:none;">
         <div class="card">
           <div class="secao">
-            <div class="secao-t">📄 Guias do Paciente</div>
+            <div class="secao-t" style="display:flex;align-items:center;gap:8px;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg> Guias do Paciente</div>
             <div class="secao-c">
               <div class="tip i" style="margin-bottom:12px;">Preencha e imprima as guias institucionais do paciente internado.</div>
               <div class="guias-lista">
                 <div class="guia-card" onclick="abrirFichaATB()">
-                  <div class="guia-icon">🦠</div>
+                  <div class="guia-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="M5 5l1.5 1.5"></path><path d="M17.5 17.5L19 19"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="M5 19l1.5-1.5"></path><path d="M17.5 6.5L19 5"></path></svg></div>
                   <div class="guia-info">
                     <div class="guia-titulo">Ficha de Solicitação de Antimicrobiano</div>
                     <div class="guia-sub">Solicitação, autorização CCIH e uso pelo farmacêutico</div>
@@ -523,7 +539,7 @@
                   <div class="guia-acao">Preencher →</div>
                 </div>
                 <div class="guia-card" onclick="abrirFichaHemo()">
-                  <div class="guia-icon">🩸</div>
+                  <div class="guia-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path><line x1="12" y1="11" x2="12" y2="17"></line><line x1="9" y1="14" x2="15" y2="14"></line></svg></div>
                   <div class="guia-info">
                     <div class="guia-titulo">Solicitação de Hemoterápicos — HEMONORTE</div>
                     <div class="guia-sub">Concentrado de hemácias, plaquetas, plasma, crioprecipitado</div>
@@ -531,7 +547,7 @@
                   <div class="guia-acao">Preencher →</div>
                 </div>
                 <div class="guia-card" onclick="abrirTermos()">
-                  <div class="guia-icon">📋</div>
+                  <div class="guia-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg></div>
                   <div class="guia-info">
                     <div class="guia-titulo">Termos de Consentimento</div>
                     <div class="guia-sub">Cuidados paliativos, traqueostomia e outros TCLEs</div>
@@ -557,7 +573,7 @@
 <div class="modal" id="modal-atb-ficha">
   <div class="modal-box" style="max-width:760px;max-height:92vh;overflow-y:auto;">
     <div class="modal-head">
-      <h3>🦠 Ficha de Solicitação de Antimicrobiano</h3>
+      <h3 style="display:flex;align-items:center;gap:8px;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="M5 5l1.5 1.5"></path><path d="M17.5 17.5L19 19"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="M5 19l1.5-1.5"></path><path d="M17.5 6.5L19 5"></path></svg> Ficha de Solicitação de Antimicrobiano</h3>
       <button class="modal-x" onclick="fecharFichaATB()">×</button>
     </div>
     <div class="modal-body" id="ficha-atb-body">
@@ -674,11 +690,77 @@
   </div>
 </div>
 
+<!-- ══════════════ MODAL SOLICITAÇÃO DE EXAMES ══════════════ -->
+<div class="modal" id="modal-sol-exames">
+  <div class="modal-box" style="max-width:680px;max-height:92vh;overflow-y:auto;">
+    <div class="modal-head">
+      <h3 style="display:flex;align-items:center;gap:8px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H15"></path><path d="M10 3V10L5 20H19L14 10V3"></path></svg>
+        Solicitação de Exames
+      </h3>
+      <button class="modal-x" onclick="fecharSolicitacaoExames()">×</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Identificação (readonly) -->
+      <div class="secao">
+        <div class="secao-t">Identificação</div>
+        <div class="secao-c">
+          <div class="dc">
+            <div class="fl" style="flex:3"><label>Paciente</label><input type="text" id="sol-pac" readonly style="background:var(--bg2);font-weight:700;"></div>
+            <div class="fl"><label>Data</label><input type="date" id="sol-data"></div>
+            <div class="fl"><label>Leito</label><input type="text" id="sol-leito" readonly style="background:var(--bg2);"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Atalhos de rotina -->
+      <div class="secao">
+        <div class="secao-t">Atalhos</div>
+        <div class="secao-c">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-sec btn-sm" onclick="_solRotina()">⭐ Solicitação de Rotina</button>
+            <button class="btn btn-sm" onclick="_solLimpar()">✕ Limpar</button>
+          </div>
+          <div class="tip i" style="margin-top:8px;font-size:.76rem;">
+            Rotina: Hemograma, PCR, Ureia, Creatinina, Sódio, Potássio, Cálcio, Magnésio, TAP/TTPA/INR
+          </div>
+        </div>
+      </div>
+
+      <!-- Lista de exames -->
+      <div class="secao">
+        <div class="secao-t">Exames solicitados</div>
+        <div class="secao-c">
+          <div id="sol-exames-lista"></div>
+          <button class="btn btn-sec btn-sm" style="margin-top:8px;" onclick="_solAddLinha()">+ Adicionar exame</button>
+        </div>
+      </div>
+
+      <!-- Indicação clínica -->
+      <div class="secao">
+        <div class="secao-t">Indicação clínica</div>
+        <div class="secao-c">
+          <div class="fl"><textarea id="sol-indicacao" rows="2" placeholder="Ex: Monitorização de função renal em sepse, controle de coagulação..." style="text-transform:uppercase;"></textarea></div>
+        </div>
+      </div>
+
+      <!-- Ações -->
+      <div class="form-actions" style="margin-top:0;">
+        <button class="btn btn-pri" onclick="salvarSolicitacaoExames()">⌘ Salvar</button>
+        <button class="btn btn-sec" onclick="imprimirSolicitacaoAtual()">🖨 Imprimir</button>
+        <button class="btn" onclick="fecharSolicitacaoExames()">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
 <!-- ══════════════ MODAL TERMOS DE CONSENTIMENTO ══════════════ -->
 <div class="modal" id="modal-termo">
   <div class="modal-box" style="max-width:760px;max-height:94vh;overflow-y:auto;">
     <div class="modal-head">
-      <h3>📋 Termos de Consentimento</h3>
+      <h3 style="display:flex;align-items:center;gap:8px;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg> Termos de Consentimento</h3>
       <button class="modal-x" onclick="fecharTermo()">×</button>
     </div>
     <div class="modal-body">
@@ -748,7 +830,7 @@
 <div class="modal" id="modal-hemo-ficha">
   <div class="modal-box" style="max-width:780px;max-height:94vh;overflow-y:auto;">
     <div class="modal-head">
-      <h3>🩸 Solicitação de Hemoterápicos — HEMONORTE</h3>
+      <h3 style="display:flex;align-items:center;gap:8px;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path><line x1="12" y1="11" x2="12" y2="17"></line><line x1="9" y1="14" x2="15" y2="14"></line></svg> Solicitação de Hemoterápicos — HEMONORTE</h3>
       <button class="modal-x" onclick="fecharFichaHemo()">×</button>
     </div>
     <div class="modal-body">
