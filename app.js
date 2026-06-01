@@ -2148,6 +2148,18 @@ let _rxItens = [];   // array de itens da prescrição atual
 let _rxAcTarget = null; // input do autocomplete ativo
 
 const RX_HORAS = ['20','22','24','02','04','06','08','10','12','14','16','18'];
+
+// Ordena horários conforme a ordem de validade da prescrição (20h → 18h do dia seguinte)
+// Horários especiais (BIC, SND, SN, ACM, EM USO) ficam no final
+function _ordenarHorarios(hor){
+  if(!hor||!hor.length) return hor;
+  const ORDEM = ['20','21','22','23','24','01','02','03','04','05','06','07','08','09','10','11','12','13','14','15','16','17','18','19'];
+  const especiais = new Set(['BIC','SND','SN','ACM','EM USO']);
+  const normais = hor.filter(h=>!especiais.has(h));
+  const extras  = hor.filter(h=>especiais.has(h));
+  normais.sort((a,b)=> ORDEM.indexOf(a) - ORDEM.indexOf(b));
+  return [...normais, ...extras];
+}
 const RX_VIAS  = ['VO','EV','SC','IM','SL','IN','SNE','SNG','OF','ORAL','TD','INH','BIC','INF','—'];
 const RX_FREQS = ['BIC ACM','24/24H','12/12H','8/8H','6/6H','4/4H','2/2H','1/1H','1X/DIA','SN','6/6H SN','8/8H SN','ACM','ACM NOITE','SND','—'];
 const RX_APRES = ['—','COMP','CAP','FA','AMP','ML','GTS','PUFF','JATO','SPRAY','SACHE','ADESIVO','UI','BOLSA','SER','FR','BISN','MEQ'];
@@ -3197,7 +3209,7 @@ function imprimirPrescricao(){
     <tbody>
       ${_rxItens.map((it,i)=>{
         const rowCls=it.tipo==='dieta'?'tr-dieta':it.tipo==='sn'?'tr-sn':it.tipo==='cuidados'?'tr-cuidado':'';
-        const hors=(it.hor||[]).join(' · ')||'—';
+        const hors=_ordenarHorarios(it.hor||[]).join(' · ')||'—';
         // Dose impressa = "qtd apres dose" (ex: "2 FA 1G", "1 COMP 200MG", "40 GTS")
         const doseImpressa=[it.qtd, (it.apres&&it.apres!=='—'?it.apres:''), (it.dose&&it.dose!=='—'?it.dose:'')]
           .filter(Boolean).join(' ')||'—';
