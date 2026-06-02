@@ -250,14 +250,14 @@
                   </div>
                 </div>
               </div>
-              <div class="fl"><label>Comorbidades</label><input type="text" id="f-comor" placeholder="Ex: HAS, FA permanente, DM..." data-adm-field></div>
+              <div class="fl"><label>Comorbidades</label><input type="text" id="f-comor" data-adm-field></div>
               <div class="dc">
-                <div class="fl"><label>Alergias</label><input type="text" id="f-alergia" placeholder="NEGA / especificar" data-adm-field></div>
-                <div class="fl"><label>Medicamentos de uso contínuo</label><input type="text" id="f-medcont" placeholder="Ex: furosemida, metoprolol..." data-adm-field></div>
+                <div class="fl"><label>Alergias</label><input type="text" id="f-alergia" placeholder="NEGA" data-adm-field></div>
+                <div class="fl"><label>Medicamentos de uso contínuo</label><input type="text" id="f-medcont" data-adm-field></div>
               </div>
               <div class="dc">
-                <div class="fl"><label>Peso (kg)</label><input type="number" step="0.1" id="f-peso" placeholder="ex: 72.5" oninput="_atualizarTFG()" data-adm-field></div>
-                <div class="fl"><label>Altura (cm)</label><input type="number" id="f-altura" placeholder="ex: 165" data-adm-field></div>
+                <div class="fl"><label>Peso (kg)</label><input type="number" step="0.1" id="f-peso" oninput="_atualizarTFG()" data-adm-field></div>
+                <div class="fl"><label>Altura (cm)</label><input type="number" id="f-altura" data-adm-field></div>
               </div>
             </div>
           </div>
@@ -269,8 +269,8 @@
             </div>
             <div class="secao-c">
               <div class="tip i" style="margin-bottom:8px;">Estes campos são preenchidos na <strong>admissão</strong> e ficam <strong>visíveis em todas as evoluções</strong> seguintes.</div>
-              <div class="fl"><label>HDA (História da Doença Atual)</label><textarea id="f-hda" rows="5" placeholder="Relato da história clínica..." data-adm-field></textarea></div>
-              <div class="fl"><label>Admissão na UTI (descrição do médico que recebeu)</label><textarea id="f-adm-desc" rows="4" placeholder="Recebo paciente..." data-adm-field></textarea></div>
+              <div class="fl"><label>HDA (História da Doença Atual)</label><textarea id="f-hda" rows="5" data-adm-field></textarea></div>
+              <div class="fl"><label>Admissão na UTI (descrição do médico que recebeu)</label><textarea id="f-adm-desc" rows="4" data-adm-field></textarea></div>
             </div>
           </div>
 
@@ -278,10 +278,16 @@
           <div class="secao">
             <div class="secao-t">Evolução do Plantão</div>
             <div class="secao-c">
-              <div class="fl"><label>Estado geral / evolução narrativa</label><textarea id="f-evol" rows="5" placeholder="Paciente em regular estado geral, evolui hemodinamicamente..."></textarea></div>
+              <div class="fl"><label>Estado geral / evolução narrativa</label><textarea id="f-evol" rows="5"></textarea></div>
               <div class="dc">
-                <div class="fl"><label>Em uso de ATB</label><input type="text" id="f-atb" placeholder="SEM ATB / especificar esquema"></div>
-                <div class="fl"><label>ATB já utilizados</label><input type="text" id="f-atb-prev" placeholder="esquemas anteriores"></div>
+                <div class="fl"><label>Em uso de ATB
+                  <button type="button" class="btn btn-sm" style="margin-left:8px;font-size:.65rem;padding:2px 8px;" onclick="_autoPreencherATBs()" title="Preencher automaticamente das prescrições">↻ Auto</button>
+                </label>
+                <textarea id="f-atb" rows="2" placeholder="Calculado automaticamente das prescrições salvas..." readonly style="background:var(--bg2);font-size:.82rem;resize:none;"></textarea>
+              </div>
+              <div class="fl"><label>ATB anteriores</label>
+                <textarea id="f-atb-prev" rows="2" placeholder="Calculado automaticamente das prescrições salvas..." readonly style="background:var(--bg2);font-size:.82rem;resize:none;"></textarea>
+              </div>
               </div>
             </div>
           </div>
@@ -290,16 +296,16 @@
           <div class="secao">
             <div class="secao-t">Controles / Sinais Vitais (24h)</div>
             <div class="secao-c grid2">
-              <div class="fl"><label>PAM (mmHg)</label><input type="text" id="f-pam" placeholder="ex: 71-90"></div>
-              <div class="fl"><label>PAS (mmHg) <span class="saps-flag">SAPS3</span></label><input type="number" id="f-pas" placeholder="sistólica (pior)" oninput="_recalcSAPS()"></div>
-              <div class="fl"><label>FC (bpm) <span class="saps-flag">SAPS3</span></label><input type="number" id="f-fc" placeholder="maior FC" oninput="_recalcSAPS()"></div>
-              <div class="fl"><label>FR (irpm)</label><input type="text" id="f-fr" placeholder="ex: 13-19"></div>
-              <div class="fl"><label>Tmáx (°C) <span class="saps-flag">SAPS3</span></label><input type="number" step="0.1" id="f-tmax" placeholder="ex: 36.8" oninput="_recalcSAPS()"></div>
-              <div class="fl"><label>SpO₂ (%)</label><input type="text" id="f-spo2" placeholder="ex: 92-98"></div>
-              <div class="fl"><label>Diurese</label><input type="text" id="f-diurese" placeholder="espontânea / SVD"></div>
-              <div class="fl"><label>Balanço Hídrico 24h</label><input type="text" id="f-bh" placeholder="ex: (+) 1.200 ml"></div>
-              <div class="fl"><label>Evacuações</label><input type="text" id="f-evac" placeholder="ex: 2x"></div>
-              <div class="fl"><label>HGT (mg/dL)</label><input type="text" id="f-hgt" placeholder="ex: 139-184-149"></div>
+              <div class="fl"><label>PAM (mmHg)</label><input type="text" id="f-pam"></div>
+              <div class="fl"><label>PAS (mmHg) <span class="saps-flag">SAPS3</span></label><input type="number" id="f-pas" oninput="_recalcSAPS()"></div>
+              <div class="fl"><label>FC (bpm) <span class="saps-flag">SAPS3</span></label><input type="number" id="f-fc" oninput="_recalcSAPS()"></div>
+              <div class="fl"><label>FR (irpm)</label><input type="number" id="f-fr" min="0" max="60"></div>
+              <div class="fl"><label>Tmáx (°C) <span class="saps-flag">SAPS3</span></label><input type="number" step="0.1" id="f-tmax" oninput="_recalcSAPS()"></div>
+              <div class="fl"><label>SpO₂ (%)</label><input type="number" id="f-spo2" min="50" max="100"></div>
+              <div class="fl"><label>Diurese</label><input type="text" id="f-diurese"></div>
+              <div class="fl"><label>Balanço Hídrico 24h</label><input type="text" id="f-bh"></div>
+              <div class="fl"><label>Evacuações</label><input type="number" id="f-evac" min="0" max="20"></div>
+              <div class="fl"><label>HGT (mg/dL)</label><input type="text" id="f-hgt"></div>
             </div>
           </div>
 
@@ -307,16 +313,16 @@
           <div class="secao">
             <div class="secao-t">Exame Físico</div>
             <div class="secao-c grid2">
-              <div class="fl"><label>Ectoscopia</label><input type="text" id="f-ef-ecto" placeholder="EGG, consciente, orientada..."></div>
-              <div class="fl"><label>Neurológico</label><input type="text" id="f-ef-neuro" placeholder="ex: Glasgow 14"></div>
-              <div class="fl"><label>Glasgow <span class="saps-flag">SAPS3</span></label><input type="number" id="f-glasgow" min="3" max="15" placeholder="3–15" oninput="_recalcSAPS()"></div>
-              <div class="fl"><label>Pupilas</label><input type="text" id="f-ef-pupilas" placeholder="ISO / FR"></div>
-              <div class="fl"><label>ACV (cardiovascular)</label><input type="text" id="f-ef-acv" placeholder="RCI, 2T, BNF, sopro..."></div>
-              <div class="fl"><label>AR (respiratório)</label><input type="text" id="f-ef-ar" placeholder="MV+, AHT, crepitos..."></div>
-              <div class="fl"><label>ABD (abdome)</label><input type="text" id="f-ef-abd" placeholder="plano, flácido, indolor..."></div>
-              <div class="fl"><label>EXT (extremidades)</label><input type="text" id="f-ef-ext" placeholder="edema 2/4+, cianose..."></div>
-              <div class="fl"><label>Pele</label><input type="text" id="f-ef-pele" placeholder="íntegra / lesões"></div>
-              <div class="fl"><label>Genitália</label><input type="text" id="f-ef-genital" placeholder=""></div>
+              <div class="fl"><label>Ectoscopia</label><input type="text" id="f-ef-ecto"></div>
+              <div class="fl"><label>Neurológico</label><input type="text" id="f-ef-neuro"></div>
+              <div class="fl"><label>Glasgow <span class="saps-flag">SAPS3</span></label><input type="number" id="f-glasgow" min="3" max="15" oninput="_recalcSAPS()"></div>
+              <div class="fl"><label>Pupilas</label><input type="text" id="f-ef-pupilas"></div>
+              <div class="fl"><label>ACV (cardiovascular)</label><input type="text" id="f-ef-acv"></div>
+              <div class="fl"><label>AR (respiratório)</label><input type="text" id="f-ef-ar"></div>
+              <div class="fl"><label>ABD (abdome)</label><input type="text" id="f-ef-abd"></div>
+              <div class="fl"><label>EXT (extremidades)</label><input type="text" id="f-ef-ext"></div>
+              <div class="fl"><label>Pele</label><input type="text" id="f-ef-pele"></div>
+              <div class="fl"><label>Genitália</label><input type="text" id="f-ef-genital"></div>
             </div>
           </div>
 
@@ -324,8 +330,8 @@
           <div class="secao">
             <div class="secao-t">Dispositivos & Suporte</div>
             <div class="secao-c grid2">
-              <div class="fl"><label>Acessos</label><input type="text" id="f-acessos" placeholder="periférico / central"></div>
-              <div class="fl"><label>Dispositivos</label><input type="text" id="f-dispositivos" placeholder="SVD (21/05), SNE..."></div>
+              <div class="fl"><label>Acessos</label><input type="text" id="f-acessos"></div>
+              <div class="fl"><label>Dispositivos</label><input type="text" id="f-dispositivos"></div>
               <div class="fl"><label>Dieta</label>
                 <select id="f-dieta"><option value="">—</option><option>ORAL</option><option>ENTERAL (SNE/SNG)</option><option>PARENTERAL</option><option>JEJUM</option><option>ZERO</option></select>
               </div>
@@ -352,9 +358,9 @@
                 </select>
               </div>
               <div class="fl"><label>Parâmetros ventilatórios</label><input type="text" id="f-vent-param" placeholder="modo, FiO2, PEEP..."></div>
-              <div class="fl"><label>PaO₂ (mmHg) <span class="saps-flag">SAPS3</span></label><input type="number" id="f-pao2" placeholder="da gasometria" oninput="_recalcSAPS()"></div>
-              <div class="fl"><label>FiO₂ (fração, ex: 0.4) <span class="saps-flag">SAPS3</span></label><input type="number" step="0.01" id="f-fio2" placeholder="0.21–1.0" oninput="_recalcSAPS()"></div>
-              <div class="fl"><label>pH arterial <span class="saps-flag">SAPS3</span></label><input type="number" step="0.01" id="f-ph" placeholder="ex: 7.35" oninput="_recalcSAPS()"></div>
+              <div class="fl"><label>PaO₂ (mmHg) <span class="saps-flag">SAPS3</span></label><input type="number" id="f-pao2" oninput="_recalcSAPS()"></div>
+              <div class="fl"><label>FiO₂ (fração, ex: 0.4) <span class="saps-flag">SAPS3</span></label><input type="number" step="0.01" id="f-fio2" oninput="_recalcSAPS()"></div>
+              <div class="fl"><label>pH arterial <span class="saps-flag">SAPS3</span></label><input type="number" step="0.01" id="f-ph" oninput="_recalcSAPS()"></div>
               <div class="fl"><label>Gasometria (texto livre)</label><input type="text" id="f-gaso" placeholder="resumo da gaso"></div>
             </div>
           </div>
