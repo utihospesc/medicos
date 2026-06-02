@@ -1044,3 +1044,18 @@ details[open] .sol-hist-rotina-sum::before{ content:'▼'; }
   border-left:3px solid var(--vinho-borda); border-radius:0 6px 6px 0;
 }
 .cult-pai{ font-weight:600; }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   DILUIÇÃO INLINE — abaixo do nome do medicamento EV
+   ════════════════════════════════════════════════════════════════════════════ */
+.rx-dil-inline{
+  display:flex; align-items:center; gap:4px; margin-top:4px;
+}
+.rx-dil-icon{ font-size:.75rem; flex-shrink:0; opacity:.7; }
+.rx-dil-input{
+  flex:1; padding:2px 6px !important; font-size:.76rem !important;
+  border:1px dashed var(--borda) !important; border-radius:5px;
+  background:var(--bg2) !important; color:var(--muted);
+  font-style:italic;
+}
+.rx-dil-input:focus{ border-color:var(--vinho) !important; color:var(--tinta); font-style:normal; }
