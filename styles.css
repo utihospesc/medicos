@@ -1104,3 +1104,41 @@ details[open] .sol-hist-rotina-sum::before{ content:'▼'; }
 .gestao-opt-ico{font-size:1.5rem;flex-shrink:0;width:38px;text-align:center;}
 .gestao-opt-t{font-weight:600;font-size:.95rem;color:var(--vinho);}
 .gestao-opt-s{font-size:.78rem;color:var(--muted);margin-top:1px;}
+
+/* ── HISTÓRICO DE PRESCRIÇÕES ─────────────────────────────────────────────── */
+.rx-hist-toggle{
+  width:100%;text-align:left;background:none;border:none;cursor:pointer;
+  font-size:.82rem;font-weight:600;color:var(--muted);padding:4px 2px;
+  display:flex;align-items:center;gap:6px;font-family:inherit;
+  transition:color .15s;
+}
+.rx-hist-toggle:hover{color:var(--vinho);}
+.rx-hist-dia{
+  margin-bottom:10px;border:1px solid var(--borda);border-radius:8px;overflow:hidden;
+}
+.rx-hist-dia-hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:6px 10px;background:#f8f4f5;border-bottom:1px solid var(--borda);
+  font-size:.78rem;font-weight:700;color:var(--vinho);cursor:pointer;
+  user-select:none;
+}
+.rx-hist-dia-hdr:hover{background:#f3eced;}
+.rx-hist-dia-body{padding:6px 4px 4px;}
+.rx-hist-item{
+  display:flex;gap:6px;align-items:baseline;padding:2px 8px;
+  font-size:.74rem;border-radius:4px;line-height:1.5;
+}
+.rx-hist-item:hover{background:#fdf4f5;}
+.rx-hist-num{color:var(--muted);min-width:18px;flex-shrink:0;font-size:.68rem;}
+.rx-hist-farm{font-weight:600;color:var(--tinta);flex:1;}
+.rx-hist-det{color:var(--muted);flex-shrink:0;font-size:.7rem;}
+.rx-hist-cat-atb{color:#7a1020;}
+.rx-hist-cat-dieta{color:#0a6b3a;}
+.rx-hist-empty{font-size:.78rem;color:var(--muted);padding:8px 10px;}
+.rx-hist-dia-load{font-size:.75rem;color:var(--muted);padding:8px 10px;font-style:italic;}
+.rx-hist-btn-usar{
+  float:right;font-size:.65rem;padding:1px 8px;border-radius:4px;
+  background:rgba(122,16,32,.08);border:1px solid var(--vinho);color:var(--vinho);
+  cursor:pointer;margin-left:8px;
+}
+.rx-hist-btn-usar:hover{background:rgba(122,16,32,.18);}
