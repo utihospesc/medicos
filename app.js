@@ -36,7 +36,7 @@ let _modoOffline = false;
 /* ── HELPERS BÁSICOS ──────────────────────────────────────────────────────── */
 const $  = id => document.getElementById(id);
 const gf = id => { const e = $(id); return e ? (e.value||'') : ''; };
-const sf = (id,v) => { const e = $(id); if(e) e.value = (v==null?'':v); };
+const sf = (id,v) => { const e=$(id); if(!e) return; e.value=(v==null?'':v); if(e.tagName==='TEXTAREA'&&!e.hasAttribute('readonly')){e.style.height='auto';e.style.height=e.scrollHeight+'px';} };
 const pad = n => String(n).padStart(2,'0');
 function hoje(){ const d=new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
 function ontem(){ const d=new Date(); d.setDate(d.getDate()-1); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
@@ -55,83 +55,6 @@ function _normalizarNome(s){
   return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/\s+/g,' ').trim();
 }
 function _isAdmin(){ return usuarioEmail && ADMIN_EMAILS.includes(usuarioEmail.toLowerCase()); }
-
-const DIARISTA_EMAIL = 'diaristauti@hospesc.com';
-function _isDiarista(){ return usuarioEmail && usuarioEmail.toLowerCase() === DIARISTA_EMAIL; }
-
-// ── EVOLUÇÃO DIARISTA ─────────────────────────────────────────────────────────
-// Chave independente de turno: uti_med_diarista_<leito>_<data>
-// Só diaristauti@hospesc.com pode editar; demais têm somente leitura.
-// NÃO entra em coletarDados() nem na impressão.
-
-function _chaveDiarista(leito, data){
-  return `uti_med_diarista_${leito}_${data}`;
-}
-
-function _aplicarModoDiarista(){
-  const ta = $('f-evol-diarista');
-  const btnWrap = $('diarista-btn-wrap');
-  const badge = $('diarista-badge');
-  const roTag = $('diarista-readonly-tag');
-  const label = $('diarista-label');
-  if(!ta) return;
-  if(_isDiarista()){
-    ta.removeAttribute('readonly');
-    ta.style.cursor = '';
-    if(btnWrap) btnWrap.style.display = '';
-    if(badge)   badge.style.display   = 'inline-block';
-    if(roTag)   roTag.style.display   = 'none';
-    if(label)   label.textContent     = 'Evolução Diarista (editável)';
-  } else {
-    ta.setAttribute('readonly', true);
-    ta.style.cursor = 'default';
-    if(btnWrap) btnWrap.style.display = 'none';
-    if(badge)   badge.style.display   = 'none';
-    if(roTag)   roTag.style.display   = 'inline-block';
-    if(label)   label.textContent     = 'Evolução Diarista';
-  }
-}
-
-async function _carregarDiarista(leito, data){
-  const ta   = $('f-evol-diarista');
-  const meta = $('diarista-meta');
-  if(!ta) return;
-  const chave = _chaveDiarista(leito, data);
-  const dado  = await dbGet(chave);
-  ta.value = dado ? (dado.texto || '') : '';
-  _autoResizeTextarea(ta);
-  if(meta){
-    if(dado && dado.autorNome && dado.registradoEm){
-      const dt = new Date(dado.registradoEm);
-      const fmt = dt.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
-      meta.textContent = `Última edição: ${dado.autorNome} — ${fmt}`;
-      meta.style.display = '';
-    } else {
-      meta.style.display = 'none';
-    }
-  }
-}
-
-async function salvarEvolucaoDiarista(){
-  if(!_isDiarista()){ toast('Sem permissão para editar a evolução diarista.', true); return; }
-  const ta = $('f-evol-diarista');
-  if(!ta) return;
-  const texto = ta.value.trim();
-  const dataT = $('f-data') ? $('f-data').value : hoje();
-  const chave = _chaveDiarista(leitoAtual, dataT);
-  try{
-    await dbSet(chave, {
-      texto,
-      autor: usuarioEmail,
-      autorNome: perfilUsuario ? perfilUsuario.nome : usuarioEmail,
-      registradoEm: new Date().toISOString()
-    });
-    toast('✓ Evolução diarista salva');
-    await _carregarDiarista(leitoAtual, dataT);
-  } catch(e){
-    toast('Erro ao salvar: ' + (e.message||e), true);
-  }
-}
 
 function mostrarTela(id){
   document.querySelectorAll('.tela').forEach(t=>{ t.classList.remove('ativa'); t.style.display='none'; });
@@ -884,8 +807,7 @@ async function abrirFormulario(leito){
     _ativarCaixaAlta();
     await _carregarPrescricao(leito);
     _atualizarPnavPac();
-    _aplicarModoDiarista();
-    await _carregarDiarista(leito, dataT);
+    await _carregarImgsExame(leito, dataT);
     mudarAba('evolucao'); // sempre abre na aba de evolução
     hideLoading();
     mostrarTela('t-form');
@@ -978,6 +900,7 @@ async function salvarEvolucao(){
     ld[leitoAtual]=L;
     await dbSet('uti_leitos',ld);
 
+    await _salvarImgsExame(leitoAtual, d.data);
     hideLoading();
     toast('✓ Evolução salva.');
     $('herd-tag').style.display='none';
@@ -999,6 +922,117 @@ function _calcIdadeDisplay(idDN,idOut){
   if(o) o.textContent = a!=null ? a+' anos' : '';
 }
 
+
+/* ════════════════════════════════════════════════════════════════════════════
+   IMAGENS DE EXAME — galeria por leito/data, armazenada no Firestore
+   Cada imagem é redimensionada (max 1200px) e salva como base64 JPEG (q=0.75).
+   Chave: uti_med_imgs_<leito>_<data>  →  { imgs: [{b64, legenda, ts}] }
+   ════════════════════════════════════════════════════════════════════════════ */
+
+let _imgExameBuffer = []; // array de {b64, legenda, ts} para o leito/data atual
+
+function _chaveImgs(leito, data){ return `uti_med_imgs_${leito}_${data}`; }
+
+// Redimensiona um File de imagem para max maxPx e retorna base64 JPEG
+function _imgParaBase64(file, maxPx=1200, qualidade=0.75){
+  return new Promise((res, rej) => {
+    const reader = new FileReader();
+    reader.onerror = rej;
+    reader.onload = ev => {
+      const img = new Image();
+      img.onerror = rej;
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if(w > maxPx || h > maxPx){
+          if(w >= h){ h = Math.round(h * maxPx / w); w = maxPx; }
+          else      { w = Math.round(w * maxPx / h); h = maxPx; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        res(canvas.toDataURL('image/jpeg', qualidade));
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// Renderiza a grade de miniaturas
+function _renderImgGrid(){
+  const grid = $('img-exame-grid');
+  if(!grid) return;
+  // Mantém o botão "Adicionar" e reconstrói os itens
+  const addBtn = grid.querySelector('.img-exame-add');
+  grid.innerHTML = '';
+  _imgExameBuffer.forEach((item, idx) => {
+    const div = document.createElement('div');
+    div.className = 'img-exame-item';
+    div.title = item.legenda || '';
+    div.innerHTML = `<img src="${item.b64}" alt="exame">
+      <button class="img-exame-del" onclick="_imgExameRemover(${idx})" title="Remover">×</button>`;
+    div.querySelector('img').addEventListener('click', () => _abrirLightbox(item.b64));
+    grid.appendChild(div);
+  });
+  if(addBtn) grid.appendChild(addBtn);
+}
+
+// Abre lightbox
+function _abrirLightbox(src){
+  const lb = $('lightbox');
+  if(!lb) return;
+  $('lightbox-img').src = src;
+  lb.classList.add('show');
+}
+
+// Handler do input file
+async function _imgExameAdicionar(input){
+  if(!input.files||!input.files.length) return;
+  const status = $('img-exame-status');
+  if(status){ status.textContent = 'Processando imagens...'; status.style.display=''; }
+  const files = Array.from(input.files);
+  for(const file of files){
+    try{
+      const b64 = await _imgParaBase64(file);
+      _imgExameBuffer.push({ b64, legenda: file.name, ts: new Date().toISOString() });
+    } catch(e){ toast('Erro ao processar ' + file.name, true); }
+  }
+  input.value = ''; // reseta para permitir re-selecionar o mesmo arquivo
+  _renderImgGrid();
+  if(status){ status.textContent = `${_imgExameBuffer.length} imagem(ns) anexada(s) — serão salvas com a evolução`; }
+}
+
+// Remove imagem do buffer
+function _imgExameRemover(idx){
+  _imgExameBuffer.splice(idx, 1);
+  _renderImgGrid();
+  const status = $('img-exame-status');
+  if(status && _imgExameBuffer.length === 0){ status.style.display='none'; }
+  else if(status){ status.textContent = `${_imgExameBuffer.length} imagem(ns) anexada(s)`; }
+}
+
+// Carrega imagens do Firestore para o leito/data
+async function _carregarImgsExame(leito, data){
+  _imgExameBuffer = [];
+  const chave = _chaveImgs(leito, data);
+  try{
+    const dado = await dbGet(chave);
+    if(dado && Array.isArray(dado.imgs)) _imgExameBuffer = dado.imgs;
+  } catch(e){ console.warn('_carregarImgsExame:', e); }
+  _renderImgGrid();
+  const status = $('img-exame-status');
+  if(status){
+    if(_imgExameBuffer.length) { status.textContent = `${_imgExameBuffer.length} imagem(ns) salva(s)`; status.style.display=''; }
+    else { status.style.display='none'; }
+  }
+}
+
+// Salva imagens — chamada dentro de salvarEvolucao
+async function _salvarImgsExame(leito, data){
+  if(!_imgExameBuffer.length) return; // nada a salvar
+  const chave = _chaveImgs(leito, data);
+  await dbSet(chave, { imgs: _imgExameBuffer, leito, data, atualizadoEm: new Date().toISOString() });
+}
 
 /* ════════════════════════════════════════════════════════════════════════════
    EXAMES LABORATORIAIS  (registro por data + gráfico de tendência)
@@ -1580,13 +1614,23 @@ function imprimirEvolucao(){
 }
 
 /* ── CAIXA ALTA AUTOMÁTICA (campos de texto, exceto data/número) ──────────── */
+function _autoResizeTA(el){
+  if(!el||el.tagName!=='TEXTAREA'||el.hasAttribute('readonly')) return;
+  el.style.height='auto';
+  el.style.height=el.scrollHeight+'px';
+}
+
 function _ativarCaixaAlta(){
   const sel='#t-form input[type=text], #t-form textarea, #modal-adm input[type=text], #modal-adm textarea';
   document.querySelectorAll(sel).forEach(el=>{
-    if(el.id==='f-evol-diarista') return; // campo diarista: sem caixa-alta forçada
+    if(el.id==='f-evol-diarista') return;
     if(el.dataset.upperBound) return; el.dataset.upperBound='1';
-    el.addEventListener('input',function(){ const p=this.selectionStart; const up=this.value.toUpperCase();
-      if(this.value!==up){ this.value=up; try{this.setSelectionRange(p,p);}catch(_){} } });
+    el.addEventListener('input',function(){
+      const p=this.selectionStart; const up=this.value.toUpperCase();
+      if(this.value!==up){ this.value=up; try{this.setSelectionRange(p,p);}catch(_){} }
+      _autoResizeTA(this);
+    });
+    _autoResizeTA(el); // ajuste inicial
   });
 }
 
