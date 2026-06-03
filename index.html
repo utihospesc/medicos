@@ -1368,5 +1368,97 @@
 <!-- Autocomplete flutuante — deve ficar no body para não ser cortado por overflow -->
 <div id="rx-autocomplete" class="rx-autocomplete" style="display:none;position:fixed;z-index:9999;"></div>
 
+
+<!-- ═══════════ MODAL DE GESTÃO DO LEITO (alta / óbito / transferência) ═══════════ -->
+<div class="modal" id="modal-gestao-leito">
+  <div class="modal-c" style="max-width:560px;">
+    <div class="modal-h">
+      <h3 id="gestao-titulo">Gerenciar leito</h3>
+      <button class="btn-close" onclick="fecharGestaoLeito()">×</button>
+    </div>
+    <div class="modal-b">
+      <div id="gestao-info" style="background:#f8f4f5;border:1px solid #d4b8be;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:.85rem;color:#3a2226;"></div>
+
+      <!-- MENU INICIAL — escolha do tipo de movimentação -->
+      <div id="gestao-menu" class="gestao-menu">
+        <button class="gestao-opt" onclick="_gestaoEscolher('alta_hosp')">
+          <span class="gestao-opt-ico">🏠</span>
+          <div><div class="gestao-opt-t">Alta hospitalar</div>
+          <div class="gestao-opt-s">Paciente vai para casa</div></div>
+        </button>
+        <button class="gestao-opt" onclick="_gestaoEscolher('alta_uti')">
+          <span class="gestao-opt-ico">🏥</span>
+          <div><div class="gestao-opt-t">Alta UTI → Enfermaria</div>
+          <div class="gestao-opt-s">Continua internado fora da UTI</div></div>
+        </button>
+        <button class="gestao-opt" onclick="_gestaoEscolher('obito')">
+          <span class="gestao-opt-ico" style="color:#7a1020;">✝</span>
+          <div><div class="gestao-opt-t">Óbito</div>
+          <div class="gestao-opt-s">Registrar óbito do paciente</div></div>
+        </button>
+        <button class="gestao-opt" onclick="_gestaoEscolher('transf_ext')">
+          <span class="gestao-opt-ico">🚑</span>
+          <div><div class="gestao-opt-t">Transferência externa</div>
+          <div class="gestao-opt-s">Para outro hospital</div></div>
+        </button>
+        <button class="gestao-opt" onclick="_gestaoEscolher('transf_int')">
+          <span class="gestao-opt-ico">🔄</span>
+          <div><div class="gestao-opt-t">Transferência entre leitos</div>
+          <div class="gestao-opt-s">Mover para outro leito da UTI</div></div>
+        </button>
+      </div>
+
+      <!-- FORM DE SAÍDA (alta/óbito/transferência externa) -->
+      <div id="gestao-form-saida" style="display:none;">
+        <div class="fl">
+          <label>Data da saída</label>
+          <input type="date" id="g-saida-data">
+        </div>
+        <div class="fl">
+          <label>Hora</label>
+          <input type="time" id="g-saida-hora">
+        </div>
+        <div class="fl" id="g-saida-destino-wrap" style="display:none;">
+          <label id="g-saida-destino-lbl">Destino</label>
+          <input type="text" id="g-saida-destino" placeholder="Ex: Hospital Walfredo Gurgel">
+        </div>
+        <div class="fl">
+          <label>Observações / motivo</label>
+          <textarea id="g-saida-obs" rows="3" placeholder="Resumo da evolução, motivo da saída..."></textarea>
+        </div>
+        <div class="fl" id="g-obito-causa-wrap" style="display:none;">
+          <label>Causa do óbito (mortis)</label>
+          <textarea id="g-obito-causa" rows="2" placeholder="Causa imediata, causas antecedentes, causa básica..."></textarea>
+        </div>
+        <div class="form-actions" style="margin-top:14px;">
+          <button class="btn btn-pri" id="g-btn-confirmar" onclick="confirmarSaidaLeito()">✓ Confirmar</button>
+          <button class="btn" onclick="_gestaoVoltar()">← Voltar</button>
+          <button class="btn" onclick="fecharGestaoLeito()">Cancelar</button>
+        </div>
+      </div>
+
+      <!-- FORM DE TRANSFERÊNCIA INTERNA -->
+      <div id="gestao-form-transf" style="display:none;">
+        <div class="fl">
+          <label>Leito de destino</label>
+          <select id="g-transf-destino"></select>
+        </div>
+        <div class="fl">
+          <label>Motivo</label>
+          <textarea id="g-transf-motivo" rows="2" placeholder="Ex: melhor monitorização, isolamento, manejo de equipe..."></textarea>
+        </div>
+        <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:10px 12px;font-size:.78rem;color:#7c2d12;margin-top:8px;">
+          ⚠ Toda a evolução, prescrição, exames e imagens serão <strong>movidos</strong> do leito original para o leito de destino. O leito de origem ficará vazio.
+        </div>
+        <div class="form-actions" style="margin-top:14px;">
+          <button class="btn btn-pri" onclick="confirmarTransferenciaInterna()">✓ Confirmar transferência</button>
+          <button class="btn" onclick="_gestaoVoltar()">← Voltar</button>
+          <button class="btn" onclick="fecharGestaoLeito()">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
