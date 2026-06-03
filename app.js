@@ -36,7 +36,7 @@ let _modoOffline = false;
 /* ── HELPERS BÁSICOS ──────────────────────────────────────────────────────── */
 const $  = id => document.getElementById(id);
 const gf = id => { const e = $(id); return e ? (e.value||'') : ''; };
-const sf = (id,v) => { const e = $(id); if(e){ e.value = (v==null?'':v); if(e.tagName==='TEXTAREA'){ e.style.height='auto'; e.style.height=e.scrollHeight+'px'; } } };
+const sf = (id,v) => { const e = $(id); if(e) e.value = (v==null?'':v); };
 const pad = n => String(n).padStart(2,'0');
 function hoje(){ const d=new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
 function ontem(){ const d=new Date(); d.setDate(d.getDate()-1); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
@@ -55,6 +55,83 @@ function _normalizarNome(s){
   return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/\s+/g,' ').trim();
 }
 function _isAdmin(){ return usuarioEmail && ADMIN_EMAILS.includes(usuarioEmail.toLowerCase()); }
+
+const DIARISTA_EMAIL = 'diaristauti@hospesc.com';
+function _isDiarista(){ return usuarioEmail && usuarioEmail.toLowerCase() === DIARISTA_EMAIL; }
+
+// ── EVOLUÇÃO DIARISTA ─────────────────────────────────────────────────────────
+// Chave independente de turno: uti_med_diarista_<leito>_<data>
+// Só diaristauti@hospesc.com pode editar; demais têm somente leitura.
+// NÃO entra em coletarDados() nem na impressão.
+
+function _chaveDiarista(leito, data){
+  return `uti_med_diarista_${leito}_${data}`;
+}
+
+function _aplicarModoDiarista(){
+  const ta = $('f-evol-diarista');
+  const btnWrap = $('diarista-btn-wrap');
+  const badge = $('diarista-badge');
+  const roTag = $('diarista-readonly-tag');
+  const label = $('diarista-label');
+  if(!ta) return;
+  if(_isDiarista()){
+    ta.removeAttribute('readonly');
+    ta.style.cursor = '';
+    if(btnWrap) btnWrap.style.display = '';
+    if(badge)   badge.style.display   = 'inline-block';
+    if(roTag)   roTag.style.display   = 'none';
+    if(label)   label.textContent     = 'Evolução Diarista (editável)';
+  } else {
+    ta.setAttribute('readonly', true);
+    ta.style.cursor = 'default';
+    if(btnWrap) btnWrap.style.display = 'none';
+    if(badge)   badge.style.display   = 'none';
+    if(roTag)   roTag.style.display   = 'inline-block';
+    if(label)   label.textContent     = 'Evolução Diarista';
+  }
+}
+
+async function _carregarDiarista(leito, data){
+  const ta   = $('f-evol-diarista');
+  const meta = $('diarista-meta');
+  if(!ta) return;
+  const chave = _chaveDiarista(leito, data);
+  const dado  = await dbGet(chave);
+  ta.value = dado ? (dado.texto || '') : '';
+  _autoResizeTextarea(ta);
+  if(meta){
+    if(dado && dado.autorNome && dado.registradoEm){
+      const dt = new Date(dado.registradoEm);
+      const fmt = dt.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+      meta.textContent = `Última edição: ${dado.autorNome} — ${fmt}`;
+      meta.style.display = '';
+    } else {
+      meta.style.display = 'none';
+    }
+  }
+}
+
+async function salvarEvolucaoDiarista(){
+  if(!_isDiarista()){ toast('Sem permissão para editar a evolução diarista.', true); return; }
+  const ta = $('f-evol-diarista');
+  if(!ta) return;
+  const texto = ta.value.trim();
+  const dataT = $('f-data') ? $('f-data').value : hoje();
+  const chave = _chaveDiarista(leitoAtual, dataT);
+  try{
+    await dbSet(chave, {
+      texto,
+      autor: usuarioEmail,
+      autorNome: perfilUsuario ? perfilUsuario.nome : usuarioEmail,
+      registradoEm: new Date().toISOString()
+    });
+    toast('✓ Evolução diarista salva');
+    await _carregarDiarista(leitoAtual, dataT);
+  } catch(e){
+    toast('Erro ao salvar: ' + (e.message||e), true);
+  }
+}
 
 function mostrarTela(id){
   document.querySelectorAll('.tela').forEach(t=>{ t.classList.remove('ativa'); t.style.display='none'; });
@@ -807,6 +884,8 @@ async function abrirFormulario(leito){
     _ativarCaixaAlta();
     await _carregarPrescricao(leito);
     _atualizarPnavPac();
+    _aplicarModoDiarista();
+    await _carregarDiarista(leito, dataT);
     mudarAba('evolucao'); // sempre abre na aba de evolução
     hideLoading();
     mostrarTela('t-form');
@@ -1501,22 +1580,13 @@ function imprimirEvolucao(){
 }
 
 /* ── CAIXA ALTA AUTOMÁTICA (campos de texto, exceto data/número) ──────────── */
-function _autoResizeTextarea(el){
-  if(!el||el.tagName!=='TEXTAREA') return;
-  el.style.height='auto';
-  el.style.height=el.scrollHeight+'px';
-}
-
 function _ativarCaixaAlta(){
   const sel='#t-form input[type=text], #t-form textarea, #modal-adm input[type=text], #modal-adm textarea';
   document.querySelectorAll(sel).forEach(el=>{
+    if(el.id==='f-evol-diarista') return; // campo diarista: sem caixa-alta forçada
     if(el.dataset.upperBound) return; el.dataset.upperBound='1';
-    el.addEventListener('input',function(){
-      const p=this.selectionStart; const up=this.value.toUpperCase();
-      if(this.value!==up){ this.value=up; try{this.setSelectionRange(p,p);}catch(_){} }
-      _autoResizeTextarea(this);
-    });
-    _autoResizeTextarea(el);
+    el.addEventListener('input',function(){ const p=this.selectionStart; const up=this.value.toUpperCase();
+      if(this.value!==up){ this.value=up; try{this.setSelectionRange(p,p);}catch(_){} } });
   });
 }
 
