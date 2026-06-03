@@ -21,8 +21,8 @@ const PERFIS_SEED  = {}; // ex: {'medico@x.br':{nome:'DR. FULANO',crm:'RN12345'}
 const APPS_SCRIPT_URL  = window.APPS_SCRIPT_URL  || '';
 const CULTURAS_SHEET_ID = window.CULTURAS_SHEET_ID || '';
 const CARTAO_SUS_FOLDER_ID = window.CARTAO_SUS_FOLDER_ID || '';
-let _cartaoSUSPDF = null;       // base64 do PDF do cartão SUS do paciente atual (para mesclar na impressão)
-let _cartaoSUSStatus = '';      // status da última busca (para feedback ao usuário)
+let _cartaoSUSPDF = null;
+let _cartaoSUSStatus = '';
 
 let db = null, auth = null;
 let usuarioEmail = null, perfilUsuario = null;
@@ -39,7 +39,7 @@ let _modoOffline = false;
 /* ── HELPERS BÁSICOS ──────────────────────────────────────────────────────── */
 const $  = id => document.getElementById(id);
 const gf = id => { const e = $(id); return e ? (e.value||'') : ''; };
-const sf = (id,v) => { const e = $(id); if(e) e.value = (v==null?'':v); };
+const sf = (id,v) => { const e=$(id); if(!e) return; e.value=(v==null?'':v); if(e.tagName==='TEXTAREA'&&!e.hasAttribute('readonly')){e.style.height='auto';e.style.height=e.scrollHeight+'px';} };
 const pad = n => String(n).padStart(2,'0');
 function hoje(){ const d=new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
 function ontem(){ const d=new Date(); d.setDate(d.getDate()-1); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
@@ -58,6 +58,196 @@ function _normalizarNome(s){
   return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/\s+/g,' ').trim();
 }
 function _isAdmin(){ return usuarioEmail && ADMIN_EMAILS.includes(usuarioEmail.toLowerCase()); }
+
+const DIARISTA_EMAIL = 'diaristauti@hospesc.com';
+function _isDiarista(){ return usuarioEmail && usuarioEmail.toLowerCase() === DIARISTA_EMAIL; }
+
+// ── EVOLUÇÃO DIARISTA ─────────────────────────────────────────────────────────
+function _chaveDiarista(leito, data){ return `uti_med_diarista_${leito}_${data}`; }
+
+function _aplicarModoDiarista(){
+  const ta = $('f-evol-diarista');
+  const btnWrap = $('diarista-btn-wrap');
+  const badge = $('diarista-badge');
+  const roTag = $('diarista-readonly-tag');
+  const label = $('diarista-label');
+  if(!ta) return;
+  if(_isDiarista()){
+    ta.removeAttribute('readonly');
+    ta.style.cursor = '';
+    if(btnWrap) btnWrap.style.display = '';
+    if(badge)   badge.style.display   = 'inline-block';
+    if(roTag)   roTag.style.display   = 'none';
+    if(label)   label.textContent     = 'Evolução Diarista (editável)';
+  } else {
+    ta.setAttribute('readonly', true);
+    ta.style.cursor = 'default';
+    if(btnWrap) btnWrap.style.display = 'none';
+    if(badge)   badge.style.display   = 'none';
+    if(roTag)   roTag.style.display   = 'inline-block';
+    if(label)   label.textContent     = 'Evolução Diarista';
+  }
+}
+
+async function _carregarDiarista(leito, data){
+  const ta   = $('f-evol-diarista');
+  const meta = $('diarista-meta');
+  if(!ta) return;
+  const chave = _chaveDiarista(leito, data);
+  const dado  = await dbGet(chave);
+  ta.value = dado ? (dado.texto || '') : '';
+  _autoResizeTA(ta);
+  if(meta){
+    if(dado && dado.autorNome && dado.registradoEm){
+      const dt = new Date(dado.registradoEm);
+      const fmt = dt.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+      meta.textContent = `Última edição: ${dado.autorNome} — ${fmt}`;
+      meta.style.display = '';
+    } else {
+      meta.style.display = 'none';
+    }
+  }
+}
+
+async function salvarEvolucaoDiarista(){
+  if(!_isDiarista()){ toast('Sem permissão para editar a evolução diarista.', true); return; }
+  const ta = $('f-evol-diarista');
+  if(!ta) return;
+  const texto = ta.value.trim();
+  const dataT = $('f-data') ? $('f-data').value : hoje();
+  const chave = _chaveDiarista(leitoAtual, dataT);
+  try{
+    await dbSet(chave, {
+      texto,
+      autor: usuarioEmail,
+      autorNome: perfilUsuario ? perfilUsuario.nome : usuarioEmail,
+      registradoEm: new Date().toISOString()
+    });
+    toast('✓ Evolução diarista salva');
+    await _carregarDiarista(leitoAtual, dataT);
+  } catch(e){
+    toast('Erro ao salvar: ' + (e.message||e), true);
+  }
+}
+
+// ── IMAGENS DE EXAME ─────────────────────────────────────────────────────────
+// Chave: uti_med_imgs_<leito>_<data>  →  { imgs: [{b64, legenda, ts}] }
+let _imgExameBuffer = [];
+function _chaveImgs(leito, data){ return `uti_med_imgs_${leito}_${data}`; }
+
+function _imgParaBase64(file, maxPx=1200, qualidade=0.75){
+  return new Promise((res, rej) => {
+    const reader = new FileReader();
+    reader.onerror = rej;
+    reader.onload = ev => {
+      const img = new Image();
+      img.onerror = rej;
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if(w > maxPx || h > maxPx){
+          if(w >= h){ h = Math.round(h * maxPx / w); w = maxPx; }
+          else      { w = Math.round(w * maxPx / h); h = maxPx; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        res(canvas.toDataURL('image/jpeg', qualidade));
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function _renderImgGrid(){
+  const grid = $('img-exame-grid');
+  if(!grid) return;
+  const addBtn = grid.querySelector('.img-exame-add');
+  grid.innerHTML = '';
+  _imgExameBuffer.forEach((item, idx) => {
+    const div = document.createElement('div');
+    div.className = 'img-exame-item';
+    div.title = item.legenda || '';
+    div.innerHTML = `<img src="${item.b64}" alt="exame">
+      <button class="img-exame-del" onclick="_imgExameRemover(${idx})" title="Remover">×</button>`;
+    div.querySelector('img').addEventListener('click', () => _abrirLightbox(item.b64));
+    grid.appendChild(div);
+  });
+  if(addBtn) grid.appendChild(addBtn);
+}
+
+function _abrirLightbox(src){
+  const lb = $('lightbox');
+  if(!lb) return;
+  $('lightbox-img').src = src;
+  lb.classList.add('show');
+}
+
+async function _imgExameAdicionar(input){
+  const files = (input && input.files) ? Array.from(input.files) : [];
+  if(!files.length) return;
+  await _imgExameProcessarArquivos(files);
+  if(input) input.value = '';
+}
+
+async function _imgExameProcessarArquivos(files){
+  const status = $('img-exame-status');
+  if(status){ status.textContent = 'Processando imagens...'; status.style.display=''; }
+  for(const file of files){
+    if(!file.type || !file.type.startsWith('image/')) continue;
+    try{
+      const b64 = await _imgParaBase64(file);
+      _imgExameBuffer.push({ b64, legenda: file.name, ts: new Date().toISOString() });
+    } catch(e){ toast('Erro ao processar ' + file.name, true); }
+  }
+  _renderImgGrid();
+  if(status){ status.textContent = `${_imgExameBuffer.length} imagem(ns) anexada(s) — serão salvas com a evolução`; }
+}
+
+function _imgExameRemover(idx){
+  _imgExameBuffer.splice(idx, 1);
+  _renderImgGrid();
+  const status = $('img-exame-status');
+  if(status && _imgExameBuffer.length === 0){ status.style.display='none'; }
+  else if(status){ status.textContent = `${_imgExameBuffer.length} imagem(ns) anexada(s)`; }
+}
+
+// Habilita drag & drop na grade (PC)
+function _imgExameAtivarDragDrop(){
+  const grid = $('img-exame-grid');
+  const add  = grid ? grid.querySelector('.img-exame-add') : null;
+  if(!grid || !add || grid.dataset.ddBound) return;
+  grid.dataset.ddBound = '1';
+  const stop = e => { e.preventDefault(); e.stopPropagation(); };
+  ['dragenter','dragover'].forEach(ev => grid.addEventListener(ev, e => { stop(e); add.classList.add('drag-over'); }));
+  ['dragleave','drop'].forEach(ev => grid.addEventListener(ev, e => { stop(e); add.classList.remove('drag-over'); }));
+  grid.addEventListener('drop', async e => {
+    const files = Array.from(e.dataTransfer.files || []);
+    if(files.length) await _imgExameProcessarArquivos(files);
+  });
+}
+
+async function _carregarImgsExame(leito, data){
+  _imgExameBuffer = [];
+  const chave = _chaveImgs(leito, data);
+  try{
+    const dado = await dbGet(chave);
+    if(dado && Array.isArray(dado.imgs)) _imgExameBuffer = dado.imgs;
+  } catch(e){ console.warn('_carregarImgsExame:', e); }
+  _renderImgGrid();
+  _imgExameAtivarDragDrop();
+  const status = $('img-exame-status');
+  if(status){
+    if(_imgExameBuffer.length) { status.textContent = `${_imgExameBuffer.length} imagem(ns) salva(s)`; status.style.display=''; }
+    else { status.style.display='none'; }
+  }
+}
+
+async function _salvarImgsExame(leito, data){
+  if(!_imgExameBuffer.length) return;
+  const chave = _chaveImgs(leito, data);
+  await dbSet(chave, { imgs: _imgExameBuffer, leito, data, atualizadoEm: new Date().toISOString() });
+}
 
 function mostrarTela(id){
   document.querySelectorAll('.tela').forEach(t=>{ t.classList.remove('ativa'); t.style.display='none'; });
@@ -810,9 +1000,13 @@ async function abrirFormulario(leito){
     _ativarCaixaAlta();
     await _carregarPrescricao(leito);
     _atualizarPnavPac();
+    _aplicarModoDiarista();
+    await _carregarDiarista(leito, dataT);
+    await _carregarImgsExame(leito, dataT);
     mudarAba('evolucao'); // sempre abre na aba de evolução
     hideLoading();
     mostrarTela('t-form');
+    _resizeTodosTextareas();
   }catch(e){ hideLoading(); console.error('abrirFormulario:',e); toast('Erro ao abrir: '+(e.message||e),true); }
 }
 
@@ -902,6 +1096,7 @@ async function salvarEvolucao(){
     ld[leitoAtual]=L;
     await dbSet('uti_leitos',ld);
 
+    await _salvarImgsExame(leitoAtual, d.data);
     hideLoading();
     toast('✓ Evolução salva.');
     $('herd-tag').style.display='none';
@@ -1504,12 +1699,31 @@ function imprimirEvolucao(){
 }
 
 /* ── CAIXA ALTA AUTOMÁTICA (campos de texto, exceto data/número) ──────────── */
+function _autoResizeTA(el){
+  if(!el||el.tagName!=='TEXTAREA'||el.hasAttribute('readonly')) return;
+  el.style.height='auto';
+  el.style.height=el.scrollHeight+'px';
+}
+
 function _ativarCaixaAlta(){
   const sel='#t-form input[type=text], #t-form textarea, #modal-adm input[type=text], #modal-adm textarea';
   document.querySelectorAll(sel).forEach(el=>{
+    if(el.id==='f-evol-diarista') return;
     if(el.dataset.upperBound) return; el.dataset.upperBound='1';
-    el.addEventListener('input',function(){ const p=this.selectionStart; const up=this.value.toUpperCase();
-      if(this.value!==up){ this.value=up; try{this.setSelectionRange(p,p);}catch(_){} } });
+    el.addEventListener('input',function(){
+      const p=this.selectionStart; const up=this.value.toUpperCase();
+      if(this.value!==up){ this.value=up; try{this.setSelectionRange(p,p);}catch(_){} }
+      _autoResizeTA(this);
+    });
+  });
+}
+
+// Ajusta altura de TODOS os textareas visíveis do formulário após renderização
+function _resizeTodosTextareas(){
+  requestAnimationFrame(()=>{
+    document.querySelectorAll('#t-form textarea').forEach(el=>{
+      if(!el.hasAttribute('readonly')) _autoResizeTA(el);
+    });
   });
 }
 
@@ -3944,7 +4158,6 @@ function abrirFichaHemo(){
     sf('fhemo-plaqconv-qtd', ui+' UNIDADES');
   }
   $('modal-hemo-ficha').classList.add('show');
-  // Busca automática do Cartão SUS do paciente no Drive
   _buscarCartaoSUSAuto();
 }
 
@@ -3953,6 +4166,10 @@ function abrirFichaHemo(){
    dados (nome da mãe, endereço, CNS, DN, sexo, naturalidade) para a ficha
    de hemoterápicos. O PDF é guardado em base64 para mesclar na impressão.
    ──────────────────────────────────────────────────────────────────────── */
+function _normalizarNome(s){
+  return (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/\s+/g,' ').trim();
+}
+
 async function _buscarCartaoSUSAuto(){
   _cartaoSUSPDF = null;
   _cartaoSUSStatus = '';
@@ -3971,13 +4188,11 @@ async function _buscarCartaoSUSAuto(){
     });
     if(r.status === 'ok' && r.dados){
       const d = r.dados;
-      // Só preenche o que estiver vazio na ficha (preserva edições manuais)
       const fill = (id,val) => { const el=$(id); if(el && val && !el.value) el.value = String(val).toUpperCase(); };
       fill('fhemo-mae',  d.mae);
       fill('fhemo-end',  d.end);
       fill('fhemo-cns',  d.cns);
       fill('fhemo-natur',d.natur);
-      // DN e sexo: só preenche se a ficha estiver vazia
       const dnEl = $('fhemo-dn');     if(dnEl && d.dn && !dnEl.value) dnEl.value = d.dn;
       const sxEl = $('fhemo-sexo');
       if(sxEl && d.sexo && !sxEl.value){
@@ -4010,7 +4225,6 @@ function _atualizarStatusCartaoSUS(msg){
   el.style.color = msg.startsWith('✓') ? '#0a6b3a' : msg.startsWith('⏳') ? '#666' : '#a35200';
 }
 
-// Botão manual de re-busca (caso o usuário corrija o nome do paciente)
 async function rebuscarCartaoSUS(){ await _buscarCartaoSUSAuto(); }
 
 function fecharFichaHemo(){ $('modal-hemo-ficha').classList.remove('show'); }
@@ -4284,27 +4498,17 @@ function _imprimirFichaHemoObj(f){
     return;
   }
 
-  // Fluxo padrão (sem cartão SUS)
   const w=window.open('','_blank','width=850,height=950');
   if(w){ w.document.write(html); w.document.close(); }
   else toast('Popup bloqueado — permita popups para imprimir.',true);
 }
 
-/* ────────────────────────────────────────────────────────────────────────────
-   Mescla a ficha HEMONORTE (HTML) com o PDF do Cartão SUS em um único PDF.
-   - Renderiza a ficha em um container oculto
-   - html2canvas → imagem
-   - jsPDF cria PDF com a imagem (página 1)
-   - PDF-lib carrega o cartão SUS e concatena as páginas
-   - Abre o PDF mesclado em nova janela com diálogo de impressão automático
-   ──────────────────────────────────────────────────────────────────────── */
+/* Mescla a ficha HEMONORTE (HTML) com o PDF do Cartão SUS em um único PDF. */
 async function _gerarPDFMescladoHemo(htmlFicha, cartaoBase64){
   showLoading('Gerando PDF combinado...');
   const container = document.createElement('div');
-  // 794px ≈ 210mm a 96dpi (largura A4)
   container.style.cssText = 'position:fixed;left:-99999px;top:0;width:794px;background:#fff;color:#000;';
   try{
-    // Extrai conteúdo do <body> e do <style>
     const parser = new DOMParser();
     const docHtml = parser.parseFromString(htmlFicha, 'text/html');
     const styleEl = docHtml.querySelector('style');
@@ -4315,18 +4519,14 @@ async function _gerarPDFMescladoHemo(htmlFicha, cartaoBase64){
     }
     const inner = document.createElement('div');
     inner.innerHTML = docHtml.body.innerHTML;
-    // Aplica margem equivalente ao @page (1cm × 1.2cm)
     inner.style.cssText = 'padding:10mm 12mm;background:#fff;';
     container.appendChild(inner);
     document.body.appendChild(container);
 
-    // Espera fonts/renderização
     await new Promise(r => setTimeout(r, 300));
 
-    // Captura
     const canvas = await html2canvas(container, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
 
-    // Cria PDF da ficha
     const { jsPDF } = window.jspdf;
     const pdfFicha = new jsPDF('p', 'mm', 'a4');
     const pdfW = pdfFicha.internal.pageSize.getWidth();
@@ -4336,7 +4536,6 @@ async function _gerarPDFMescladoHemo(htmlFicha, cartaoBase64){
     if(imgH <= pdfH){
       pdfFicha.addImage(dataURL, 'JPEG', 0, 0, pdfW, imgH);
     } else {
-      // Se a ficha for maior que uma página, fatia
       let restante = imgH; let yOffset = 0;
       while(restante > 0){
         pdfFicha.addImage(dataURL, 'JPEG', 0, yOffset === 0 ? 0 : -yOffset, pdfW, imgH);
@@ -4345,14 +4544,11 @@ async function _gerarPDFMescladoHemo(htmlFicha, cartaoBase64){
       }
     }
 
-    // Bytes da ficha
     const fichaBytes = pdfFicha.output('arraybuffer');
 
-    // PDF-lib: carrega ficha + cartão e mescla
     const PDFDocument = window.PDFLib.PDFDocument;
     const fichaDoc = await PDFDocument.load(fichaBytes);
 
-    // base64 → Uint8Array
     const bin = atob(cartaoBase64);
     const cartaoBytes = new Uint8Array(bin.length);
     for(let i=0;i<bin.length;i++) cartaoBytes[i] = bin.charCodeAt(i);
@@ -4370,15 +4566,13 @@ async function _gerarPDFMescladoHemo(htmlFicha, cartaoBase64){
 
     hideLoading();
 
-    // Abre em nova janela e dispara impressão
     const w = window.open(url, '_blank');
     if(w){
-      // O onload do PDF embed nem sempre dispara — aguarda um pouco antes de printar
       setTimeout(()=>{ try{ w.focus(); w.print(); }catch(_){ } }, 1200);
     } else {
       toast('Popup bloqueado — permita popups para imprimir.', true);
     }
-    setTimeout(() => URL.revokeObjectURL(url), 180000); // libera após 3 min
+    setTimeout(() => URL.revokeObjectURL(url), 180000);
   } finally {
     if(container.parentNode) container.parentNode.removeChild(container);
   }
