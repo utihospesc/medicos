@@ -45,8 +45,9 @@
     messagingSenderId: "113839432711",
     appId: "1:113839432711:web:d439ffe7e89c4a3798f6a2"
   };
-  window.APPS_SCRIPT_URL = "";
-  window.CULTURAS_SHEET_ID = "";
+  window.APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyHhgR5tmL8nmvN2juaTOnUU1HWw1CCGM8jB1krDHAQf0cNwxIEk0JjxFpc-BMjAn-L/exec";
+  window.CULTURAS_SHEET_ID = "1yQHmd84BSlbAs7jb4ztN6fsy6eyZHY4wb6IcqOp0j7U";
+  window.CARTAO_SUS_FOLDER_ID = "1p2hR_MqQrgIT4m1HIkclr6a4IbHA2GsS";
 </script>
 
 <!-- ══════════════ TELA LOGIN ══════════════ -->
@@ -346,26 +347,22 @@
           <!-- VENTILAÇÃO / GASOMETRIA -->
           <div class="secao">
             <div class="secao-t">Ventilação & Gasometria</div>
-            <div class="secao-c">
-              <div class="dc">
-                <div class="fl"><label>Suporte ventilatório</label>
-                  <select id="f-vent" onchange="_recalcSAPS()">
-                    <option value="AA">Ar ambiente (AA)</option>
-                    <option value="CN">Cateter nasal O₂</option>
-                    <option value="CTNO2">Cateter de alto fluxo / CTNO2</option>
-                    <option value="VM">Máscara de O₂ / VM (venturi)</option>
-                    <option value="VNI">VNI (BiPAP/CPAP)</option>
-                    <option value="VMI">Ventilação mecânica invasiva (TOT/TQT)</option>
-                  </select>
-                </div>
-                <div class="fl"><label>Parâmetros ventilatórios</label><input type="text" id="f-vent-param" placeholder="modo, FiO2, PEEP..."></div>
+            <div class="secao-c grid2">
+              <div class="fl"><label>Suporte ventilatório</label>
+                <select id="f-vent" onchange="_recalcSAPS()">
+                  <option value="AA">Ar ambiente (AA)</option>
+                  <option value="CN">Cateter nasal O₂</option>
+                  <option value="CTNO2">Cateter de alto fluxo / CTNO2</option>
+                  <option value="VM">Máscara de O₂ / VM (venturi)</option>
+                  <option value="VNI">VNI (BiPAP/CPAP)</option>
+                  <option value="VMI">Ventilação mecânica invasiva (TOT/TQT)</option>
+                </select>
               </div>
-              <div class="dc">
-                <div class="fl"><label>PaO₂ (mmHg) <span class="saps-flag">SAPS3</span></label><input type="number" id="f-pao2" oninput="_recalcSAPS()"></div>
-                <div class="fl"><label>FiO₂ (fração, ex: 0.4) <span class="saps-flag">SAPS3</span></label><input type="number" step="0.01" id="f-fio2" oninput="_recalcSAPS()"></div>
-                <div class="fl"><label>pH arterial <span class="saps-flag">SAPS3</span></label><input type="number" step="0.01" id="f-ph" oninput="_recalcSAPS()"></div>
-              </div>
-              <div class="fl"><label>Gasometria — resumo</label><textarea id="f-gaso" rows="2" placeholder="resumo da gasometria"></textarea></div>
+              <div class="fl"><label>Parâmetros ventilatórios</label><input type="text" id="f-vent-param" placeholder="modo, FiO2, PEEP..."></div>
+              <div class="fl"><label>PaO₂ (mmHg) <span class="saps-flag">SAPS3</span></label><input type="number" id="f-pao2" oninput="_recalcSAPS()"></div>
+              <div class="fl"><label>FiO₂ (fração, ex: 0.4) <span class="saps-flag">SAPS3</span></label><input type="number" step="0.01" id="f-fio2" oninput="_recalcSAPS()"></div>
+              <div class="fl"><label>pH arterial <span class="saps-flag">SAPS3</span></label><input type="number" step="0.01" id="f-ph" oninput="_recalcSAPS()"></div>
+              <div class="fl"><label>Gasometria (texto livre)</label><input type="text" id="f-gaso" placeholder="resumo da gaso"></div>
             </div>
           </div>
 
@@ -399,17 +396,6 @@
             <div class="secao-t">Exames de Imagem</div>
             <div class="secao-c">
               <div class="fl"><label>Achados (ECO, RX, TC...)</label><textarea id="f-imagem" rows="3" placeholder="ECO (21/05): hipertrofia concêntrica do VE..."></textarea></div>
-              <div style="margin-top:6px;">
-                <label style="font-size:.75rem;color:var(--muted);font-weight:600;display:block;margin-bottom:4px;">Imagens anexadas</label>
-                <div class="img-exame-grid" id="img-exame-grid">
-                  <div class="img-exame-add" onclick="document.getElementById('img-exame-input').click()" title="Adicionar imagem">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-                    <span>Adicionar</span>
-                  </div>
-                </div>
-                <input type="file" id="img-exame-input" accept="image/*" multiple style="display:none" onchange="_imgExameAdicionar(this)">
-                <div id="img-exame-status" style="font-size:.7rem;color:var(--muted);margin-top:4px;display:none;"></div>
-              </div>
             </div>
           </div>
 
@@ -1009,10 +995,14 @@
         </div>
       </div>
 
+      <!-- Status do Cartão SUS encontrado no Drive -->
+      <div id="hemo-cartao-status" style="display:none;font-size:.78rem;padding:6px 10px;margin-top:8px;border-radius:6px;background:#f8f4f5;border:1px solid #d4b8be;"></div>
+
       <!-- Ações -->
       <div class="form-actions" style="margin-top:0;">
         <button class="btn btn-pri" onclick="salvarFichaHemo()">⌘ Salvar ficha</button>
         <button class="btn btn-sec" onclick="imprimirFichaHemo()">🖨 Imprimir</button>
+        <button class="btn btn-sec" onclick="rebuscarCartaoSUS()" title="Tentar buscar o Cartão SUS no Drive novamente">↻ Buscar Cartão SUS</button>
         <button class="btn" onclick="fecharFichaHemo()">Fechar</button>
       </div>
     </div>
@@ -1328,12 +1318,6 @@
       </div>
     </div>
   </div>
-</div>
-
-<!-- Lightbox para imagens de exame -->
-<div id="lightbox" onclick="this.classList.remove('show')">
-  <button id="lightbox-close" onclick="document.getElementById('lightbox').classList.remove('show')">×</button>
-  <img id="lightbox-img" src="" alt="Imagem de exame">
 </div>
 
 <!-- Autocomplete flutuante — deve ficar no body para não ser cortado por overflow -->
