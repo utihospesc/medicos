@@ -3675,6 +3675,128 @@ function _bicCalc(){
 }
 
 
+/* ════════════════════════════════════════════════════════════════════════════
+   HISTÓRICO COMPACTO DE PRESCRIÇÕES
+   Chave única por leito: uti_med_rxs_<leito>
+   Estrutura: { dias: [ {d, autor, i:[{f,ds,v,fr,cat,d0}]}, ... ] }
+   Máximo de 30 dias. Campos mínimos: f=farm ds=dose v=via fr=freq
+   ════════════════════════════════════════════════════════════════════════════ */
+const RX_HIST_MAX_DIAS = 30;
+const _rxHistKey = (leito) => `uti_med_rxs_${leito}`;
+
+function _rxCompactar(itens, data, autor){
+  const iMin = (itens||[]).map(it=>({
+    f: (it.farm||'').trim(), ds:(it.dose||'').trim(),
+    v: (it.via||'').trim(),  fr:(it.freq||'').trim(),
+    ...(it._cat ? {cat:it._cat} : {}),
+    ...(it.d0   ? {d0:it.d0}   : {}),
+  })).filter(it=>it.f);
+  return { d: data, autor: autor||'', i: iMin };
+}
+
+async function _rxGravarHistorico(itens, data, autor){
+  try{
+    const key = _rxHistKey(leitoAtual);
+    const atual = await dbGet(key) || {dias:[]};
+    let dias = Array.isArray(atual.dias) ? atual.dias : [];
+    dias = dias.filter(d => d.d !== data);
+    dias.unshift(_rxCompactar(itens, data, autor));
+    if(dias.length > RX_HIST_MAX_DIAS) dias = dias.slice(0, RX_HIST_MAX_DIAS);
+    await dbSet(key, {dias, atualizadoEm: new Date().toISOString()});
+  } catch(e){ console.warn('[rxHistórico]', e); }
+}
+
+async function _rxLerHistorico(){
+  const doc = await dbGet(_rxHistKey(leitoAtual));
+  return (doc && Array.isArray(doc.dias)) ? doc.dias : [];
+}
+
+let _rxHistAberto = false;
+
+async function _rxHistoricoToggle(){
+  const body = $('rx-hist-conteudo');
+  const chev = $('rx-hist-chevron');
+  if(!body||!chev) return;
+  _rxHistAberto = !_rxHistAberto;
+  chev.textContent = _rxHistAberto ? '▲' : '▼';
+  if(!_rxHistAberto){ body.style.display='none'; return; }
+  body.style.display='';
+  await _rxHistoricoRenderizar();
+}
+
+async function _rxHistoricoInit(){
+  const painel = $('rx-historico-painel');
+  if(!painel) return;
+  const dias = await _rxLerHistorico();
+  painel.style.display = dias.length ? '' : 'none';
+  if(_rxHistAberto) await _rxHistoricoRenderizar();
+}
+
+async function _rxHistoricoRenderizar(){
+  const body = $('rx-hist-conteudo');
+  if(!body) return;
+  body.innerHTML='<div class="rx-hist-empty" style="padding:8px;">Carregando...</div>';
+  const dias = await _rxLerHistorico();
+  const dataAtual = gf('f-data')||hoje();
+  if(!dias.length){ body.innerHTML='<div class="rx-hist-empty">Nenhum histórico salvo.</div>'; return; }
+  let h='';
+  dias.forEach((dia,idx)=>{
+    if(dia.d===dataAtual) return;
+    const dtFmt = dia.d ? _fmtDataCurta(dia.d) : '—';
+    const total = (dia.i||[]).length;
+    const idBody = `rxh-body-${idx}`;
+    h+=`<div class="rx-hist-dia">
+      <div class="rx-hist-dia-hdr" onclick="_rxHistToggleDia('${idBody}')">
+        <span>📋 ${dtFmt} <span style="font-weight:400;color:var(--muted);">(${total} item${total!==1?'s':''})</span></span>
+        <span style="display:flex;gap:6px;align-items:center;">
+          <button class="rx-hist-btn-usar" onclick="event.stopPropagation();_rxHistUsarDia('${dia.d}')">Usar esta</button>
+          <span style="font-size:.7rem;color:var(--muted);">▼</span>
+        </span>
+      </div>
+      <div class="rx-hist-dia-body" id="${idBody}" style="display:none;">`;
+    if(!dia.i||!dia.i.length){
+      h+='<div class="rx-hist-empty">Prescrição vazia.</div>';
+    } else {
+      dia.i.forEach((it,n)=>{
+        const catCls = it.cat==='ATB'?'rx-hist-cat-atb':it.cat==='DIETA'?'rx-hist-cat-dieta':'';
+        const det = [it.ds,it.v,it.fr].filter(Boolean).join(' · ');
+        const dDia = it.d0 ? ` <span style="font-size:.64rem;background:#fef3c7;color:#92400e;padding:0 4px;border-radius:3px;">D${_calcDDia(it.d0,dia.d)}</span>` : '';
+        h+=`<div class="rx-hist-item">
+          <span class="rx-hist-num">${n+1}.</span>
+          <span class="rx-hist-farm ${catCls}">${it.f}${dDia}</span>
+          <span class="rx-hist-det">${det}</span>
+        </div>`;
+      });
+    }
+    h+='</div></div>';
+  });
+  body.innerHTML = h||'<div class="rx-hist-empty">Sem histórico de dias anteriores.</div>';
+}
+
+function _rxHistToggleDia(id){
+  const el=$(id); if(!el) return;
+  el.style.display = el.style.display!=='none' ? 'none' : '';
+}
+
+function _calcDDia(d0, dPrescript){
+  try{ return Math.floor((new Date(dPrescript)-new Date(d0))/86400000)+1; }
+  catch(_){ return '?'; }
+}
+
+async function _rxHistUsarDia(data){
+  const dias = await _rxLerHistorico();
+  const dia = dias.find(d=>d.d===data);
+  if(!dia||!dia.i||!dia.i.length){ toast('Prescrição vazia.',true); return; }
+  if(_rxItens.length && !confirm(`Substituir a prescrição atual pelos ${dia.i.length} itens de ${_fmtDataCurta(data)}?`)) return;
+  _rxItens = dia.i.map(it=>({
+    id: Date.now()+Math.random(),
+    farm:it.f, dose:it.ds, via:it.v, freq:it.fr,
+    _cat:it.cat||'normal', obs:'', d0:it.d0||null, mpp:false
+  }));
+  _renderPrescricao();
+  toast(`✓ ${_rxItens.length} itens carregados de ${_fmtDataCurta(data)}`);
+}
+
 async function _salvarPrescricaoCore(){
   if(!leitoAtual){ toast('Abra o prontuário de um paciente.',true); return; }
   // Valida: nenhum medicamento pode ter dose vazia
@@ -4031,6 +4153,8 @@ function _fatbAutoDetectarMicro(){
   sf('fatb-micro-data', ult.data||'');
   sf('fatb-micro-mat',  ult.sitio||'');
   sf('fatb-micro-sens', ult.sens||ult.micro||'');
+  // Inicializa painel de histórico
+  _rxHistoricoInit();
 }
 
 // Salvar ficha no Firebase
