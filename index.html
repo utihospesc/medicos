@@ -45,8 +45,8 @@
     messagingSenderId: "113839432711",
     appId: "1:113839432711:web:d439ffe7e89c4a3798f6a2"
   };
-  window.APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyHhgR5tmL8nmvN2juaTOnUU1HWw1CCGM8jB1krDHAQf0cNwxIEk0JjxFpc-BMjAn-L/exec";
-  window.CULTURAS_SHEET_ID = "1yQHmd84BSlbAs7jb4ztN6fsy6eyZHY4wb6IcqOp0j7U";
+  window.APPS_SCRIPT_URL = "";
+  window.CULTURAS_SHEET_ID = "";
 </script>
 
 <!-- ══════════════ TELA LOGIN ══════════════ -->
@@ -329,17 +329,23 @@
           <!-- DISPOSITIVOS -->
           <div class="secao">
             <div class="secao-t">Dispositivos & Suporte</div>
-            <div class="secao-c grid2">
-              <div class="fl"><label>Acessos</label><input type="text" id="f-acessos"></div>
-              <div class="fl"><label>Dispositivos</label><input type="text" id="f-dispositivos"></div>
-              <div class="fl"><label>Dieta</label>
-                <select id="f-dieta"><option value="">—</option><option>ORAL</option><option>ENTERAL (SNE/SNG)</option><option>PARENTERAL</option><option>JEJUM</option><option>ZERO</option></select>
+            <div class="secao-c">
+              <div class="dc">
+                <div class="fl"><label>Acessos</label><textarea id="f-acessos" rows="2" placeholder="AVP, CVC, PAI..."></textarea></div>
+                <div class="fl"><label>Dispositivos</label><textarea id="f-dispositivos" rows="2" placeholder="SVD, SNE, TQT..."></textarea></div>
               </div>
-              <div class="fl"><label>Droga vasoativa (DVA) <span class="saps-flag">SAPS3</span></label>
-                <select id="f-dva" onchange="_recalcSAPS()"><option value="NAO">NÃO</option><option value="SIM">SIM</option></select>
+              <div class="dc">
+                <div class="fl"><label>Dieta</label>
+                  <select id="f-dieta"><option value="">—</option><option>ORAL</option><option>ENTERAL (SNE/SNG)</option><option>PARENTERAL</option><option>JEJUM</option><option>ZERO</option></select>
+                </div>
+                <div class="fl"><label>Droga vasoativa (DVA) <span class="saps-flag">SAPS3</span></label>
+                  <select id="f-dva" onchange="_recalcSAPS()"><option value="NAO">NÃO</option><option value="SIM">SIM</option></select>
+                </div>
               </div>
-              <div class="fl"><label>Sedação</label><input type="text" id="f-sedacao" placeholder="sem / esquema"></div>
-              <div class="fl"><label>Transfusão sanguínea</label><input type="text" id="f-transfusao" placeholder="não / hemocomp."></div>
+              <div class="dc">
+                <div class="fl"><label>Sedação</label><textarea id="f-sedacao" rows="2" placeholder="sem / esquema"></textarea></div>
+                <div class="fl"><label>Transfusão sanguínea</label><textarea id="f-transfusao" rows="2" placeholder="não / hemocomp."></textarea></div>
+              </div>
             </div>
           </div>
 
