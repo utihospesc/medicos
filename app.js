@@ -807,10 +807,10 @@ async function abrirFormulario(leito){
     _ativarCaixaAlta();
     await _carregarPrescricao(leito);
     _atualizarPnavPac();
-    await _carregarImgsExame(leito, dataT);
     mudarAba('evolucao'); // sempre abre na aba de evolução
     hideLoading();
     mostrarTela('t-form');
+    _resizeTodosTextareas();
   }catch(e){ hideLoading(); console.error('abrirFormulario:',e); toast('Erro ao abrir: '+(e.message||e),true); }
 }
 
@@ -900,7 +900,6 @@ async function salvarEvolucao(){
     ld[leitoAtual]=L;
     await dbSet('uti_leitos',ld);
 
-    await _salvarImgsExame(leitoAtual, d.data);
     hideLoading();
     toast('✓ Evolução salva.');
     $('herd-tag').style.display='none';
@@ -922,117 +921,6 @@ function _calcIdadeDisplay(idDN,idOut){
   if(o) o.textContent = a!=null ? a+' anos' : '';
 }
 
-
-/* ════════════════════════════════════════════════════════════════════════════
-   IMAGENS DE EXAME — galeria por leito/data, armazenada no Firestore
-   Cada imagem é redimensionada (max 1200px) e salva como base64 JPEG (q=0.75).
-   Chave: uti_med_imgs_<leito>_<data>  →  { imgs: [{b64, legenda, ts}] }
-   ════════════════════════════════════════════════════════════════════════════ */
-
-let _imgExameBuffer = []; // array de {b64, legenda, ts} para o leito/data atual
-
-function _chaveImgs(leito, data){ return `uti_med_imgs_${leito}_${data}`; }
-
-// Redimensiona um File de imagem para max maxPx e retorna base64 JPEG
-function _imgParaBase64(file, maxPx=1200, qualidade=0.75){
-  return new Promise((res, rej) => {
-    const reader = new FileReader();
-    reader.onerror = rej;
-    reader.onload = ev => {
-      const img = new Image();
-      img.onerror = rej;
-      img.onload = () => {
-        let w = img.width, h = img.height;
-        if(w > maxPx || h > maxPx){
-          if(w >= h){ h = Math.round(h * maxPx / w); w = maxPx; }
-          else      { w = Math.round(w * maxPx / h); h = maxPx; }
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = w; canvas.height = h;
-        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        res(canvas.toDataURL('image/jpeg', qualidade));
-      };
-      img.src = ev.target.result;
-    };
-    reader.readAsDataURL(file);
-  });
-}
-
-// Renderiza a grade de miniaturas
-function _renderImgGrid(){
-  const grid = $('img-exame-grid');
-  if(!grid) return;
-  // Mantém o botão "Adicionar" e reconstrói os itens
-  const addBtn = grid.querySelector('.img-exame-add');
-  grid.innerHTML = '';
-  _imgExameBuffer.forEach((item, idx) => {
-    const div = document.createElement('div');
-    div.className = 'img-exame-item';
-    div.title = item.legenda || '';
-    div.innerHTML = `<img src="${item.b64}" alt="exame">
-      <button class="img-exame-del" onclick="_imgExameRemover(${idx})" title="Remover">×</button>`;
-    div.querySelector('img').addEventListener('click', () => _abrirLightbox(item.b64));
-    grid.appendChild(div);
-  });
-  if(addBtn) grid.appendChild(addBtn);
-}
-
-// Abre lightbox
-function _abrirLightbox(src){
-  const lb = $('lightbox');
-  if(!lb) return;
-  $('lightbox-img').src = src;
-  lb.classList.add('show');
-}
-
-// Handler do input file
-async function _imgExameAdicionar(input){
-  if(!input.files||!input.files.length) return;
-  const status = $('img-exame-status');
-  if(status){ status.textContent = 'Processando imagens...'; status.style.display=''; }
-  const files = Array.from(input.files);
-  for(const file of files){
-    try{
-      const b64 = await _imgParaBase64(file);
-      _imgExameBuffer.push({ b64, legenda: file.name, ts: new Date().toISOString() });
-    } catch(e){ toast('Erro ao processar ' + file.name, true); }
-  }
-  input.value = ''; // reseta para permitir re-selecionar o mesmo arquivo
-  _renderImgGrid();
-  if(status){ status.textContent = `${_imgExameBuffer.length} imagem(ns) anexada(s) — serão salvas com a evolução`; }
-}
-
-// Remove imagem do buffer
-function _imgExameRemover(idx){
-  _imgExameBuffer.splice(idx, 1);
-  _renderImgGrid();
-  const status = $('img-exame-status');
-  if(status && _imgExameBuffer.length === 0){ status.style.display='none'; }
-  else if(status){ status.textContent = `${_imgExameBuffer.length} imagem(ns) anexada(s)`; }
-}
-
-// Carrega imagens do Firestore para o leito/data
-async function _carregarImgsExame(leito, data){
-  _imgExameBuffer = [];
-  const chave = _chaveImgs(leito, data);
-  try{
-    const dado = await dbGet(chave);
-    if(dado && Array.isArray(dado.imgs)) _imgExameBuffer = dado.imgs;
-  } catch(e){ console.warn('_carregarImgsExame:', e); }
-  _renderImgGrid();
-  const status = $('img-exame-status');
-  if(status){
-    if(_imgExameBuffer.length) { status.textContent = `${_imgExameBuffer.length} imagem(ns) salva(s)`; status.style.display=''; }
-    else { status.style.display='none'; }
-  }
-}
-
-// Salva imagens — chamada dentro de salvarEvolucao
-async function _salvarImgsExame(leito, data){
-  if(!_imgExameBuffer.length) return; // nada a salvar
-  const chave = _chaveImgs(leito, data);
-  await dbSet(chave, { imgs: _imgExameBuffer, leito, data, atualizadoEm: new Date().toISOString() });
-}
 
 /* ════════════════════════════════════════════════════════════════════════════
    EXAMES LABORATORIAIS  (registro por data + gráfico de tendência)
@@ -1630,7 +1518,15 @@ function _ativarCaixaAlta(){
       if(this.value!==up){ this.value=up; try{this.setSelectionRange(p,p);}catch(_){} }
       _autoResizeTA(this);
     });
-    _autoResizeTA(el); // ajuste inicial
+  });
+}
+
+// Ajusta altura de TODOS os textareas visíveis do formulário após renderização
+function _resizeTodosTextareas(){
+  requestAnimationFrame(()=>{
+    document.querySelectorAll('#t-form textarea').forEach(el=>{
+      if(!el.hasAttribute('readonly')) _autoResizeTA(el);
+    });
   });
 }
 
