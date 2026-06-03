@@ -494,17 +494,18 @@ a:hover{text-decoration:underline}
 /* inputs dentro da tabela */
 .presc-table input[type=text],
 .presc-table select{
-  width:100%; padding:4px 7px; border:1.5px solid transparent;
-  border-radius:6px; font-size:.82rem; font-family:inherit;
-  background:transparent; transition:.15s;
+  width:100%; padding:5px 8px; border:1.5px solid #d1d5db;
+  border-radius:6px; font-size:.84rem; font-family:inherit;
+  background:#fff; color:var(--tinta); transition:.15s;
 }
 .presc-table input[type=text]:focus,
 .presc-table select:focus{
   outline:none; border-color:var(--vinho);
-  background:white; box-shadow:0 0 0 2px var(--vinho-claro);
+  background:#fff; box-shadow:0 0 0 2px var(--vinho-claro);
 }
-.presc-table input.rx-farm{ font-weight:700; color:var(--tinta); }
-.presc-table input.rx-farm::placeholder{ font-weight:400; }
+.presc-table input[type=text]::placeholder{ color:#aab; }
+.presc-table input.rx-farm{ font-weight:700; font-size:.88rem; color:var(--tinta); }
+.presc-table input.rx-farm::placeholder{ font-weight:400; color:#aab; }
 
 /* horários checkboxes */
 .rx-horarios{ display:flex; flex-wrap:wrap; gap:3px; }
@@ -745,24 +746,26 @@ a:hover{text-decoration:underline}
   display:flex; gap:4px; align-items:center; margin-top:4px;
 }
 .rx-qtd-inline{
-  width:38px !important; text-align:center; flex-shrink:0;
-  padding:3px 4px !important; font-size:.78rem !important;
-  border:1px solid var(--borda); border-radius:5px; background:var(--bg2);
+  width:42px !important; text-align:center; flex-shrink:0;
+  padding:4px 5px !important; font-size:.8rem !important;
+  border:1.5px solid #d1d5db; border-radius:5px; background:#fff;
+  font-weight:600; color:var(--tinta);
 }
+.rx-qtd-inline:focus{ border-color:var(--vinho); outline:none; }
 .rx-apres-sel{
-  flex:1; min-width:58px; font-size:.78rem !important;
-  padding:3px 4px !important; border:1px solid var(--borda);
-  border-radius:5px; background:var(--bg2); color:var(--muted);
+  flex:1; min-width:62px; font-size:.8rem !important;
+  padding:4px 5px !important; border:1.5px solid #d1d5db;
+  border-radius:5px; background:#fff; color:var(--tinta);
 }
 /* Obs como textarea que cresce */
 .td-obs{ vertical-align:top !important; min-width:160px; }
 .rx-obs-area{
   width:100%; min-width:150px; resize:vertical;
   min-height:38px; padding:5px 8px;
-  border:1.5px solid var(--borda); border-radius:7px;
-  font-size:.86rem; font-family:inherit;
+  border:1.5px solid #d1d5db; border-radius:7px;
+  font-size:.84rem; font-family:inherit;
   text-transform:uppercase; line-height:1.4;
-  background:white; color:var(--tinta);
+  background:#fff; color:var(--tinta);
   transition:border-color .15s;
 }
 .rx-obs-area:focus{ border-color:var(--vinho); outline:none; }
@@ -1049,16 +1052,22 @@ details[open] .sol-hist-rotina-sum::before{ content:'▼'; }
    DILUIÇÃO INLINE — abaixo do nome do medicamento EV
    ════════════════════════════════════════════════════════════════════════════ */
 .rx-dil-inline{
-  display:flex; align-items:center; gap:4px; margin-top:4px;
+  display:flex; align-items:center; gap:5px; margin-top:5px;
+  background:#eff6ff; border:1.5px solid #bfdbfe;
+  border-radius:6px; padding:3px 6px;
 }
-.rx-dil-icon{ font-size:.75rem; flex-shrink:0; opacity:.7; }
+.rx-dil-label{
+  font-size:.68rem; font-weight:700; color:#1d4ed8;
+  white-space:nowrap; flex-shrink:0; letter-spacing:.02em;
+}
 .rx-dil-input{
-  flex:1; padding:2px 6px !important; font-size:.76rem !important;
-  border:1px dashed var(--borda) !important; border-radius:5px;
-  background:var(--bg2) !important; color:var(--muted);
-  font-style:italic;
+  flex:1; padding:2px 5px !important; font-size:.8rem !important;
+  border:none !important; border-radius:4px;
+  background:transparent !important; color:#1e3a5f !important;
+  font-style:normal; font-weight:500;
 }
-.rx-dil-input:focus{ border-color:var(--vinho) !important; color:var(--tinta); font-style:normal; }
+.rx-dil-input:focus{ outline:none !important; }
+.rx-dil-input::placeholder{ color:#93c5fd !important; font-style:italic; font-weight:400; }
 
 
 /* ── EVOLUÇÃO DIARISTA ─────────────────────────────────────────── */
