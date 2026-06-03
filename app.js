@@ -130,6 +130,252 @@ async function salvarEvolucaoDiarista(){
   }
 }
 
+// ── GESTÃO DO LEITO: ALTA / ÓBITO / TRANSFERÊNCIA ─────────────────────────
+// Prefixos de chaves vinculadas a um leito (para mover na transferência interna)
+const _PREFIXOS_LEITO = [
+  'uti_med_ev_',           // evoluções
+  'uti_med_rx_',           // prescrição
+  'uti_med_imgs_',         // imagens de exame
+  'uti_med_atb_ficha_',    // fichas ATB
+  'uti_med_hemo_ficha_',   // fichas hemoterapia
+  'uti_med_sol_exam_',     // solicitações de exame
+  'uti_med_sol_cult_',     // solicitações de cultura
+  'uti_med_diarista_',     // evoluções diarista
+  'uti_med_termo_',        // termos/consentimentos
+  'uti_med_adm_log_',      // log de admissão
+];
+
+let _gestaoLeito = null;       // leito sendo gerenciado
+let _gestaoTipo  = null;       // 'alta_hosp' | 'alta_uti' | 'obito' | 'transf_ext' | 'transf_int'
+
+async function abrirGestaoLeito(leito){
+  _gestaoLeito = leito;
+  _gestaoTipo = null;
+  const ld = await _getLeitos();
+  const L = ld[leito];
+  if(!L || !L.ocupado){
+    toast('Este leito está vazio.', true);
+    return;
+  }
+  const info = $('gestao-info');
+  if(info){
+    info.innerHTML = `<strong>Leito ${pad(leito)}</strong> — ${L.pac||'(sem nome)'} ` +
+      (L.adm ? ` · Admitido em ${_fmtDataCurta(L.adm)}` : '') +
+      (L.diag ? `<br><span style="color:var(--muted);font-size:.78rem;">${L.diag}</span>` : '');
+  }
+  $('gestao-menu').style.display = '';
+  $('gestao-form-saida').style.display = 'none';
+  $('gestao-form-transf').style.display = 'none';
+  $('gestao-titulo').textContent = 'Gerenciar leito ' + pad(leito);
+  $('modal-gestao-leito').classList.add('show');
+}
+
+function fecharGestaoLeito(){
+  $('modal-gestao-leito').classList.remove('show');
+  _gestaoLeito = null; _gestaoTipo = null;
+}
+
+function _gestaoVoltar(){
+  $('gestao-menu').style.display = '';
+  $('gestao-form-saida').style.display = 'none';
+  $('gestao-form-transf').style.display = 'none';
+  _gestaoTipo = null;
+}
+
+async function _gestaoEscolher(tipo){
+  _gestaoTipo = tipo;
+  $('gestao-menu').style.display = 'none';
+
+  if(tipo === 'transf_int'){
+    await _gestaoMontarTransfInterna();
+    $('gestao-form-transf').style.display = '';
+    return;
+  }
+
+  // Formulário de saída (alta/óbito/transf. externa)
+  $('gestao-form-saida').style.display = '';
+  const agora = new Date();
+  sf('g-saida-data', hoje());
+  sf('g-saida-hora', agora.getHours().toString().padStart(2,'0')+':'+agora.getMinutes().toString().padStart(2,'0'));
+  sf('g-saida-obs','');
+  sf('g-saida-destino','');
+  sf('g-obito-causa','');
+
+  const destWrap = $('g-saida-destino-wrap');
+  const destLbl  = $('g-saida-destino-lbl');
+  const obitoW   = $('g-obito-causa-wrap');
+  const btn      = $('g-btn-confirmar');
+
+  if(tipo === 'alta_hosp'){
+    destWrap.style.display = 'none';
+    obitoW.style.display = 'none';
+    btn.textContent = '✓ Confirmar alta hospitalar';
+    btn.style.background = '#0a6b3a';
+  } else if(tipo === 'alta_uti'){
+    destWrap.style.display = '';
+    destLbl.textContent = 'Unidade/setor de destino';
+    sf('g-saida-destino','ENFERMARIA');
+    obitoW.style.display = 'none';
+    btn.textContent = '✓ Confirmar alta da UTI';
+    btn.style.background = '';
+  } else if(tipo === 'obito'){
+    destWrap.style.display = 'none';
+    obitoW.style.display = '';
+    btn.textContent = '✓ Registrar óbito';
+    btn.style.background = '#7a1020';
+  } else if(tipo === 'transf_ext'){
+    destWrap.style.display = '';
+    destLbl.textContent = 'Hospital de destino';
+    obitoW.style.display = 'none';
+    btn.textContent = '✓ Confirmar transferência';
+    btn.style.background = '';
+  }
+}
+
+async function _gestaoMontarTransfInterna(){
+  const ld = await _getLeitos();
+  const sel = $('g-transf-destino');
+  sel.innerHTML = '<option value="">— Selecione —</option>';
+  for(let i=1;i<=TOTAL_LEITOS;i++){
+    if(i === _gestaoLeito) continue;
+    const ocupado = ld[i] && ld[i].ocupado;
+    const o = document.createElement('option');
+    o.value = i;
+    o.disabled = !!ocupado;
+    o.textContent = `Leito ${pad(i)}` + (ocupado ? ` — OCUPADO (${(ld[i].pac||'').slice(0,30)})` : ' — Vazio');
+    sel.appendChild(o);
+  }
+  sf('g-transf-motivo','');
+}
+
+async function confirmarSaidaLeito(){
+  if(!_gestaoLeito || !_gestaoTipo) return;
+  const tipo = _gestaoTipo;
+  const leito = _gestaoLeito;
+  const data = gf('g-saida-data') || hoje();
+  const hora = gf('g-saida-hora') || '';
+  const obs  = gf('g-saida-obs');
+  const dest = gf('g-saida-destino');
+  const causa= gf('g-obito-causa');
+
+  if(tipo === 'obito' && !causa.trim()){
+    toast('Informe a causa do óbito.', true); return;
+  }
+  if((tipo === 'alta_uti' || tipo === 'transf_ext') && !dest.trim()){
+    toast('Informe o destino.', true); return;
+  }
+
+  const tipoLabel = {
+    alta_hosp:'Alta hospitalar',
+    alta_uti :'Alta da UTI para enfermaria/setor',
+    obito    :'Óbito',
+    transf_ext:'Transferência para outro hospital'
+  }[tipo];
+
+  if(!confirm(`Confirma ${tipoLabel} do paciente no Leito ${pad(leito)}?\n\nO leito ficará vazio e o histórico ficará disponível nos indicadores.`)) return;
+
+  showLoading('Registrando saída...');
+  try{
+    const ld = await _getLeitos();
+    const L = ld[leito] || {};
+    const dataHora = data + (hora ? ('T'+hora) : '');
+
+    // Log de saída — usado pelos indicadores
+    const logKey = `uti_med_alta_log_${leito}_${data}`;
+    await dbSet(logKey, {
+      leito, tipo, tipoLabel,
+      paciente: L.pac||'', dn: L.dn||'', sexo: L.sexo||'', cns: L.cns||'',
+      diagnostico: L.diag||'', cid: L.cid||'',
+      admUTI: L.adm||'', admHosp: L.admHosp||'',
+      saida: data, saidaHora: hora, saidaDataHora: dataHora,
+      destino: dest||'', observacoes: obs||'',
+      causaObito: tipo === 'obito' ? causa : '',
+      saps3: L.saps3||null,
+      autor: usuarioEmail||'', autorNome: (perfilUsuario && perfilUsuario.nome) || usuarioEmail || '',
+      registradoEm: new Date().toISOString()
+    });
+
+    // Libera o leito (mantém todas as chaves históricas preservadas)
+    ld[leito] = { ocupado:false };
+    await dbSet('uti_leitos', ld);
+
+    hideLoading();
+    fecharGestaoLeito();
+    await renderLeitos();
+    toast('✓ '+tipoLabel+' registrada para o Leito '+pad(leito));
+  } catch(e){
+    hideLoading();
+    console.error('confirmarSaidaLeito:', e);
+    toast('Erro ao registrar: '+(e.message||e), true);
+  }
+}
+
+async function confirmarTransferenciaInterna(){
+  if(!_gestaoLeito) return;
+  const origem = _gestaoLeito;
+  const destino = parseInt(gf('g-transf-destino')||'0');
+  const motivo = gf('g-transf-motivo');
+
+  if(!destino){ toast('Selecione o leito de destino.', true); return; }
+  if(destino === origem){ toast('Destino igual à origem.', true); return; }
+
+  const ld = await _getLeitos();
+  if(ld[destino] && ld[destino].ocupado){
+    toast('Leito de destino já está ocupado.', true); return;
+  }
+
+  if(!confirm(`Transferir paciente do Leito ${pad(origem)} → Leito ${pad(destino)}?\n\nTodas as evoluções, prescrições, exames e imagens serão movidos.`)) return;
+
+  showLoading('Transferindo paciente...');
+  try{
+    // 1. Move o registro do leito
+    ld[destino] = Object.assign({}, ld[origem]);
+    ld[origem] = { ocupado:false };
+    await dbSet('uti_leitos', ld);
+
+    // 2. Move todas as chaves prefixadas: substitui _<origem>_ por _<destino>_
+    let movidas = 0;
+    for(const prefixo of _PREFIXOS_LEITO){
+      const chavePrefOrigem = `${prefixo}${origem}_`;
+      const registros = await dbListByPrefix(chavePrefOrigem);
+      for(const chaveOrig of Object.keys(registros)){
+        const sufixo = chaveOrig.substring(chavePrefOrigem.length);
+        const chaveDest = `${prefixo}${destino}_${sufixo}`;
+        const valor = registros[chaveOrig];
+        // Atualiza referência interna ao leito, se presente
+        if(valor && typeof valor === 'object'){
+          if('leito' in valor) valor.leito = destino;
+        }
+        await dbSet(chaveDest, valor);
+        await dbDelete(chaveOrig);
+        movidas++;
+      }
+    }
+
+    // 3. Registra a transferência em log próprio
+    const logKey = `uti_med_transf_log_${destino}_${hoje()}_${Date.now()}`;
+    await dbSet(logKey, {
+      origem, destino,
+      paciente: (ld[destino] && ld[destino].pac) || '',
+      motivo: motivo||'',
+      chavesMovidas: movidas,
+      data: hoje(),
+      autor: usuarioEmail||'',
+      autorNome: (perfilUsuario && perfilUsuario.nome) || usuarioEmail || '',
+      registradoEm: new Date().toISOString()
+    });
+
+    hideLoading();
+    fecharGestaoLeito();
+    await renderLeitos();
+    toast(`✓ Paciente transferido: Leito ${pad(origem)} → Leito ${pad(destino)} (${movidas} registros movidos)`);
+  } catch(e){
+    hideLoading();
+    console.error('confirmarTransferenciaInterna:', e);
+    toast('Erro na transferência: '+(e.message||e), true);
+  }
+}
+
 // ── IMAGENS DE EXAME ─────────────────────────────────────────────────────────
 // Chave: uti_med_imgs_<leito>_<data>  →  { imgs: [{b64, legenda, ts}] }
 let _imgExameBuffer = [];
@@ -679,6 +925,7 @@ async function renderLeitos(){
           <button class="btn btn-sm" style="flex:1;font-size:0.62rem;padding:2px 4px;border-radius:4px;background:rgba(122,16,32,0.1);border:1px solid var(--vinho);color:var(--vinho);" onclick="abrirFormularioDirect(${i},'evolucao')">📋 Evolução</button>
           <button class="btn btn-sm" style="flex:1;font-size:0.62rem;padding:2px 4px;border-radius:4px;background:rgba(122,16,32,0.1);border:1px solid var(--vinho);color:var(--vinho);" onclick="abrirFormularioDirect(${i},'prescricao')">💊 Presc.</button>
           <button class="btn btn-sm" style="flex:1;font-size:0.62rem;padding:2px 4px;border-radius:4px;background:rgba(122,16,32,0.1);border:1px solid var(--vinho);color:var(--vinho);" onclick="abrirFormularioDirect(${i},'guias')">📄 Guias</button>
+          <button class="btn btn-sm" style="flex:0 0 auto;font-size:0.65rem;padding:2px 7px;border-radius:4px;background:#f3f4f6;border:1px solid #9ca3af;color:#374151;" onclick="abrirGestaoLeito(${i})" title="Alta, óbito ou transferência">⚙</button>
         </div>
       </div>`;
     } else {
