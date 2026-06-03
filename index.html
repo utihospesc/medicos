@@ -544,6 +544,14 @@
             <button class="btn btn-sec btn-sm" onclick="imprimirPrescricao()">🖨 Imprimir</button>
           </div>
 
+          <!-- HISTÓRICO DE PRESCRIÇÕES -->
+          <div id="rx-historico-painel" style="margin-top:14px;border-top:1px solid var(--borda);padding-top:10px;display:none;">
+            <button class="rx-hist-toggle" onclick="_rxHistoricoToggle()" id="rx-hist-toggle-btn">
+              📋 Histórico de prescrições <span id="rx-hist-chevron">▼</span>
+            </button>
+            <div id="rx-hist-conteudo" style="display:none;margin-top:8px;"></div>
+          </div>
+
           <!-- AUTOCOMPLETE movido para o body via JS -->
         </div>
       </div><!-- /aba-prescricao -->
