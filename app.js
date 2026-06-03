@@ -36,7 +36,7 @@ let _modoOffline = false;
 /* ── HELPERS BÁSICOS ──────────────────────────────────────────────────────── */
 const $  = id => document.getElementById(id);
 const gf = id => { const e = $(id); return e ? (e.value||'') : ''; };
-const sf = (id,v) => { const e = $(id); if(e) e.value = (v==null?'':v); };
+const sf = (id,v) => { const e = $(id); if(e){ e.value = (v==null?'':v); if(e.tagName==='TEXTAREA'){ e.style.height='auto'; e.style.height=e.scrollHeight+'px'; } } };
 const pad = n => String(n).padStart(2,'0');
 function hoje(){ const d=new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
 function ontem(){ const d=new Date(); d.setDate(d.getDate()-1); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
@@ -1501,12 +1501,22 @@ function imprimirEvolucao(){
 }
 
 /* ── CAIXA ALTA AUTOMÁTICA (campos de texto, exceto data/número) ──────────── */
+function _autoResizeTextarea(el){
+  if(!el||el.tagName!=='TEXTAREA') return;
+  el.style.height='auto';
+  el.style.height=el.scrollHeight+'px';
+}
+
 function _ativarCaixaAlta(){
   const sel='#t-form input[type=text], #t-form textarea, #modal-adm input[type=text], #modal-adm textarea';
   document.querySelectorAll(sel).forEach(el=>{
     if(el.dataset.upperBound) return; el.dataset.upperBound='1';
-    el.addEventListener('input',function(){ const p=this.selectionStart; const up=this.value.toUpperCase();
-      if(this.value!==up){ this.value=up; try{this.setSelectionRange(p,p);}catch(_){} } });
+    el.addEventListener('input',function(){
+      const p=this.selectionStart; const up=this.value.toUpperCase();
+      if(this.value!==up){ this.value=up; try{this.setSelectionRange(p,p);}catch(_){} }
+      _autoResizeTextarea(this);
+    });
+    _autoResizeTextarea(el);
   });
 }
 
