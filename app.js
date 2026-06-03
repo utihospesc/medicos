@@ -3230,6 +3230,8 @@ function _rxSetField(id, campo, val) {
   const it = _rxItens.find(i => i.id === id);
   if (it) {
     it[campo] = val;
+    // Re-renderiza ao mudar via (para mostrar/ocultar campo de diluente)
+    if(campo === 'via'){ _renderPrescricao(); return; }
     if (campo === 'farm') {
       it._cat = _rxDetectarCategoria(val);
       it.tipo = _rxDetectarTipo(it._cat);
@@ -3261,6 +3263,14 @@ function _rxHorariosHtml(it){
   const horChips=RX_HORAS.map(h=>`<span class="rx-hor-chip ${ativos.includes(h)?'on':''}" onclick="_rxToggleHor(${it.id},'${h}')">${h}</span>`).join('');
   const espChips=especiais.map(e=>`<span class="rx-hor-chip rx-hor-chip-sn ${ativos.includes(e)?'on':''}" onclick="_rxToggleHor(${it.id},'${e}')">${e}</span>`).join('');
   return `<div class="rx-horarios">${horChips}${espChips}</div>`;
+}
+
+// Vias que exigem/mostram campo de diluente
+const RX_VIAS_DILUICAO = new Set(['EV','EV (BIC)','EV (BIC ACM)','EV BIC','IM']);
+
+function _rxMostrarDiluicao(it){
+  // mostra se a via exige ou se já tem valor preenchido
+  return RX_VIAS_DILUICAO.has((it.via||'').trim().toUpperCase()) || !!(it.diluicao && it.diluicao.trim());
 }
 
 function _renderPrescricao(){
@@ -3308,7 +3318,7 @@ function _renderPrescricao(){
             oninput="_rxSetField(${it.id},'qtd',this.value)">
           <select class="rx-apres-sel" onchange="_rxSetField(${it.id},'apres',this.value)">${apresOpts}</select>
         </div>
-        ${it.diluicao?`<div class="rx-dil-inline"><span class="rx-dil-icon">💧</span><input type="text" class="rx-dil-input" value="${it.diluicao}" placeholder="diluição EV" oninput="_rxSetField(${it.id},'diluicao',this.value.toUpperCase())" style="text-transform:uppercase;"></div>`:''}
+        ${_rxMostrarDiluicao(it)?`<div class="rx-dil-inline"><span class="rx-dil-label">DILUENTE:</span><input type="text" class="rx-dil-input" value="${it.diluicao||''}" placeholder="ex: + 100ML SF 0,9%" oninput="_rxSetField(${it.id},'diluicao',this.value.toUpperCase())" style="text-transform:uppercase;"></div>`:''}
       </td>
       <td>
         <input type="text" value="${it.dose||''}" placeholder="DOSE *"
@@ -4013,7 +4023,7 @@ function imprimirPrescricao(){
           : '';
         // Diluição abaixo do nome (apenas EV com diluição)
         const dilHtml=it.diluicao
-          ? `<div style="font-size:7pt;color:#555;margin-top:1px;font-style:italic;">💧 ${it.diluicao.toUpperCase()}</div>`
+          ? `<div style="font-size:7pt;color:#1d4ed8;margin-top:1px;font-weight:600;">Diluente: ${it.diluicao.toUpperCase()}</div>`
           : '';
         return `<tr class="${rowCls}">
           <td class="n">${i+1}</td>
@@ -5420,7 +5430,7 @@ function _gerarHtmlPrescricao(){
       ? `<span style="background:${it._ddia>=10?'#b71c1c':it._ddia>=7?'#e65100':'#1565c0'};color:white;font-size:6pt;font-weight:800;padding:1px 5px;border-radius:4px;margin-left:5px;vertical-align:middle;">D${it._ddia}</span>`
       : '';
     const dilHtml=it.diluicao
-      ? `<div style="font-size:7pt;color:#555;margin-top:1px;font-style:italic;">💧 ${it.diluicao.toUpperCase()}</div>`
+      ? `<div style="font-size:7pt;color:#1d4ed8;margin-top:1px;font-weight:600;">Diluente: ${it.diluicao.toUpperCase()}</div>`
       : '';
     return `<tr style="background:${bg};">
       <td style="padding:4px 6px;border:1px solid #ccc;width:24px;color:#888;font-size:8pt;">${i+1}</td>
