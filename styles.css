@@ -1361,3 +1361,139 @@ tr.rx-drag-over td{ border-top:2px solid var(--vinho) !important; }
   .mrx-divider{ height:1px; width:auto; }
   .mrx-col-hor{ border-top:1px solid var(--borda); }
 }
+
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   EVOLUÇÃO DIARISTA — modal estruturado + dropdown readonly
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Dropdown na evolução médica */
+.diarista-dropdown-btn{
+  width:100%; display:flex; align-items:center; gap:8px;
+  background:linear-gradient(90deg,#f0fdf4,#dcfce7); border:1.5px solid #86efac;
+  border-radius:8px; padding:8px 12px; cursor:pointer; font-family:inherit;
+  font-size:.83rem; font-weight:600; color:#166534; transition:.15s;
+  text-align:left;
+}
+.diarista-dropdown-btn:hover{ background:linear-gradient(90deg,#dcfce7,#bbf7d0); border-color:#4ade80; }
+.diarista-dropdown-ico{ font-size:1rem; flex-shrink:0; }
+.diarista-dropdown-meta{ font-size:.72rem; font-weight:400; color:#15803d; flex:1; }
+.diarista-dropdown-chev{ font-size:.72rem; flex-shrink:0; transition:transform .2s; }
+.diarista-dropdown-chev.open{ transform:rotate(180deg); }
+
+/* Corpo do dropdown (read-only) */
+#diarista-dropdown-body{
+  border:1.5px solid #86efac; border-top:none; border-radius:0 0 8px 8px;
+  padding:14px 16px; background:#f0fdf4;
+  animation:devFadeIn .18s ease;
+}
+@keyframes devFadeIn{ from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:none} }
+.dev-ro-pacinfo{
+  font-size:.75rem; color:#166534; font-weight:600;
+  display:flex; gap:16px; margin-bottom:10px; flex-wrap:wrap;
+}
+.dev-ro-section{ margin-bottom:12px; }
+.dev-ro-sec-title{
+  font-size:.68rem; font-weight:800; letter-spacing:.1em;
+  color:#15803d; text-transform:uppercase; margin-bottom:5px;
+  border-bottom:1px solid #86efac; padding-bottom:3px;
+}
+.dev-ro-diag{ font-size:.82rem; color:#1a2e1f; white-space:pre-wrap; }
+.dev-ro-cid{
+  display:inline-block; margin-top:4px; background:#166534; color:#fff;
+  font-size:.7rem; font-weight:700; padding:2px 8px; border-radius:4px;
+}
+.dev-ro-check-group{ margin-bottom:6px; }
+.dev-ro-check-grp-title{ font-size:.73rem; font-weight:700; color:#166534; margin-bottom:3px; }
+.dev-ro-item{
+  font-size:.78rem; display:flex; align-items:flex-start; gap:6px;
+  color:#1a2e1f; padding:2px 0;
+}
+.dev-ro-item-ok::before{ content:'✓'; color:#16a34a; font-weight:700; flex-shrink:0; }
+.dev-ro-item-no::before{ content:'○'; color:#9ca3af; flex-shrink:0; }
+.dev-ro-metas{ display:flex; flex-wrap:wrap; gap:6px; }
+.dev-ro-meta-chip{
+  background:#16a34a; color:#fff; font-size:.72rem; font-weight:600;
+  padding:3px 10px; border-radius:10px;
+}
+.dev-ro-livre{ font-size:.82rem; color:#1a2e1f; white-space:pre-wrap; margin-top:2px; }
+.dev-ro-author{
+  font-size:.7rem; color:#6b7280; margin-top:10px; padding-top:6px;
+  border-top:1px solid #86efac; font-style:italic;
+}
+
+/* ── MODAL EVOLUÇÃO DIARISTA ─────────────────────────────────────────────── */
+#modal-diarista-ev{ align-items:center; justify-content:center; }
+.diarista-ev-panel{
+  background:#fff; border-radius:14px; width:min(820px,96vw);
+  max-height:92vh; display:flex; flex-direction:column; overflow:hidden;
+  box-shadow:0 24px 60px rgba(0,0,0,.22);
+  animation:mrxIn .18s ease;
+}
+.diarista-ev-hdr{
+  display:flex; align-items:flex-start; justify-content:space-between;
+  padding:14px 20px; flex-shrink:0;
+  background:linear-gradient(135deg,#15803d,#166534);
+}
+.diarista-ev-title{ font-size:1rem; font-weight:700; color:#fff; }
+.diarista-ev-subtitle{ font-size:.72rem; color:rgba(255,255,255,.75); margin-top:2px; }
+.diarista-ev-body{
+  flex:1; overflow-y:auto; padding:18px 22px;
+  display:flex; flex-direction:column; gap:16px;
+}
+.diarista-ev-footer{
+  padding:12px 20px; border-top:1px solid var(--borda);
+  display:flex; justify-content:flex-end; gap:8px;
+  background:#f0fdf4; flex-shrink:0;
+}
+.diarista-ev-section{ display:flex; flex-direction:column; gap:8px; }
+.diarista-ev-sec-title{
+  font-size:.68rem; font-weight:800; letter-spacing:.1em;
+  color:#15803d; text-transform:uppercase;
+  border-bottom:1.5px solid #86efac; padding-bottom:4px;
+}
+.diarista-ev-pacinfo{
+  display:flex; gap:20px; flex-wrap:wrap; font-size:.82rem;
+  background:#f0fdf4; border:1px solid #86efac; border-radius:8px;
+  padding:8px 14px; color:#166534; font-weight:600;
+}
+.dev-row2{ display:flex; gap:10px; align-items:flex-start; }
+.dev-field{ display:flex; flex-direction:column; gap:4px; }
+.dev-lbl{ font-size:.7rem; font-weight:700; color:#4b5563; text-transform:uppercase; }
+.dev-input{
+  border:1.5px solid #d1d5db; border-radius:6px; padding:7px 10px;
+  font-size:.86rem; font-family:inherit; color:var(--tinta);
+  transition:border-color .15s;
+}
+.dev-input:focus{ outline:none; border-color:#16a34a; }
+.dev-textarea{
+  border:1.5px solid #d1d5db; border-radius:6px; padding:8px 10px;
+  font-size:.84rem; font-family:inherit; color:var(--tinta);
+  resize:vertical; min-height:70px; transition:border-color .15s;
+}
+.dev-textarea:focus{ outline:none; border-color:#16a34a; }
+.dev-checklist-group{
+  background:#f8fffe; border:1px solid #d1fae5; border-radius:8px; padding:10px 14px;
+  display:flex; flex-direction:column; gap:6px;
+}
+.dev-checklist-hdr{
+  font-size:.76rem; font-weight:700; color:#166534; margin-bottom:2px;
+}
+.dev-check{
+  display:flex; align-items:flex-start; gap:8px; cursor:pointer;
+  font-size:.81rem; color:#1a2e1f; line-height:1.4;
+}
+.dev-check input[type=checkbox]{ margin-top:2px; flex-shrink:0; accent-color:#16a34a; width:14px; height:14px; }
+.dc-check-alert{ background:#fef9c3; border-radius:5px; padding:4px 6px; }
+.dev-metas-grid{ display:flex; flex-wrap:wrap; gap:8px; }
+.dev-meta-chip{
+  display:flex; align-items:center; gap:6px; cursor:pointer;
+  border:1.5px solid #d1fae5; border-radius:20px; padding:5px 12px;
+  font-size:.8rem; font-weight:600; color:#166534;
+  background:#fff; transition:.15s;
+}
+.dev-meta-chip:hover{ background:#dcfce7; border-color:#86efac; }
+.dev-meta-chip input[type=checkbox]{ display:none; }
+.dev-meta-chip:has(input:checked){ background:#16a34a; color:#fff; border-color:#15803d; }
+.dev-meta-chip input:checked + span{ color:#fff; }
