@@ -3398,16 +3398,7 @@ function _mrxAcHilight(){
 }
 
 /* ─── MODO REORDENAÇÃO DRAG-AND-DROP ────────────────────────────────────── */
-function _rxModoReordenar(){
-  _rxModoReordenando = !_rxModoReordenando;
-  const btn = $('btn-rx-reordenar');
-  const thDrag = $('presc-th-drag');
-  if(btn) btn.classList.toggle('ativo', _rxModoReordenando);
-  if(thDrag) thDrag.style.display = _rxModoReordenando ? '' : 'none';
-  _renderPrescricao();
-  if(_rxModoReordenando) toast('Modo reordenação ativo — arraste as alças ⠿ para reposicionar');
-  else toast('Reordenação concluída');
-}
+function _rxModoReordenar(){ /* drag sempre ativo — sem toggle */ }
 
 function _rxDragStart(e, id){
   _rxDragId = id;
@@ -3593,9 +3584,8 @@ function _renderPrescricao(){
     const dispensa=_rxDispensaDose(it);
     const dosePendente = !dispensa && (!it.dose || it.dose.trim()===''||it.dose==='—');
     const doseStyle = dosePendente ? 'border-color:#e53935!important;background:#fff5f5!important;' : '';
-    const clickEditar = _rxModoReordenando ? '' : `ondblclick="abrirModalRxItem(${it.id})"`;
-    return `<tr class="${rowCls}" data-rx-id="${it.id}" ${clickEditar}>
-      ${_rxModoReordenando?`<td class="presc-td-drag"><span class="rx-drag-handle" draggable="true" onmousedown="_rxDragStart(event,${it.id})">⠿</span></td>`:''}
+    return `<tr class="${rowCls}" data-rx-id="${it.id}" ondblclick="abrirModalRxItem(${it.id})">
+      <td class="presc-td-drag"><span class="rx-drag-handle" draggable="true" onmousedown="_rxDragStart(event,${it.id})">⠿</span></td>
       <td class="presc-num">${i+1}</td>
       <td class="td-farm">
         <div style="display:flex;align-items:center;gap:4px;">
@@ -4013,26 +4003,16 @@ async function _rxLerHistorico(){
   return (doc && Array.isArray(doc.dias)) ? doc.dias : [];
 }
 
-let _rxHistAberto = false;
-
-async function _rxHistoricoToggle(){
-  const body = $('rx-hist-conteudo');
-  const chev = $('rx-hist-chevron');
-  if(!body||!chev) return;
-  _rxHistAberto = !_rxHistAberto;
-  chev.textContent = _rxHistAberto ? '▲' : '▼';
-  if(!_rxHistAberto){ body.style.display='none'; return; }
-  body.style.display='';
+// Abre modal do histórico de prescrições
+async function abrirHistoricoRx(){
+  const numEl = $('rxh-leito-num');
+  if(numEl) numEl.textContent = leitoAtual ? String(leitoAtual).padStart(2,'0') : '—';
+  $('modal-rx-historico').classList.add('show');
   await _rxHistoricoRenderizar();
 }
 
-async function _rxHistoricoInit(){
-  const painel = $('rx-historico-painel');
-  if(!painel) return;
-  const dias = await _rxLerHistorico();
-  painel.style.display = dias.length ? '' : 'none';
-  if(_rxHistAberto) await _rxHistoricoRenderizar();
-}
+// Mantido para compatibilidade com chamadas internas
+async function _rxHistoricoInit(){ /* histórico agora é modal — sem-op */ }
 
 async function _rxHistoricoRenderizar(){
   const body = $('rx-hist-conteudo');
