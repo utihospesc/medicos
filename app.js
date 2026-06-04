@@ -3400,53 +3400,70 @@ function _mrxAcHilight(){
 /* ─── MODO REORDENAÇÃO DRAG-AND-DROP ────────────────────────────────────── */
 function _rxModoReordenar(){ /* drag sempre ativo — sem toggle */ }
 
-function _rxDragStart(e, id){
-  _rxDragId = id;
-  const tr = e.target.closest('tr');
-  if(!tr) return;
-  e.dataTransfer ? null : null; // touch-safe
-  tr.classList.add('rx-dragging');
-  // Drag events na tbody
-  const tbody = tr.closest('tbody');
-  if(!tbody) return;
-  function onOver(ev){ ev.preventDefault();
-    const overTr = ev.target.closest('tr[data-rx-id]');
-    tbody.querySelectorAll('tr').forEach(r=>r.classList.remove('rx-drag-over'));
-    if(overTr && overTr.dataset.rxId != _rxDragId) overTr.classList.add('rx-drag-over');
-  }
-  function onDrop(ev){ ev.preventDefault();
-    const overTr = ev.target.closest('tr[data-rx-id]');
-    if(overTr && overTr.dataset.rxId != _rxDragId){
-      const fromId = _rxDragId;
-      const toId   = parseInt(overTr.dataset.rxId);
-      const fromIdx= _rxItens.findIndex(i=>i.id===fromId);
-      const toIdx  = _rxItens.findIndex(i=>i.id===toId);
-      if(fromIdx>=0&&toIdx>=0){
-        const [item] = _rxItens.splice(fromIdx,1);
-        _rxItens.splice(toIdx,0,item);
+/* ─── DRAG & DROP — event delegation no tbody (persiste entre re-renders) ── */
+function _rxIniciarDragDelegation(){
+  const tbody = $('presc-tbody');
+  if(!tbody || tbody.dataset.ddOk) return;
+  tbody.dataset.ddOk = '1';
+
+  tbody.addEventListener('dragstart', e => {
+    const handle = e.target.closest('.rx-drag-handle');
+    if(!handle) return;
+    const tr = handle.closest('tr[data-rx-id]');
+    if(!tr) return;
+    _rxDragId = Number(tr.dataset.rxId);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', _rxDragId);
+    requestAnimationFrame(() => tr.classList.add('rx-dragging'));
+  });
+
+  tbody.addEventListener('dragover', e => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    const overTr = e.target.closest('tr[data-rx-id]');
+    tbody.querySelectorAll('tr').forEach(r => r.classList.remove('rx-drag-over'));
+    if(overTr && Number(overTr.dataset.rxId) !== _rxDragId)
+      overTr.classList.add('rx-drag-over');
+  });
+
+  tbody.addEventListener('dragleave', e => {
+    if(!tbody.contains(e.relatedTarget))
+      tbody.querySelectorAll('tr').forEach(r => r.classList.remove('rx-drag-over'));
+  });
+
+  tbody.addEventListener('drop', e => {
+    e.preventDefault();
+    const overTr = e.target.closest('tr[data-rx-id]');
+    if(overTr && _rxDragId != null){
+      const toId   = Number(overTr.dataset.rxId);
+      const fromIdx = _rxItens.findIndex(i => i.id === _rxDragId);
+      const toIdx   = _rxItens.findIndex(i => i.id === toId);
+      if(fromIdx >= 0 && toIdx >= 0 && fromIdx !== toIdx){
+        const [item] = _rxItens.splice(fromIdx, 1);
+        _rxItens.splice(toIdx, 0, item);
       }
     }
-    cleanup();
-  }
-  function onEnd(){ cleanup(); }
-  function cleanup(){
-    tbody.querySelectorAll('tr').forEach(r=>{ r.classList.remove('rx-dragging','rx-drag-over'); });
-    tbody.removeEventListener('dragover',onOver);
-    tbody.removeEventListener('drop',onDrop);
-    tbody.removeEventListener('dragend',onEnd);
-    _rxDragId=null;
+    _rxDragLimpar();
     _renderPrescricao();
-  }
-  tbody.addEventListener('dragover',onOver);
-  tbody.addEventListener('drop',onDrop);
-  tbody.addEventListener('dragend',onEnd);
-  // Necessário para iniciar drag via mousedown em mobile-friendly
-  const dragEl = e.target.closest('[draggable]');
-  if(dragEl) dragEl.addEventListener('dragstart', ev=>{ ev.dataTransfer.effectAllowed='move'; }, {once:true});
+  });
+
+  tbody.addEventListener('dragend', () => {
+    _rxDragLimpar();
+    _renderPrescricao();
+  });
 }
 
+function _rxDragLimpar(){
+  const tbody = $('presc-tbody');
+  if(tbody) tbody.querySelectorAll('tr').forEach(r =>
+    r.classList.remove('rx-dragging', 'rx-drag-over'));
+  _rxDragId = null;
+}
+
+// Compatibilidade: chamada antiga (onmousedown inline) — agora sem uso real
+function _rxDragStart(e, id){ /* substituído por delegation em _rxIniciarDragDelegation */ }
+
 function addItemPrescricao(){ abrirModalRxItem(null,'normal'); }
-function addItemPrescricaoEspecial(tipo){ abrirModalRxItem(null,tipo); }
 function addItemPrescricaoEspecial(tipo){ abrirModalRxItem(null,tipo); }
 function _rxFocusUltimo(){
   setTimeout(()=>{
@@ -3585,7 +3602,7 @@ function _renderPrescricao(){
     const dosePendente = !dispensa && (!it.dose || it.dose.trim()===''||it.dose==='—');
     const doseStyle = dosePendente ? 'border-color:#e53935!important;background:#fff5f5!important;' : '';
     return `<tr class="${rowCls}" data-rx-id="${it.id}" ondblclick="abrirModalRxItem(${it.id})">
-      <td class="presc-td-drag"><span class="rx-drag-handle" draggable="true" onmousedown="_rxDragStart(event,${it.id})">⠿</span></td>
+      <td class="presc-td-drag"><span class="rx-drag-handle" draggable="true" title="Arraste para reordenar">⠿</span></td>
       <td class="presc-num">${i+1}</td>
       <td class="td-farm">
         <div style="display:flex;align-items:center;gap:4px;">
@@ -3621,6 +3638,7 @@ function _renderPrescricao(){
       </td>
     </tr>`;
   }).join('');
+  _rxIniciarDragDelegation();
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
