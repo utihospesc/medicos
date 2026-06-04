@@ -3162,14 +3162,303 @@ async function _renderApoioClinico(){
 
 
 
-function addItemPrescricao(){ _rxItens.push(_rxNovoItem('normal')); _renderPrescricao(); _rxFocusUltimo(); }
-function addItemPrescricaoEspecial(tipo){
-  const item=_rxNovoItem(tipo);
-  if(tipo==='dieta'){ item.farm='DIETA '; item.via='VO'; item.freq='SND'; item.hor=['SND']; }
-  if(tipo==='sn'){    item.freq='SN'; item.hor=['SN']; }
-  if(tipo==='cuidados'){ item.via='—'; item.freq='SND'; }
-  _rxItens.push(item); _renderPrescricao(); _rxFocusUltimo();
+/* ═══════════════════════════════════════════════════════════════════════════
+   MODAL DE ADIÇÃO/EDIÇÃO DE ITEM DA PRESCRIÇÃO
+   ═══════════════════════════════════════════════════════════════════════════ */
+let _mrxEditId = null;     // id do item sendo editado (null = novo)
+let _mrxHorSel = [];       // horários selecionados no modal
+let _rxModoReordenando = false;  // modo drag-and-drop ativo
+let _rxDragId = null;      // id do item sendo arrastado
+
+// Abre o modal para novo item ou edição de existente
+function abrirModalRxItem(id, tipo){
+  _mrxEditId = id;
+  // Popula selects
+  $('mrx-via').innerHTML   = RX_VIAS.map(v=>`<option>${v}</option>`).join('');
+  $('mrx-freq').innerHTML  = RX_FREQS.map(f=>`<option>${f}</option>`).join('');
+  $('mrx-apres').innerHTML = RX_APRES.map(a=>`<option>${a}</option>`).join('');
+
+  if(id){
+    // EDIÇÃO: preenche com dados do item existente
+    const it = _rxItens.find(i=>i.id===id);
+    if(!it) return;
+    $('modal-rx-titulo').textContent = 'Editar item';
+    $('mrx-btn-salvar').textContent = '✓ Salvar alterações';
+    sf('mrx-farm', it.farm||'');
+    sf('mrx-qtd',  it.qtd||'');
+    sf('mrx-dose', it.dose||'');
+    sf('mrx-dil',  it.diluicao||'');
+    sf('mrx-obs',  it.obs||'');
+    $('mrx-via').value  = it.via||'EV';
+    $('mrx-freq').value = it.freq||'24/24H';
+    $('mrx-apres').value= it.apres||'—';
+    $('mrx-cat').value  = it._cat||'Medicação Geral';
+    _mrxHorSel = Array.isArray(it.hor) ? [...it.hor] : [];
+  } else {
+    // NOVO: defaults por tipo
+    $('modal-rx-titulo').textContent = 'Adicionar item';
+    $('mrx-btn-salvar').textContent = '✓ Confirmar item';
+    sf('mrx-farm',''); sf('mrx-qtd','1'); sf('mrx-dose','');
+    sf('mrx-dil',''); sf('mrx-obs','');
+    const via  = tipo==='dieta'?'VO':tipo==='cuidados'?'—':'EV';
+    const freq = tipo==='dieta'?'SND':tipo==='sn'?'SN':tipo==='cuidados'?'SND':'24/24H';
+    $('mrx-via').value  = via;
+    $('mrx-freq').value = freq;
+    $('mrx-apres').value= '—';
+    $('mrx-cat').value  = tipo==='dieta'?'Dieta':tipo==='cuidados'?'Cuidados':'Medicação Geral';
+    _mrxHorSel = [];
+    if(tipo==='dieta') _mrxHorSel=['SND'];
+    if(tipo==='sn')    _mrxHorSel=['SN'];
+  }
+  _mrxViaChange();
+  _mrxFreqChange();
+  _mrxAtualizarBadgeCat();
+  $('modal-rx-item').classList.add('show');
+  setTimeout(()=>{ $('mrx-farm').focus(); $('mrx-farm').select(); }, 100);
 }
+
+function fecharModalRxItem(){
+  $('modal-rx-item').classList.remove('show');
+  _mrxAcFechar();
+  _mrxEditId = null;
+}
+
+// Atualiza visibilidade do campo Diluente e badge de categoria
+function _mrxViaChange(){
+  const via = $('mrx-via').value;
+  const mostraDil = RX_VIAS_DILUICAO.has(via.trim().toUpperCase());
+  $('mrx-dil-wrap').style.display = mostraDil ? '' : 'none';
+}
+
+function _mrxFreqChange(){
+  _mrxHorSel = _mrxHorSel.filter(h => h); // mantém seleção
+  _mrxRenderHorarios();
+}
+
+// Renderiza chips de horário igual ao da tabela
+function _mrxRenderHorarios(){
+  const freq = $('mrx-freq').value;
+  const wrap = $('mrx-horarios');
+  if(!wrap) return;
+  wrap.innerHTML = _rxHorariosHtmlPara(freq, _mrxHorSel, '_mrxToggleHor');
+}
+
+// Versão do _rxHorariosHtml que funciona com callback customizado
+function _rxHorariosHtmlPara(freq, horSel, callbackFn){
+  const CHIPS_HOR = ['06','07','08','10','12','14','16','18','20','22','24','02'];
+  const CHIPS_ESP = ['BIC','SN','SND','ACM','ACM NOITE'];
+  const especial  = ['BIC ACM','SN','SND','ACM','ACM NOITE','BIC','—'].includes(freq);
+  let h = '';
+  if(especial){
+    const tag = freq==='BIC ACM'?'BIC':freq;
+    h += `<span class="rx-hor-chip ${horSel.includes(tag)?'on':''} rx-hor-chip-snd"
+      onclick="${callbackFn}('${tag}')">${tag}</span>`;
+  } else {
+    CHIPS_HOR.forEach(hr=>{
+      h+=`<span class="rx-hor-chip ${horSel.includes(hr)?'on':''}"
+        onclick="${callbackFn}('${hr}')">${hr}h</span>`;
+    });
+    CHIPS_ESP.forEach(e=>{
+      const cls = e==='SND'?'rx-hor-chip-snd':e==='SN'||e==='ACM'?'rx-hor-chip-sn':'';
+      h+=`<span class="rx-hor-chip ${horSel.includes(e)?'on':''} ${cls}"
+        onclick="${callbackFn}('${e}')">${e}</span>`;
+    });
+  }
+  return h;
+}
+
+function _mrxToggleHor(h){
+  if(_mrxHorSel.includes(h)) _mrxHorSel=_mrxHorSel.filter(x=>x!==h);
+  else _mrxHorSel.push(h);
+  _mrxRenderHorarios();
+}
+
+function _mrxAtualizarBadgeCat(){
+  const cat = $('mrx-cat').value;
+  const el  = $('mrx-cat-badge');
+  if(!el) return;
+  const cor = _rxCatCor(cat);
+  el.style.cssText += `;${cor}padding:4px 10px;border-radius:8px;font-size:.72rem;font-weight:700;`;
+  el.textContent = cat;
+}
+
+// Salvar item do modal
+function _mrxSalvar(){
+  const farm = ($('mrx-farm').value||'').trim().toUpperCase();
+  const dose = ($('mrx-dose').value||'').trim().toUpperCase();
+  const via  = $('mrx-via').value;
+  const freq = $('mrx-freq').value;
+  if(!farm){ toast('Informe o nome do fármaco/item.', true); $('mrx-farm').focus(); return; }
+
+  const dispensa = ['—','SND','SN','BIC ACM'].some(x=>via===x||farm.startsWith('DIETA')||farm.startsWith('CUIDADO'));
+  if(!dispensa && !dose){ toast('Dose obrigatória.', true); $('mrx-dose').focus(); return; }
+
+  if(_mrxEditId){
+    // Atualiza item existente
+    const it = _rxItens.find(i=>i.id===_mrxEditId);
+    if(it){
+      it.farm     = farm;
+      it.qtd      = ($('mrx-qtd').value||'').trim();
+      it.apres    = $('mrx-apres').value;
+      it.dose     = dose;
+      it.via      = via;
+      it.diluicao = ($('mrx-dil').value||'').trim().toUpperCase();
+      it.freq     = freq;
+      it.hor      = [..._mrxHorSel];
+      it.obs      = ($('mrx-obs').value||'').trim().toUpperCase();
+      it._cat     = $('mrx-cat').value;
+    }
+  } else {
+    // Novo item
+    const item = _rxNovoItem('normal');
+    item.farm     = farm;
+    item.qtd      = ($('mrx-qtd').value||'').trim();
+    item.apres    = $('mrx-apres').value;
+    item.dose     = dose;
+    item.via      = via;
+    item.diluicao = ($('mrx-dil').value||'').trim().toUpperCase();
+    item.freq     = freq;
+    item.hor      = [..._mrxHorSel];
+    item.obs      = ($('mrx-obs').value||'').trim().toUpperCase();
+    item._cat     = $('mrx-cat').value;
+    item.tipo     = 'normal';
+    // Auto-ordena ao inserir (por prioridade de categoria)
+    _rxItens.push(item);
+    _rxItens.sort((a,b)=>(RX_PRIO[a._cat||'Medicação Geral']||6)-(RX_PRIO[b._cat||'Medicação Geral']||6));
+  }
+
+  fecharModalRxItem();
+  _renderPrescricao();
+  toast(_mrxEditId ? '✓ Item atualizado' : '✓ Item adicionado');
+}
+
+/* ─── AUTOCOMPLETE DO MODAL ────────────────────────────────────────────── */
+let _mrxAcRes=[], _mrxAcIdx=-1;
+
+function _mrxAcInput(el){
+  _mrxAcIdx=-1;
+  const q=(el.value||'').trim().toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+  if(q.length<2){ _mrxAcFechar(); return; }
+  _mrxAcRes=RX_BANCO.filter(m=>{
+    const n=m.nome.toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+    const c=(m.cat||'').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+    return n.includes(q)||c.includes(q);
+  }).slice(0,14);
+  const ac=$('mrx-ac');
+  if(!_mrxAcRes.length){ _mrxAcFechar(); return; }
+  const reQ=new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\$&')+')','gi');
+  ac.innerHTML=_mrxAcRes.map((m,i)=>{
+    const mark=m.nome.replace(reQ,'<span class="rx-ac-mark">$1</span>');
+    const cor=_rxCatCor(m.cat);
+    return `<div class="rx-ac-item" data-idx="${i}" onmousedown="_mrxAcEscolher(${i})">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <div class="rx-ac-nome" style="flex:1;">${mark}</div>
+        <span style="font-size:.6rem;font-weight:700;padding:1px 6px;border-radius:8px;${cor}">${m.cat||''}</span>
+      </div>
+      <div class="rx-ac-info">${m.dose||''}${m.via?' · '+m.via:''}${m.freq?' · '+m.freq:''}${m.diluicao?' · <em>'+m.diluicao+'</em>':''}</div>
+    </div>`;
+  }).join('');
+  ac.style.display='block';
+}
+
+function _mrxAcFechar(){ const a=$('mrx-ac'); if(a) a.style.display='none'; _mrxAcIdx=-1; }
+
+function _mrxAcEscolher(i){
+  const m=_mrxAcRes[i]; if(!m) return;
+  sf('mrx-farm', m.nome);
+  sf('mrx-dose', m.dose||'');
+  sf('mrx-qtd',  m.qtd||'1');
+  sf('mrx-dil',  m.diluicao||'');
+  sf('mrx-obs',  m.obs||'');
+  if(m.via)  $('mrx-via').value  = m.via;
+  if(m.freq) $('mrx-freq').value = m.freq;
+  if(m.apres)$('mrx-apres').value= m.apres;
+  // Categoria
+  const catMap={'ATB':'ATB','Dieta':'Dieta','Droga Vasoativa':'Droga Vasoativa','Sedação':'Sedação','Hidratação':'Hidratação','Cuidados':'Cuidados','Protocolo':'Protocolo'};
+  $('mrx-cat').value = catMap[m.cat] || 'Medicação Geral';
+  // Horários pré-definidos
+  _mrxHorSel = Array.isArray(m.hor) ? [...m.hor] : [];
+  _mrxViaChange();
+  _mrxFreqChange();
+  _mrxAtualizarBadgeCat();
+  _mrxAcFechar();
+  setTimeout(()=>$('mrx-dose').focus(),80);
+}
+
+function _mrxAcKey(e){
+  const ac=$('mrx-ac'); if(!ac||ac.style.display==='none') return;
+  if(e.key==='ArrowDown'){ e.preventDefault(); _mrxAcIdx=Math.min(_mrxAcIdx+1,_mrxAcRes.length-1); _mrxAcHilight(); }
+  else if(e.key==='ArrowUp'){ e.preventDefault(); _mrxAcIdx=Math.max(_mrxAcIdx-1,0); _mrxAcHilight(); }
+  else if(e.key==='Enter'||e.key==='Tab'){ e.preventDefault(); if(_mrxAcIdx>=0) _mrxAcEscolher(_mrxAcIdx); else if(_mrxAcRes.length===1) _mrxAcEscolher(0); }
+  else if(e.key==='Escape') _mrxAcFechar();
+}
+function _mrxAcHilight(){
+  document.querySelectorAll('#mrx-ac .rx-ac-item').forEach((el,i)=>{
+    el.classList.toggle('sel', i===_mrxAcIdx);
+    if(i===_mrxAcIdx) el.scrollIntoView({block:'nearest'});
+  });
+}
+
+/* ─── MODO REORDENAÇÃO DRAG-AND-DROP ────────────────────────────────────── */
+function _rxModoReordenar(){
+  _rxModoReordenando = !_rxModoReordenando;
+  const btn = $('btn-rx-reordenar');
+  const thDrag = $('presc-th-drag');
+  if(btn) btn.classList.toggle('ativo', _rxModoReordenando);
+  if(thDrag) thDrag.style.display = _rxModoReordenando ? '' : 'none';
+  _renderPrescricao();
+  if(_rxModoReordenando) toast('Modo reordenação ativo — arraste as alças ⠿ para reposicionar');
+  else toast('Reordenação concluída');
+}
+
+function _rxDragStart(e, id){
+  _rxDragId = id;
+  const tr = e.target.closest('tr');
+  if(!tr) return;
+  e.dataTransfer ? null : null; // touch-safe
+  tr.classList.add('rx-dragging');
+  // Drag events na tbody
+  const tbody = tr.closest('tbody');
+  if(!tbody) return;
+  function onOver(ev){ ev.preventDefault();
+    const overTr = ev.target.closest('tr[data-rx-id]');
+    tbody.querySelectorAll('tr').forEach(r=>r.classList.remove('rx-drag-over'));
+    if(overTr && overTr.dataset.rxId != _rxDragId) overTr.classList.add('rx-drag-over');
+  }
+  function onDrop(ev){ ev.preventDefault();
+    const overTr = ev.target.closest('tr[data-rx-id]');
+    if(overTr && overTr.dataset.rxId != _rxDragId){
+      const fromId = _rxDragId;
+      const toId   = parseInt(overTr.dataset.rxId);
+      const fromIdx= _rxItens.findIndex(i=>i.id===fromId);
+      const toIdx  = _rxItens.findIndex(i=>i.id===toId);
+      if(fromIdx>=0&&toIdx>=0){
+        const [item] = _rxItens.splice(fromIdx,1);
+        _rxItens.splice(toIdx,0,item);
+      }
+    }
+    cleanup();
+  }
+  function onEnd(){ cleanup(); }
+  function cleanup(){
+    tbody.querySelectorAll('tr').forEach(r=>{ r.classList.remove('rx-dragging','rx-drag-over'); });
+    tbody.removeEventListener('dragover',onOver);
+    tbody.removeEventListener('drop',onDrop);
+    tbody.removeEventListener('dragend',onEnd);
+    _rxDragId=null;
+    _renderPrescricao();
+  }
+  tbody.addEventListener('dragover',onOver);
+  tbody.addEventListener('drop',onDrop);
+  tbody.addEventListener('dragend',onEnd);
+  // Necessário para iniciar drag via mousedown em mobile-friendly
+  const dragEl = e.target.closest('[draggable]');
+  if(dragEl) dragEl.addEventListener('dragstart', ev=>{ ev.dataTransfer.effectAllowed='move'; }, {once:true});
+}
+
+function addItemPrescricao(){ abrirModalRxItem(null,'normal'); }
+function addItemPrescricaoEspecial(tipo){ abrirModalRxItem(null,tipo); }
+function addItemPrescricaoEspecial(tipo){ abrirModalRxItem(null,tipo); }
 function _rxFocusUltimo(){
   setTimeout(()=>{
     const inputs=document.querySelectorAll('#presc-tbody .rx-farm');
@@ -3296,14 +3585,19 @@ function _renderPrescricao(){
     return;
   }
   tbody.innerHTML=_rxItens.map((it,i)=>{
-    const rowCls = it.tipo==='dieta'?'presc-dieta':it.tipo==='sn'?'presc-sn':it.tipo==='cuidados'?'presc-cuidado':'';
+    const rowCls = [
+      it.tipo==='dieta'?'presc-dieta':it.tipo==='sn'?'presc-sn':it.tipo==='cuidados'?'presc-cuidado':'',
+      _rxModoReordenando?'':'rx-editavel'
+    ].filter(Boolean).join(' ');
     const viaOpts=RX_VIAS.map(v=>`<option ${it.via===v?'selected':''}>${v}</option>`).join('');
     const freqOpts=RX_FREQS.map(f=>`<option ${it.freq===f?'selected':''}>${f}</option>`).join('');
     const apresOpts=RX_APRES.map(a=>`<option ${it.apres===a?'selected':''}>${a}</option>`).join('');
     const dispensa=_rxDispensaDose(it);
     const dosePendente = !dispensa && (!it.dose || it.dose.trim()===''||it.dose==='—');
     const doseStyle = dosePendente ? 'border-color:#e53935!important;background:#fff5f5!important;' : '';
-    return `<tr class="${rowCls}">
+    const clickEditar = _rxModoReordenando ? '' : `ondblclick="abrirModalRxItem(${it.id})"`;
+    return `<tr class="${rowCls}" data-rx-id="${it.id}" ${clickEditar}>
+      ${_rxModoReordenando?`<td class="presc-td-drag"><span class="rx-drag-handle" draggable="true" onmousedown="_rxDragStart(event,${it.id})">⠿</span></td>`:''}
       <td class="presc-num">${i+1}</td>
       <td class="td-farm">
         <div style="display:flex;align-items:center;gap:4px;">
@@ -3367,7 +3661,7 @@ function _rxAcInput(el, itId){
   const vw=window.innerWidth;
   const dropW=Math.max(rect.width,320);
   if(rect.left+dropW>vw) ac.style.left=Math.max(0,vw-dropW-8)+'px';
-  const reQ=new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');
+  const reQ=new RegExp('('+q.replace(/[.*+?^${}()|[\]\\\\]/g,'\\$&')+')','gi');
   ac.innerHTML=_rxAcResultados.map((m,i)=>{
     const nNorm=m.nome.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
     const mark=m.nome.replace(reQ,'<span class="rx-ac-mark">$1</span>');
