@@ -1151,3 +1151,28 @@ details[open] .sol-hist-rotina-sum::before{ content:'▼'; }
   cursor:pointer;margin-left:8px;
 }
 .rx-hist-btn-usar:hover{background:rgba(122,16,32,.18);}
+
+
+/* ── MODAL ITEM PRESCRIÇÃO ───────────────────────────────────────────────── */
+#mrx-farm{ letter-spacing:.02em; }
+#mrx-farm::placeholder{ font-weight:400; letter-spacing:normal; }
+
+/* ── REORDENAÇÃO DRAG-AND-DROP ───────────────────────────────────────────── */
+.presc-th-drag{ width:28px; }
+.rx-drag-handle{
+  cursor: grab; color:#c0c0c0; font-size:1.1rem; padding:4px 6px;
+  display:flex; align-items:center; justify-content:center;
+  border-radius:4px; transition:color .12s, background .12s;
+  user-select:none;
+}
+.rx-drag-handle:hover{ color:var(--vinho); background:var(--vinho-claro); }
+.rx-drag-handle:active{ cursor:grabbing; }
+tr.rx-dragging{ opacity:.4; background:var(--vinho-claro) !important; }
+tr.rx-drag-over td{ border-top:2px solid var(--vinho) !important; }
+#btn-rx-reordenar.ativo{
+  background:var(--vinho); color:#fff; border-color:var(--vinho);
+}
+.presc-table tbody tr.rx-editavel{ cursor:pointer; }
+.presc-table tbody tr.rx-editavel:hover td.td-farm::after{
+  content:' ✏'; font-size:.7rem; color:var(--muted);
+}
