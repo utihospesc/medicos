@@ -168,25 +168,25 @@ function _renderDiaristaDropdown(d){
   const body = $('diarista-dropdown-body');
   if(!body || !d) return;
   const GRUPOS = [
-    { titulo:'🧠 Neurologia e Analgesia', itens:[
+    { titulo:'Neurologia e Analgesia', cls:'neuro', itens:[
       {id:'dc-dor', txt:'Dor e delirium avaliados e tratados'},
       {id:'dc-sed', txt:'Sedação avaliada, com redução ou interrupção se elegível'},
     ]},
-    { titulo:'🫁 Ventilação Mecânica', itens:[
+    { titulo:'Ventilação Mecânica', cls:'vent', itens:[
       {id:'dc-vm-desm', txt:'Avaliação de possibilidade de desmame e ajuste para VM protetora'},
       {id:'dc-vm-prev', txt:'Medidas preventivas aplicadas: cabeceira elevada e higiene oral'},
     ]},
-    { titulo:'🍽️ Nutrição e Profilaxias', itens:[
+    { titulo:'Nutrição e Profilaxias', cls:'nut', itens:[
       {id:'dc-nut',  txt:'Nutrição avaliada e otimizada'},
       {id:'dc-prof', txt:'Profilaxias revisadas (TVP e HDA)'},
     ]},
-    { titulo:'🦠 Manejo Infeccioso', itens:[
+    { titulo:'Manejo Infeccioso', cls:'inf', itens:[
       {id:'dc-disp',   txt:'Necessidade de manutenção dos dispositivos reavaliada'},
       {id:'dc-atb',    txt:'Antibioticoterapia em uso avaliada (ajuste ou suspensão)'},
       {id:'dc-cult',   txt:'Culturas avaliadas'},
       {id:'dc-novinf', txt:'Novo quadro infeccioso grave — protocolo de 1h aplicado'},
     ]},
-    { titulo:'🏥 Plano Multidisciplinar', itens:[
+    { titulo:'Plano Multidisciplinar', cls:'multi', itens:[
       {id:'dc-riscos', txt:'Identificação correta e riscos mapeados'},
       {id:'dc-med',    txt:'Revisão e conciliação de medicações realizadas'},
       {id:'dc-mob',    txt:'Mobilização e fisioterapia ativa avaliadas'},
@@ -207,7 +207,7 @@ function _renderDiaristaDropdown(d){
     GRUPOS.forEach(g => {
       const marcados = g.itens.filter(i => cl[i.id]);
       if(!marcados.length) return;
-      h += `<div class="dev-ro-check-group"><div class="dev-ro-check-grp-title">${g.titulo}</div>`;
+      h += `<div class="dev-ro-check-group"><div class="dev-ro-check-grp-title dev-ro-chk-hdr-${g.cls}">${g.titulo}</div>`;
       g.itens.forEach(i => {
         h += `<div class="dev-ro-item ${cl[i.id]?'dev-ro-item-ok':'dev-ro-item-no'}">${i.txt}</div>`;
       });
@@ -2072,11 +2072,21 @@ function _ativarCaixaAlta(){
 
 // Ajusta altura de TODOS os textareas visíveis do formulário após renderização
 function _resizeTodosTextareas(){
+  // Duplo rAF: primeiro garante que o DOM foi pintado,
+  // segundo cobre casos de layout tardio (fontes, imagens inline)
   requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>{
+      document.querySelectorAll('#t-form textarea').forEach(el=>{
+        if(!el.hasAttribute('readonly')) _autoResizeTA(el);
+      });
+    });
+  });
+  // Fallback com delay para navegadores lentos
+  setTimeout(()=>{
     document.querySelectorAll('#t-form textarea').forEach(el=>{
       if(!el.hasAttribute('readonly')) _autoResizeTA(el);
     });
-  });
+  }, 200);
 }
 
 
