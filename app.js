@@ -63,73 +63,176 @@ function _isAdmin(){ return usuarioEmail && ADMIN_EMAILS.includes(usuarioEmail.t
 const DIARISTA_EMAIL = 'diaristauti@hospesc.com';
 function _isDiarista(){ return usuarioEmail && usuarioEmail.toLowerCase() === DIARISTA_EMAIL; }
 
-// ── EVOLUÇÃO DIARISTA ─────────────────────────────────────────────────────────
+// ── EVOLUÇÃO DIARISTA — modal estruturado ────────────────────────────────────
+// Chave: uti_med_diarista_<leito>_<data>
+// Só diaristauti@hospesc.com edita; demais veem dropdown read-only na evolução.
+// NÃO entra em coletarDados() nem na impressão.
+
 function _chaveDiarista(leito, data){ return `uti_med_diarista_${leito}_${data}`; }
 
-function _aplicarModoDiarista(){
-  const ta = $('f-evol-diarista');
-  const btnWrap = $('diarista-btn-wrap');
-  const badge = $('diarista-badge');
-  const roTag = $('diarista-readonly-tag');
-  const label = $('diarista-label');
-  if(!ta) return;
-  if(_isDiarista()){
-    ta.removeAttribute('readonly');
-    ta.style.cursor = '';
-    if(btnWrap) btnWrap.style.display = '';
-    if(badge)   badge.style.display   = 'inline-block';
-    if(roTag)   roTag.style.display   = 'none';
-    if(label)   label.textContent     = 'Evolução Diarista (editável)';
-  } else {
-    ta.setAttribute('readonly', true);
-    ta.style.cursor = 'default';
-    if(btnWrap) btnWrap.style.display = 'none';
-    if(badge)   badge.style.display   = 'none';
-    if(roTag)   roTag.style.display   = 'inline-block';
-    if(label)   label.textContent     = 'Evolução Diarista';
+const _DEV_CHECKS = [
+  'dc-dor','dc-sed','dc-vm-desm','dc-vm-prev',
+  'dc-nut','dc-prof','dc-disp','dc-atb','dc-cult','dc-novinf',
+  'dc-riscos','dc-med','dc-mob','dc-plano'
+];
+
+async function abrirModalDiaristaEv(leito){
+  if(!_isDiarista()){ toast('Acesso exclusivo do médico diarista.', true); return; }
+  if(leito) leitoAtual = leito;
+  const ld = await _getLeitos();
+  const L  = ld[leitoAtual] || {};
+  const data = hoje();
+  sf('dev-leito', pad(leitoAtual));
+  sf('dev-pac',   L.pac || '—');
+  sf('dev-data',  _fmtDataCurta(data));
+  const dado = await dbGet(_chaveDiarista(leitoAtual, data));
+  sf('dev-diag',  dado?.diag  || '');
+  sf('dev-cid',   dado?.cid   || '');
+  sf('dev-livre', dado?.livre || '');
+  _DEV_CHECKS.forEach(id => { const el=$(id); if(el) el.checked = !!(dado?.checklist?.[id]); });
+  document.querySelectorAll('#dev-metas-grid input[type=checkbox]').forEach(cb => {
+    cb.checked = !!(dado?.metas?.includes(cb.value));
+  });
+  $('modal-diarista-ev').classList.add('show');
+}
+
+function fecharModalDiaristaEv(){ $('modal-diarista-ev').classList.remove('show'); }
+
+async function salvarEvolucaoDiaristaModal(){
+  if(!_isDiarista()){ toast('Sem permissão.', true); return; }
+  const data = hoje();
+  const checklist = {};
+  _DEV_CHECKS.forEach(id => { const el=$(id); if(el) checklist[id] = el.checked; });
+  const metas = [];
+  document.querySelectorAll('#dev-metas-grid input[type=checkbox]:checked')
+    .forEach(cb => metas.push(cb.value));
+  const ld = await _getLeitos();
+  const payload = {
+    leito: leitoAtual, data,
+    paciente: ld[leitoAtual]?.pac || '',
+    diag:    (gf('dev-diag') || '').trim(),
+    cid:     (gf('dev-cid')  || '').trim().toUpperCase(),
+    checklist, metas,
+    livre:   (gf('dev-livre') || '').trim(),
+    autor:   usuarioEmail,
+    autorNome: perfilUsuario ? perfilUsuario.nome : usuarioEmail,
+    registradoEm: new Date().toISOString()
+  };
+  try{
+    showLoading('Salvando evolução diarista...');
+    await dbSet(_chaveDiarista(leitoAtual, data), payload);
+    hideLoading();
+    fecharModalDiaristaEv();
+    toast('✓ Evolução diarista salva');
+    await _carregarDiarista(leitoAtual, data);
+  } catch(e){
+    hideLoading();
+    toast('Erro ao salvar: ' + (e.message||e), true);
   }
 }
 
 async function _carregarDiarista(leito, data){
-  const ta   = $('f-evol-diarista');
-  const meta = $('diarista-meta');
-  if(!ta) return;
-  const chave = _chaveDiarista(leito, data);
-  const dado  = await dbGet(chave);
-  ta.value = dado ? (dado.texto || '') : '';
-  _autoResizeTA(ta);
-  if(meta){
-    if(dado && dado.autorNome && dado.registradoEm){
-      const dt = new Date(dado.registradoEm);
-      const fmt = dt.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
-      meta.textContent = `Última edição: ${dado.autorNome} — ${fmt}`;
-      meta.style.display = '';
-    } else {
-      meta.style.display = 'none';
-    }
+  const painel = $('secao-diarista-dropdown');
+  const metaEl = $('diarista-dropdown-meta');
+  if(!painel) return;
+  const dado = await dbGet(_chaveDiarista(leito, data));
+  if(!dado || (!dado.diag && !dado.livre && !dado.metas?.length &&
+      !Object.values(dado.checklist||{}).some(Boolean))){
+    painel.style.display = 'none'; return;
+  }
+  painel.style.display = '';
+  if(metaEl){
+    const dt = dado.registradoEm ? new Date(dado.registradoEm) : null;
+    const fmt = dt ? dt.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
+    metaEl.textContent = `${dado.autorNome||'Diarista'} — ${fmt}`;
+  }
+  const body = $('diarista-dropdown-body');
+  if(body && body.style.display !== 'none') _renderDiaristaDropdown(dado);
+}
+
+function _toggleDiaristaDropdown(){
+  const body = $('diarista-dropdown-body');
+  const chev = $('diarista-dropdown-chev');
+  if(!body) return;
+  const aberto = body.style.display !== 'none';
+  if(aberto){ body.style.display='none'; if(chev) chev.classList.remove('open'); }
+  else {
+    body.style.display = '';
+    if(chev) chev.classList.add('open');
+    const dataT = $('f-data') ? $('f-data').value : hoje();
+    dbGet(_chaveDiarista(leitoAtual, dataT)).then(dado => { if(dado) _renderDiaristaDropdown(dado); });
   }
 }
 
-async function salvarEvolucaoDiarista(){
-  if(!_isDiarista()){ toast('Sem permissão para editar a evolução diarista.', true); return; }
-  const ta = $('f-evol-diarista');
-  if(!ta) return;
-  const texto = ta.value.trim();
-  const dataT = $('f-data') ? $('f-data').value : hoje();
-  const chave = _chaveDiarista(leitoAtual, dataT);
-  try{
-    await dbSet(chave, {
-      texto,
-      autor: usuarioEmail,
-      autorNome: perfilUsuario ? perfilUsuario.nome : usuarioEmail,
-      registradoEm: new Date().toISOString()
-    });
-    toast('✓ Evolução diarista salva');
-    await _carregarDiarista(leitoAtual, dataT);
-  } catch(e){
-    toast('Erro ao salvar: ' + (e.message||e), true);
+function _renderDiaristaDropdown(d){
+  const body = $('diarista-dropdown-body');
+  if(!body || !d) return;
+  const GRUPOS = [
+    { titulo:'🧠 Neurologia e Analgesia', itens:[
+      {id:'dc-dor', txt:'Dor e delirium avaliados e tratados'},
+      {id:'dc-sed', txt:'Sedação avaliada, com redução ou interrupção se elegível'},
+    ]},
+    { titulo:'🫁 Ventilação Mecânica', itens:[
+      {id:'dc-vm-desm', txt:'Avaliação de possibilidade de desmame e ajuste para VM protetora'},
+      {id:'dc-vm-prev', txt:'Medidas preventivas aplicadas: cabeceira elevada e higiene oral'},
+    ]},
+    { titulo:'🍽️ Nutrição e Profilaxias', itens:[
+      {id:'dc-nut',  txt:'Nutrição avaliada e otimizada'},
+      {id:'dc-prof', txt:'Profilaxias revisadas (TVP e HDA)'},
+    ]},
+    { titulo:'🦠 Manejo Infeccioso', itens:[
+      {id:'dc-disp',   txt:'Necessidade de manutenção dos dispositivos reavaliada'},
+      {id:'dc-atb',    txt:'Antibioticoterapia em uso avaliada (ajuste ou suspensão)'},
+      {id:'dc-cult',   txt:'Culturas avaliadas'},
+      {id:'dc-novinf', txt:'Novo quadro infeccioso grave — protocolo de 1h aplicado'},
+    ]},
+    { titulo:'🏥 Plano Multidisciplinar', itens:[
+      {id:'dc-riscos', txt:'Identificação correta e riscos mapeados'},
+      {id:'dc-med',    txt:'Revisão e conciliação de medicações realizadas'},
+      {id:'dc-mob',    txt:'Mobilização e fisioterapia ativa avaliadas'},
+      {id:'dc-plano',  txt:'Plano terapêutico definido e discutido com equipe'},
+    ]},
+  ];
+  const cl = d.checklist || {};
+  let h = '';
+  if(d.diag || d.cid){
+    h += `<div class="dev-ro-section"><div class="dev-ro-sec-title">Diagnósticos</div>`;
+    if(d.diag) h += `<div class="dev-ro-diag">${d.diag}</div>`;
+    if(d.cid)  h += `<span class="dev-ro-cid">${d.cid}</span>`;
+    h += `</div>`;
   }
+  const algumCheck = Object.values(cl).some(Boolean);
+  if(algumCheck){
+    h += `<div class="dev-ro-section"><div class="dev-ro-sec-title">Check-List</div>`;
+    GRUPOS.forEach(g => {
+      const marcados = g.itens.filter(i => cl[i.id]);
+      if(!marcados.length) return;
+      h += `<div class="dev-ro-check-group"><div class="dev-ro-check-grp-title">${g.titulo}</div>`;
+      g.itens.forEach(i => {
+        h += `<div class="dev-ro-item ${cl[i.id]?'dev-ro-item-ok':'dev-ro-item-no'}">${i.txt}</div>`;
+      });
+      h += `</div>`;
+    });
+    h += `</div>`;
+  }
+  if(d.metas && d.metas.length){
+    h += `<div class="dev-ro-section"><div class="dev-ro-sec-title">Metas do Dia</div>
+      <div class="dev-ro-metas">${d.metas.map(m=>`<span class="dev-ro-meta-chip">${m}</span>`).join('')}</div></div>`;
+  }
+  if(d.livre){
+    h += `<div class="dev-ro-section"><div class="dev-ro-sec-title">Campo Livre</div>
+      <div class="dev-ro-livre">${d.livre}</div></div>`;
+  }
+  if(d.autorNome && d.registradoEm){
+    const dt = new Date(d.registradoEm);
+    const fmt = dt.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    h += `<div class="dev-ro-author">Registrado por ${d.autorNome} em ${fmt}</div>`;
+  }
+  body.innerHTML = h;
 }
+
+function _aplicarModoDiarista(){ /* sem-op — agora é modal */ }
+async function salvarEvolucaoDiarista(){ await salvarEvolucaoDiaristaModal(); }
 
 // ── GESTÃO DO LEITO: ALTA / ÓBITO / TRANSFERÊNCIA ─────────────────────────
 // Prefixos de chaves vinculadas a um leito (para mover na transferência interna)
@@ -927,6 +1030,7 @@ async function renderLeitos(){
           <button class="btn btn-sm" style="flex:1;font-size:0.62rem;padding:2px 4px;border-radius:4px;background:rgba(122,16,32,0.1);border:1px solid var(--vinho);color:var(--vinho);" onclick="abrirFormularioDirect(${i},'prescricao')">💊 Presc.</button>
           <button class="btn btn-sm" style="flex:1;font-size:0.62rem;padding:2px 4px;border-radius:4px;background:rgba(122,16,32,0.1);border:1px solid var(--vinho);color:var(--vinho);" onclick="abrirFormularioDirect(${i},'guias')">📄 Guias</button>
           <button class="btn btn-sm" style="flex:0 0 auto;font-size:0.65rem;padding:2px 7px;border-radius:4px;background:#f3f4f6;border:1px solid #9ca3af;color:#374151;" onclick="abrirGestaoLeito(${i})" title="Alta, óbito ou transferência">⚙</button>
+          ${_isDiarista()?`<button class="btn btn-sm" style="flex:0 0 auto;font-size:0.62rem;padding:2px 7px;border-radius:4px;background:#dcfce7;border:1px solid #86efac;color:#166534;font-weight:700;" onclick="abrirModalDiaristaEv(${i})" title="Preencher evolução diarista">👨‍⚕️</button>`:''}
         </div>
       </div>`;
     } else {
