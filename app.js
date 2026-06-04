@@ -34,6 +34,7 @@ let _culturasForm = [];       // chips de cultura do formulário atual
 let _labLinhas = [];          // exames laboratoriais (array de {data, valores})
 let _itensSAPS = {};          // itens de admissão do SAPS preenchidos manualmente
 let _labChart = null;         // instância Chart.js
+let _labCampoAtivo = null;    // campo do gráfico de exames selecionado
 let _modoOffline = false;
 
 /* ── HELPERS BÁSICOS ──────────────────────────────────────────────────────── */
@@ -3183,7 +3184,7 @@ function abrirModalRxItem(id, tipo){
     const it = _rxItens.find(i=>i.id===id);
     if(!it) return;
     $('modal-rx-titulo').textContent = 'Editar item';
-    $('mrx-btn-salvar').textContent = '✓ Salvar alterações';
+    const lbl2=$('mrx-btn-label'); if(lbl2) lbl2.textContent='Salvar alterações'; $('modal-rx-titulo').textContent='Editar item';
     sf('mrx-farm', it.farm||'');
     sf('mrx-qtd',  it.qtd||'');
     sf('mrx-dose', it.dose||'');
@@ -3197,7 +3198,7 @@ function abrirModalRxItem(id, tipo){
   } else {
     // NOVO: defaults por tipo
     $('modal-rx-titulo').textContent = 'Adicionar item';
-    $('mrx-btn-salvar').textContent = '✓ Confirmar item';
+    const lbl1=$('mrx-btn-label'); if(lbl1) lbl1.textContent='Confirmar item'; $('modal-rx-titulo').textContent='Adicionar item';
     sf('mrx-farm',''); sf('mrx-qtd','1'); sf('mrx-dose','');
     sf('mrx-dil',''); sf('mrx-obs','');
     const via  = tipo==='dieta'?'VO':tipo==='cuidados'?'—':'EV';
@@ -3274,12 +3275,9 @@ function _mrxToggleHor(h){
 }
 
 function _mrxAtualizarBadgeCat(){
-  const cat = $('mrx-cat').value;
-  const el  = $('mrx-cat-badge');
-  if(!el) return;
-  const cor = _rxCatCor(cat);
-  el.style.cssText += `;${cor}padding:4px 10px;border-radius:8px;font-size:.72rem;font-weight:700;`;
-  el.textContent = cat;
+  const cat = ($('mrx-cat')||{}).value || 'Medicação Geral';
+  const badge = $('mrx-cat-badge');
+  if(badge) badge.textContent = cat;
 }
 
 // Salvar item do modal
