@@ -504,7 +504,7 @@
               <button class="btn btn-sec btn-sm" onclick="importarUsoContinuo()">⊕ Uso contínuo</button>
               <button class="btn btn-sec btn-sm" onclick="abrirTemplates()">⭐ Templates</button>
               <button class="btn btn-sec btn-sm" onclick="abrirCalcBIC()">⚗ Calc BIC</button>
-              <button class="btn btn-sec btn-sm" onclick="_rxOrdenar()">↕ Reordenar</button>
+              <button class="btn btn-sec btn-sm" onclick="abrirHistoricoRx()">📋 Histórico</button>
               <button class="btn btn-sec btn-sm" onclick="imprimirPrescricao()">🖨 Imprimir</button>
             </div>
           </div>
@@ -520,7 +520,7 @@
             <table class="presc-table" id="presc-table">
               <thead>
                 <tr>
-                  <th class="presc-th-drag" id="presc-th-drag" style="display:none;"></th>
+                  <th class="presc-th-drag"></th>
                   <th class="presc-th-num">#</th>
                   <th class="presc-th-farm">Fármaco / Item</th>
                   <th class="presc-th-dose">Dose</th>
@@ -541,17 +541,8 @@
             <button class="btn btn-sec btn-sm" onclick="abrirModalRxItem(null,'sn')">+ SN</button>
             <button class="btn btn-sec btn-sm" onclick="abrirModalRxItem(null,'cuidados')">+ Cuidados</button>
             <div style="flex:1;"></div>
-            <button class="btn btn-sec btn-sm" onclick="_rxModoReordenar()" id="btn-rx-reordenar" title="Ativar modo de reordenação manual">⠿ Reordenar</button>
             <button class="btn btn-pri btn-sm" onclick="salvarPrescricao()">⌘ Salvar prescrição</button>
             <button class="btn btn-sec btn-sm" onclick="imprimirPrescricao()">🖨 Imprimir</button>
-          </div>
-
-          <!-- HISTÓRICO DE PRESCRIÇÕES -->
-          <div id="rx-historico-painel" style="margin-top:14px;border-top:1px solid var(--borda);padding-top:10px;display:none;">
-            <button class="rx-hist-toggle" onclick="_rxHistoricoToggle()" id="rx-hist-toggle-btn">
-              📋 Histórico de prescrições <span id="rx-hist-chevron">▼</span>
-            </button>
-            <div id="rx-hist-conteudo" style="display:none;margin-top:8px;"></div>
           </div>
 
           <!-- AUTOCOMPLETE movido para o body via JS -->
@@ -1379,6 +1370,19 @@
 <div id="rx-autocomplete" class="rx-autocomplete" style="display:none;position:fixed;z-index:9999;"></div>
 
 
+
+<!-- ═══════════ MODAL HISTÓRICO DE PRESCRIÇÕES ═══════════ -->
+<div class="modal" id="modal-rx-historico">
+  <div class="modal-box" style="max-width:680px;">
+    <div class="modal-head">
+      <h3>📋 Histórico de prescrições — Leito <span id="rxh-leito-num"></span></h3>
+      <button class="modal-x" onclick="$('modal-rx-historico').classList.remove('show')">×</button>
+    </div>
+    <div class="modal-body" id="rx-hist-conteudo" style="min-height:120px;padding:14px 16px;">
+      <div class="rx-hist-empty">Carregando...</div>
+    </div>
+  </div>
+</div>
 
 <!-- ═══════════ MODAL ITEM PRESCRIÇÃO ═══════════ -->
 <div class="modal" id="modal-rx-item">
