@@ -4120,7 +4120,9 @@ async function _salvarPrescricaoCore(){
     await dbSet(key,{ leito:leitoAtual, data, paciente:gf('f-pac'),
       itens:_rxItens, autor:usuarioEmail, autorNome:perfilUsuario?perfilUsuario.nome:'',
       salvadoEm:new Date().toISOString() });
+    await _rxGravarHistorico(_rxItens, data, perfilUsuario?perfilUsuario.nome:usuarioEmail);
     hideLoading(); toast('✓ Prescrição salva.');
+    _rxHistoricoInit();
   }catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
 }
 
@@ -4221,12 +4223,56 @@ async function _autoPreencherATBs(){
 }
 
 async function _carregarPrescricao(leito){
-  const data=gf('f-data')||hoje();
-  const key=`uti_med_rx_${leito}_${data}`;
-  const saved=await dbGet(key);
-  _rxItens = saved&&saved.itens ? saved.itens : [];
-  _rxAtualizarDdias();   // calcula it._ddia para cada ATB
-  _snapshotRX();         // snapshot para detectar novos ATBs
+  const data = gf('f-data') || hoje();
+  const key  = `uti_med_rx_${leito}_${data}`;
+  let saved  = await dbGet(key);
+
+  // Se não há prescrição para hoje, carrega a última disponível (mais recente)
+  if(!saved || !saved.itens || !saved.itens.length){
+    try{
+      const todas = await dbListByPrefix(`uti_med_rx_${leito}_`);
+      const ordenadas = Object.values(todas)
+        .filter(rx => rx && rx.itens && rx.itens.length && rx.data && rx.data !== data)
+        .sort((a,b) => b.data.localeCompare(a.data));
+      if(ordenadas.length){
+        saved = ordenadas[0];
+        // Marca os itens como herdados para exibir aviso
+        _rxItensHerdadosData = saved.data;
+      } else {
+        _rxItensHerdadosData = null;
+      }
+    } catch(e){ console.warn('_carregarPrescricao fallback:', e); }
+  } else {
+    _rxItensHerdadosData = null;
+  }
+
+  _rxItens = saved && saved.itens ? saved.itens.map(it=>({...it, id:it.id||Date.now()+Math.random()})) : [];
+  _rxAtualizarDdias();
+  _snapshotRX();
+  _rxMostrarAvisoHeranca();
+  _rxHistoricoInit();
+}
+
+// Variável global para data da prescrição herdada
+let _rxItensHerdadosData = null;
+
+function _rxMostrarAvisoHeranca(){
+  // Exibe aviso discreto se a prescrição foi carregada de outro dia
+  let av = $('rx-aviso-heranca');
+  if(!av){
+    av = document.createElement('div');
+    av.id = 'rx-aviso-heranca';
+    av.style.cssText = 'display:none;padding:5px 12px;background:#fff7ed;border:1px solid #fed7aa;' +
+      'border-radius:6px;font-size:.78rem;color:#92400e;font-weight:600;margin-bottom:8px;';
+    const apoio = $('presc-apoio');
+    if(apoio && apoio.parentNode) apoio.parentNode.insertBefore(av, apoio);
+  }
+  if(_rxItensHerdadosData){
+    av.style.display = '';
+    av.innerHTML = `⚠ Exibindo última prescrição salva (${_fmtDataCurta(_rxItensHerdadosData)}) — salve para registrar a de hoje.`;
+  } else {
+    av.style.display = 'none';
+  }
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
