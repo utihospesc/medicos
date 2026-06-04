@@ -292,6 +292,17 @@
             </div>
           </div>
 
+          <!-- DROPDOWN EVOLUÇÃO DIARISTA (somente leitura, visível a todos) -->
+          <div id="secao-diarista-dropdown" style="display:none;margin-bottom:6px;">
+            <button class="diarista-dropdown-btn" onclick="_toggleDiaristaDropdown()" id="diarista-dropdown-btn">
+              <span class="diarista-dropdown-ico">👨‍⚕️</span>
+              <span>Evolução do Diarista</span>
+              <span id="diarista-dropdown-meta" class="diarista-dropdown-meta"></span>
+              <span id="diarista-dropdown-chev" class="diarista-dropdown-chev">▼</span>
+            </button>
+            <div id="diarista-dropdown-body" style="display:none;"></div>
+          </div>
+
           <!-- EVOLUÇÃO DIARISTA -->
           <div class="secao" id="secao-diarista">
             <div class="secao-t" style="display:flex;align-items:center;gap:8px;">
@@ -1380,6 +1391,118 @@
     </div>
     <div class="modal-body" id="rx-hist-conteudo" style="min-height:120px;padding:14px 16px;">
       <div class="rx-hist-empty">Carregando...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ MODAL EVOLUÇÃO DIARISTA ═══════════ -->
+<div class="modal" id="modal-diarista-ev">
+  <div class="diarista-ev-panel">
+
+    <!-- Cabeçalho -->
+    <div class="diarista-ev-hdr">
+      <div>
+        <div class="diarista-ev-title">Evolução do Diarista</div>
+        <div class="diarista-ev-subtitle">Hospital dos Pescadores · Liga Contra o Câncer UTI</div>
+      </div>
+      <button class="mrx-close" onclick="fecharModalDiaristaEv()">×</button>
+    </div>
+
+    <!-- Corpo com scroll -->
+    <div class="diarista-ev-body">
+
+      <!-- Info do paciente (readonly) -->
+      <div class="diarista-ev-pacinfo">
+        <span><strong>Leito:</strong> <span id="dev-leito">—</span></span>
+        <span><strong>Paciente:</strong> <span id="dev-pac">—</span></span>
+        <span><strong>Data:</strong> <span id="dev-data">—</span></span>
+      </div>
+
+      <!-- Diagnósticos + CID -->
+      <div class="diarista-ev-section">
+        <div class="diarista-ev-sec-title">Diagnósticos / Informações Importantes</div>
+        <div class="dev-row2">
+          <div class="dev-field" style="flex:1;">
+            <label class="dev-lbl">Diagnóstico principal</label>
+            <textarea id="dev-diag" class="dev-textarea" rows="3"
+              placeholder="Diagnóstico e informações relevantes do paciente..."></textarea>
+          </div>
+          <div class="dev-field" style="flex:0 0 120px;">
+            <label class="dev-lbl">CID-10</label>
+            <input type="text" id="dev-cid" class="dev-input"
+              placeholder="Ex: J18.9" style="text-transform:uppercase;">
+          </div>
+        </div>
+      </div>
+
+      <!-- CHECK-LIST -->
+      <div class="diarista-ev-section">
+        <div class="diarista-ev-sec-title">Check-List</div>
+
+        <div class="dev-checklist-group">
+          <div class="dev-checklist-hdr">🧠 Neurologia e Analgesia</div>
+          <label class="dev-check"><input type="checkbox" id="dc-dor"> <span>Dor e delirium avaliados e tratados</span></label>
+          <label class="dev-check"><input type="checkbox" id="dc-sed"> <span>Sedação avaliada, com redução ou interrupção se elegível</span></label>
+        </div>
+
+        <div class="dev-checklist-group">
+          <div class="dev-checklist-hdr">🫁 Ventilação Mecânica</div>
+          <label class="dev-check"><input type="checkbox" id="dc-vm-desm"> <span>Avaliação de possibilidade de desmame e ajuste para VM protetora</span></label>
+          <label class="dev-check"><input type="checkbox" id="dc-vm-prev"> <span>Medidas preventivas aplicadas: cabeceira elevada e higiene oral</span></label>
+        </div>
+
+        <div class="dev-checklist-group">
+          <div class="dev-checklist-hdr">🍽️ Nutrição e Profilaxias</div>
+          <label class="dev-check"><input type="checkbox" id="dc-nut"> <span>Nutrição avaliada e otimizada</span></label>
+          <label class="dev-check"><input type="checkbox" id="dc-prof"> <span>Profilaxias revisadas (TVP e HDA)</span></label>
+        </div>
+
+        <div class="dev-checklist-group">
+          <div class="dev-checklist-hdr">🦠 Manejo Infeccioso</div>
+          <label class="dev-check"><input type="checkbox" id="dc-disp"> <span>Necessidade de manutenção dos dispositivos reavaliada</span></label>
+          <label class="dev-check"><input type="checkbox" id="dc-atb"> <span>Antibioticoterapia em uso avaliada (ajuste ou suspensão)</span></label>
+          <label class="dev-check"><input type="checkbox" id="dc-cult"> <span>Culturas avaliadas</span></label>
+          <label class="dev-check dc-check-alert" id="dc-novo-inf-wrap"><input type="checkbox" id="dc-novinf"> <span>Se novo quadro infeccioso grave hoje: colher culturas antes do antimicrobiano, administrar medicação em &lt;1h, dosar lactato e realizar ressuscitação volêmica se hipotensão ou lactato elevado</span></label>
+        </div>
+
+        <div class="dev-checklist-group">
+          <div class="dev-checklist-hdr">🏥 Plano Multidisciplinar</div>
+          <label class="dev-check"><input type="checkbox" id="dc-riscos"> <span>Identificação correta e riscos mapeados (queda, lesão por pressão, broncoaspiração, sangramento, instabilidade)</span></label>
+          <label class="dev-check"><input type="checkbox" id="dc-med"> <span>Revisão e conciliação de medicações realizadas</span></label>
+          <label class="dev-check"><input type="checkbox" id="dc-mob"> <span>Mobilização e fisioterapia ativa avaliadas</span></label>
+          <label class="dev-check"><input type="checkbox" id="dc-plano"> <span>Plano terapêutico definido e discutido com a equipe multiprofissional</span></label>
+        </div>
+      </div>
+
+      <!-- METAS DO DIA -->
+      <div class="diarista-ev-section">
+        <div class="diarista-ev-sec-title">Metas do Dia, Plano Terapêutico e Pendências</div>
+        <div class="dev-metas-grid" id="dev-metas-grid">
+          <label class="dev-meta-chip"><input type="checkbox" value="Desmame ventilatório"> <span>Desmame ventilatório</span></label>
+          <label class="dev-meta-chip"><input type="checkbox" value="Reduzir sedação"> <span>Reduzir sedação</span></label>
+          <label class="dev-meta-chip"><input type="checkbox" value="Retirar dispositivo"> <span>Retirar dispositivo</span></label>
+          <label class="dev-meta-chip"><input type="checkbox" value="Ajuste antibiótico"> <span>Ajuste antibiótico</span></label>
+          <label class="dev-meta-chip"><input type="checkbox" value="Otimização hemodinâmica"> <span>Otimização hemodinâmica</span></label>
+          <label class="dev-meta-chip"><input type="checkbox" value="Alta da UTI"> <span>Alta da UTI</span></label>
+          <label class="dev-meta-chip"><input type="checkbox" value="Manter conduta atual"> <span>Manter conduta atual</span></label>
+          <label class="dev-meta-chip"><input type="checkbox" value="Aguardar exames"> <span>Aguardar exames</span></label>
+        </div>
+      </div>
+
+      <!-- CAMPO LIVRE -->
+      <div class="diarista-ev-section">
+        <div class="diarista-ev-sec-title">Campo Livre</div>
+        <textarea id="dev-livre" class="dev-textarea" rows="5"
+          placeholder="Observações adicionais, pendências, intercorrências..."></textarea>
+      </div>
+    </div>
+
+    <!-- Rodapé -->
+    <div class="diarista-ev-footer">
+      <button class="mrx-btn-cancel" onclick="fecharModalDiaristaEv()">Cancelar</button>
+      <button class="mrx-btn-confirm" onclick="salvarEvolucaoDiaristaModal()">
+        ✓ Salvar evolução diarista
+      </button>
     </div>
   </div>
 </div>
