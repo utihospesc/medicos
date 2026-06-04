@@ -1167,10 +1167,7 @@ details[open] .sol-hist-rotina-sum::before{ content:'▼'; }
 .rx-drag-handle:active{ cursor:grabbing; }
 tr.rx-dragging{ opacity:.4; background:var(--vinho-claro) !important; }
 tr.rx-drag-over td{ border-top:2px solid var(--vinho) !important; }
-#btn-rx-reordenar.ativo{
-  background:var(--vinho); color:#fff; border-color:var(--vinho);
-}
-.presc-table tbody tr.rx-editavel{ cursor:pointer; }
+.presc-table tbody tr.rx-editavel{ cursor:default; }
 .presc-table tbody tr.rx-editavel:hover td.td-farm::after{
   content:' ✏'; font-size:.7rem; color:var(--muted);
 }
