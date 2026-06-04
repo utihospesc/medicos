@@ -520,6 +520,7 @@
             <table class="presc-table" id="presc-table">
               <thead>
                 <tr>
+                  <th class="presc-th-drag" id="presc-th-drag" style="display:none;"></th>
                   <th class="presc-th-num">#</th>
                   <th class="presc-th-farm">Fármaco / Item</th>
                   <th class="presc-th-dose">Dose</th>
@@ -535,11 +536,12 @@
           </div>
 
           <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-            <button class="btn btn-pri btn-sm" onclick="addItemPrescricao()">+ Adicionar item</button>
-            <button class="btn btn-sec btn-sm" onclick="addItemPrescricaoEspecial('dieta')">+ Dieta</button>
-            <button class="btn btn-sec btn-sm" onclick="addItemPrescricaoEspecial('sn')">+ Medicamento SN</button>
-            <button class="btn btn-sec btn-sm" onclick="addItemPrescricaoEspecial('cuidados')">+ Cuidados gerais</button>
+            <button class="btn btn-pri btn-sm" onclick="abrirModalRxItem(null)">+ Adicionar item</button>
+            <button class="btn btn-sec btn-sm" onclick="abrirModalRxItem(null,'dieta')">+ Dieta</button>
+            <button class="btn btn-sec btn-sm" onclick="abrirModalRxItem(null,'sn')">+ SN</button>
+            <button class="btn btn-sec btn-sm" onclick="abrirModalRxItem(null,'cuidados')">+ Cuidados</button>
             <div style="flex:1;"></div>
+            <button class="btn btn-sec btn-sm" onclick="_rxModoReordenar()" id="btn-rx-reordenar" title="Ativar modo de reordenação manual">⠿ Reordenar</button>
             <button class="btn btn-pri btn-sm" onclick="salvarPrescricao()">⌘ Salvar prescrição</button>
             <button class="btn btn-sec btn-sm" onclick="imprimirPrescricao()">🖨 Imprimir</button>
           </div>
@@ -1376,6 +1378,107 @@
 <!-- Autocomplete flutuante — deve ficar no body para não ser cortado por overflow -->
 <div id="rx-autocomplete" class="rx-autocomplete" style="display:none;position:fixed;z-index:9999;"></div>
 
+
+
+<!-- ═══════════ MODAL ITEM PRESCRIÇÃO ═══════════ -->
+<div class="modal" id="modal-rx-item">
+  <div class="modal-c" style="max-width:620px;">
+    <div class="modal-h">
+      <h3 id="modal-rx-titulo">Adicionar item</h3>
+      <button class="btn-close" onclick="fecharModalRxItem()">×</button>
+    </div>
+    <div class="modal-b">
+
+      <!-- CAMPO PRINCIPAL: FÁRMACO com autocomplete -->
+      <div class="fl" style="position:relative;">
+        <label>Fármaco / Item <span style="color:var(--vinho);">*</span></label>
+        <input type="text" id="mrx-farm" placeholder="DIGITE O NOME DO MEDICAMENTO..."
+          style="font-size:1rem;font-weight:700;text-transform:uppercase;"
+          autocomplete="off"
+          oninput="_mrxAcInput(this)" onblur="setTimeout(_mrxAcFechar,150)"
+          onkeydown="_mrxAcKey(event)">
+        <div id="mrx-ac" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:600;
+          background:#fff;border:1.5px solid var(--vinho-borda);border-radius:10px;
+          box-shadow:0 8px 24px rgba(92,10,24,.18);max-height:220px;overflow-y:auto;"></div>
+      </div>
+
+      <!-- GRADE: Quantidade + Apresentação + Via -->
+      <div class="dc" style="gap:10px;">
+        <div class="fl" style="flex:0 0 70px;">
+          <label>Qtd.</label>
+          <input type="text" id="mrx-qtd" placeholder="1">
+        </div>
+        <div class="fl" style="flex:1;">
+          <label>Apresentação</label>
+          <select id="mrx-apres"></select>
+        </div>
+        <div class="fl" style="flex:1;">
+          <label>Via <span style="color:var(--vinho);">*</span></label>
+          <select id="mrx-via" onchange="_mrxViaChange()"></select>
+        </div>
+      </div>
+
+      <!-- Dose -->
+      <div class="fl">
+        <label>Dose <span style="color:var(--vinho);" id="mrx-dose-req">*</span></label>
+        <input type="text" id="mrx-dose" placeholder="EX: 1G, 500MG, 10ML..."
+          style="text-transform:uppercase;font-weight:600;">
+      </div>
+
+      <!-- Diluente (aparece só para EV/IM) -->
+      <div class="fl" id="mrx-dil-wrap" style="display:none;">
+        <label style="color:#1d4ed8;font-weight:700;">Diluente</label>
+        <input type="text" id="mrx-dil" placeholder="EX: + 100ML SF 0,9%"
+          style="text-transform:uppercase;background:#eff6ff;border-color:#93c5fd;">
+      </div>
+
+      <!-- Frequência -->
+      <div class="fl">
+        <label>Frequência <span style="color:var(--vinho);">*</span></label>
+        <select id="mrx-freq" onchange="_mrxFreqChange()"></select>
+      </div>
+
+      <!-- Horários -->
+      <div class="fl" id="mrx-hor-wrap">
+        <label>Horários</label>
+        <div id="mrx-horarios" class="rx-horarios" style="margin-top:4px;"></div>
+      </div>
+
+      <!-- Observações -->
+      <div class="fl">
+        <label>Observações</label>
+        <textarea id="mrx-obs" rows="2" placeholder="TEMPO DE INFUSÃO, OBSERVAÇÕES ESPECIAIS..."
+          style="text-transform:uppercase;"></textarea>
+      </div>
+
+      <!-- Categoria (auto-detectada, editável) -->
+      <div class="fl" style="display:flex;gap:10px;align-items:flex-end;">
+        <div style="flex:1;">
+          <label>Categoria</label>
+          <select id="mrx-cat">
+            <option>Medicação Geral</option>
+            <option>ATB</option>
+            <option>Dieta</option>
+            <option>Hidratação</option>
+            <option>Droga Vasoativa</option>
+            <option>Sedação</option>
+            <option>Protocolo</option>
+            <option>Cuidados</option>
+          </select>
+        </div>
+        <div id="mrx-cat-badge" style="flex-shrink:0;padding:4px 10px;border-radius:8px;
+          font-size:.72rem;font-weight:700;margin-bottom:1px;"></div>
+      </div>
+
+      <div class="form-actions" style="margin-top:16px;">
+        <button class="btn btn-pri" id="mrx-btn-salvar" onclick="_mrxSalvar()">✓ Confirmar item</button>
+        <button class="btn" onclick="fecharModalRxItem()">Cancelar</button>
+        <div style="flex:1;"></div>
+        <div id="mrx-apoio-inline" style="font-size:.75rem;color:var(--muted);text-align:right;"></div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ═══════════ MODAL DE GESTÃO DO LEITO (alta / óbito / transferência) ═══════════ -->
 <div class="modal" id="modal-gestao-leito">
