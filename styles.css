@@ -1153,9 +1153,7 @@ details[open] .sol-hist-rotina-sum::before{ content:'▼'; }
 .rx-hist-btn-usar:hover{background:rgba(122,16,32,.18);}
 
 
-/* ── MODAL ITEM PRESCRIÇÃO ───────────────────────────────────────────────── */
-#mrx-farm{ letter-spacing:.02em; }
-#mrx-farm::placeholder{ font-weight:400; letter-spacing:normal; }
+/* ── MODAL ITEM PRESCRIÇÃO — ver .mrx-* abaixo ── */
 
 /* ── REORDENAÇÃO DRAG-AND-DROP ───────────────────────────────────────────── */
 .presc-th-drag{ width:28px; }
@@ -1175,4 +1173,194 @@ tr.rx-drag-over td{ border-top:2px solid var(--vinho) !important; }
 .presc-table tbody tr.rx-editavel{ cursor:pointer; }
 .presc-table tbody tr.rx-editavel:hover td.td-farm::after{
   content:' ✏'; font-size:.7rem; color:var(--muted);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   MODAL ITEM PRESCRIÇÃO — layout desktop em 2 colunas
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Overlay e painel */
+#modal-rx-item{
+  align-items:center; justify-content:center; padding:0;
+  backdrop-filter:blur(3px);
+}
+.mrx-panel{
+  background:#fff; border-radius:14px; width:min(920px, 96vw);
+  box-shadow:0 24px 60px rgba(0,0,0,.22), 0 0 0 1px rgba(122,16,32,.08);
+  display:flex; flex-direction:column; overflow:hidden;
+  animation:mrxIn .18s ease;
+}
+@keyframes mrxIn{
+  from{opacity:0;transform:translateY(10px) scale(.98);}
+  to{opacity:1;transform:none;}
+}
+
+/* Cabeçalho */
+.mrx-hdr{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 20px 12px;
+  background:linear-gradient(135deg, var(--vinho) 0%, #9c1b2e 100%);
+  color:#fff; flex-shrink:0;
+}
+.mrx-hdr-left{ display:flex; align-items:center; gap:12px; }
+.mrx-hdr-icon{
+  font-size:1.6rem; font-weight:900; color:rgba(255,255,255,.9);
+  font-style:italic; letter-spacing:-.04em; line-height:1;
+  background:rgba(255,255,255,.15); border-radius:8px;
+  width:38px; height:38px; display:flex; align-items:center; justify-content:center;
+}
+.mrx-hdr-title{ font-size:.95rem; font-weight:700; letter-spacing:.01em; }
+.mrx-hdr-sub{
+  font-size:.7rem; font-weight:600; margin-top:2px;
+  background:rgba(255,255,255,.2); border-radius:10px;
+  padding:1px 8px; display:inline-block; letter-spacing:.04em;
+}
+.mrx-close{
+  background:rgba(255,255,255,.15); border:none; color:#fff;
+  width:30px; height:30px; border-radius:50%; cursor:pointer;
+  font-size:1.2rem; line-height:1; display:flex; align-items:center;
+  justify-content:center; transition:.15s;
+}
+.mrx-close:hover{ background:rgba(255,255,255,.3); }
+
+/* Campo fármaco em destaque */
+.mrx-farm-wrap{
+  position:relative; padding:14px 20px 10px;
+  border-bottom:1px solid var(--borda);
+  background:#fdfcfc; flex-shrink:0;
+}
+.mrx-farm-label{
+  font-size:.65rem; font-weight:800; letter-spacing:.12em;
+  color:var(--vinho); margin-bottom:5px;
+}
+.mrx-farm-input{
+  width:100%; border:2px solid var(--borda); border-radius:8px;
+  padding:10px 14px; font-size:1.05rem; font-weight:700;
+  font-family:inherit; text-transform:uppercase;
+  color:var(--tinta); background:#fff;
+  transition:border-color .15s, box-shadow .15s;
+  letter-spacing:.02em;
+}
+.mrx-farm-input:focus{
+  outline:none; border-color:var(--vinho);
+  box-shadow:0 0 0 3px rgba(122,16,32,.1);
+}
+.mrx-farm-input::placeholder{ font-weight:400; letter-spacing:normal; color:#b0b8c4; }
+
+/* Autocomplete do modal */
+.mrx-ac-drop{
+  position:absolute; top:calc(100% - 10px); left:20px; right:20px; z-index:600;
+  background:#fff; border:1.5px solid var(--vinho-borda);
+  border-radius:10px; box-shadow:0 8px 30px rgba(92,10,24,.18);
+  max-height:240px; overflow-y:auto;
+}
+
+/* Corpo 2 colunas */
+.mrx-body{
+  display:grid; grid-template-columns:1fr 3px 280px;
+  gap:0; overflow-y:auto; max-height:calc(100vh - 260px);
+}
+.mrx-col{ padding:16px 20px; display:flex; flex-direction:column; gap:12px; }
+.mrx-col-hor{ padding:16px 18px; }
+.mrx-divider{ background:var(--borda); flex-shrink:0; }
+.mrx-section-label{
+  font-size:.62rem; font-weight:800; letter-spacing:.12em;
+  color:var(--muted); margin-bottom:-2px;
+}
+
+/* Campos internos */
+.mrx-field{ display:flex; flex-direction:column; gap:4px; }
+.mrx-lbl{
+  font-size:.71rem; font-weight:700; color:#4b5563;
+  letter-spacing:.02em; text-transform:uppercase;
+}
+.mrx-req{ color:var(--vinho); }
+.mrx-input{
+  border:1.5px solid #d1d5db; border-radius:7px;
+  padding:7px 10px; font-size:.88rem; font-family:inherit;
+  color:var(--tinta); background:#fff; text-transform:uppercase;
+  transition:border-color .15s, box-shadow .15s;
+}
+.mrx-input:focus{
+  outline:none; border-color:var(--vinho);
+  box-shadow:0 0 0 2px rgba(122,16,32,.1);
+}
+.mrx-input::placeholder{ color:#b0b8c4; text-transform:none; font-weight:400; }
+.mrx-input-sm{ width:52px; text-align:center; font-weight:700; }
+.mrx-input-dose{
+  font-size:.95rem; font-weight:700; border-width:2px;
+  letter-spacing:.03em;
+}
+.mrx-input-dose::placeholder{ font-size:.8rem; font-weight:400; }
+.mrx-select{
+  border:1.5px solid #d1d5db; border-radius:7px;
+  padding:7px 10px; font-size:.86rem; font-family:inherit;
+  color:var(--tinta); background:#fff; cursor:pointer;
+  transition:border-color .15s;
+}
+.mrx-select:focus{ outline:none; border-color:var(--vinho); }
+.mrx-textarea{
+  border:1.5px solid #d1d5db; border-radius:7px;
+  padding:7px 10px; font-size:.83rem; font-family:inherit;
+  color:var(--tinta); background:#fff; resize:vertical;
+  min-height:54px; text-transform:uppercase;
+  transition:border-color .15s;
+}
+.mrx-textarea:focus{ outline:none; border-color:var(--vinho); }
+.mrx-textarea::placeholder{ text-transform:none; color:#b0b8c4; }
+
+/* Linha qtd + apres + via */
+.mrx-row3{ display:flex; gap:8px; align-items:flex-end; }
+.mrx-row3 .mrx-field{ flex:1; }
+
+/* Diluente */
+.mrx-dil-field{ background:#eff6ff; border-radius:8px; padding:8px 10px; }
+.mrx-lbl-dil{ color:#1d4ed8; }
+.mrx-input-dil{
+  background:transparent; border-color:#93c5fd;
+  color:#1e3a5f; font-weight:600;
+}
+.mrx-input-dil:focus{ border-color:#1d4ed8; box-shadow:0 0 0 2px rgba(29,78,216,.1); }
+
+/* Horários */
+.mrx-hor-grid{
+  display:flex; flex-wrap:wrap; gap:5px;
+}
+.mrx-hor-grid .rx-hor-chip{
+  font-size:.72rem; padding:4px 8px;
+}
+.mrx-apoio-txt{ font-size:.72rem; color:var(--muted); margin-top:8px; }
+
+/* Rodapé */
+.mrx-footer{
+  padding:12px 20px; border-top:1px solid var(--borda);
+  display:flex; justify-content:flex-end; gap:8px;
+  background:#fafafa; flex-shrink:0;
+}
+.mrx-btn-cancel{
+  background:#fff; border:1.5px solid #d1d5db; border-radius:8px;
+  padding:8px 18px; font-size:.86rem; font-family:inherit;
+  color:#4b5563; cursor:pointer; transition:.15s;
+}
+.mrx-btn-cancel:hover{ background:#f3f4f6; border-color:#9ca3af; }
+.mrx-btn-confirm{
+  background:var(--vinho); border:none; border-radius:8px;
+  padding:9px 24px; font-size:.88rem; font-family:inherit;
+  color:#fff; cursor:pointer; font-weight:700;
+  display:flex; align-items:center; gap:6px;
+  box-shadow:0 2px 8px rgba(122,16,32,.25);
+  transition:all .15s;
+}
+.mrx-btn-confirm:hover{
+  background:#6b0e1c;
+  box-shadow:0 4px 14px rgba(122,16,32,.35);
+  transform:translateY(-1px);
+}
+
+/* Mobile: colapsa para coluna única */
+@media(max-width:640px){
+  .mrx-panel{ border-radius:10px 10px 0 0; position:fixed; bottom:0; left:0; right:0; width:100%; }
+  .mrx-body{ grid-template-columns:1fr; max-height:60vh; }
+  .mrx-divider{ height:1px; width:auto; }
+  .mrx-col-hor{ border-top:1px solid var(--borda); }
 }
