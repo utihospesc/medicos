@@ -1497,3 +1497,25 @@ tr.rx-drag-over td{ border-top:2px solid var(--vinho) !important; }
 .dev-meta-chip input[type=checkbox]{ display:none; }
 .dev-meta-chip:has(input:checked){ background:#16a34a; color:#fff; border-color:#15803d; }
 .dev-meta-chip input:checked + span{ color:#fff; }
+
+/* ── SVG ICONS NOS GRUPOS DO CHECKLIST DIARISTA ─────────────────────────── */
+.dev-chk-ico{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:28px; height:28px; border-radius:7px; flex-shrink:0;
+  margin-right:6px; vertical-align:middle;
+}
+.dev-chk-ico svg{ display:block; }
+.dev-chk-ico.neuro{ background:#7c3aed; color:#fff; }
+.dev-chk-ico.vent{  background:#0369a1; color:#fff; }
+.dev-chk-ico.nut{   background:#d97706; color:#fff; }
+.dev-chk-ico.inf{   background:#dc2626; color:#fff; }
+.dev-chk-ico.multi{ background:#166534; color:#fff; }
+
+.dev-checklist-hdr{ display:flex; align-items:center; }
+
+/* Dropdown readonly — cores dos grupos */
+.dev-ro-chk-hdr-neuro::before{ content:''; display:inline-block; width:8px; height:8px; background:#7c3aed; border-radius:50%; margin-right:6px; }
+.dev-ro-chk-hdr-vent::before{  content:''; display:inline-block; width:8px; height:8px; background:#0369a1; border-radius:50%; margin-right:6px; }
+.dev-ro-chk-hdr-nut::before{   content:''; display:inline-block; width:8px; height:8px; background:#d97706; border-radius:50%; margin-right:6px; }
+.dev-ro-chk-hdr-inf::before{   content:''; display:inline-block; width:8px; height:8px; background:#dc2626; border-radius:50%; margin-right:6px; }
+.dev-ro-chk-hdr-multi::before{ content:''; display:inline-block; width:8px; height:8px; background:#166534; border-radius:50%; margin-right:6px; }
