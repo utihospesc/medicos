@@ -879,6 +879,15 @@ function _recalcSAPS(){
   return r;
 }
 
+// Mostra/oculta campo de especificação de DVA conforme seleção
+function _toggleDVAcampo(){
+  const wrap = $('f-dva-campo-wrap');
+  if(!wrap) return;
+  const val = gf('f-dva');
+  wrap.style.display = (val === 'SIM') ? '' : 'none';
+  if(val !== 'SIM'){ sf('f-dva-qual',''); }
+}
+
 function _coletarDadosSAPS(){
   const num = id => { const v=gf(id); return v===''?null:Number(v); };
   // Fisiológicos da evolução (campos do formulário)
@@ -1395,7 +1404,8 @@ function _preencherEvolucao(ev, herdado){
   sf('f-ef-pupilas',ev.pupilas||''); sf('f-ef-acv',ev.acv||''); sf('f-ef-ar',ev.ar||'');
   sf('f-ef-abd',ev.abd||''); sf('f-ef-ext',ev.ext||''); sf('f-ef-pele',ev.pele||''); sf('f-ef-genital',ev.genital||'');
   sf('f-acessos',ev.acessos||''); sf('f-dispositivos',ev.dispositivos||''); sf('f-dieta',ev.dieta||'');
-  sf('f-dva',ev.dva||'NAO'); sf('f-sedacao',ev.sedacao||''); sf('f-transfusao',ev.transfusao||'');
+  sf('f-dva',ev.dva||'NAO'); sf('f-dva-qual',ev.dvaQual||''); _toggleDVAcampo();
+  sf('f-sedacao',ev.sedacao||''); sf('f-transfusao',ev.transfusao||'');
   sf('f-vent',ev.vent||'AA'); sf('f-vent-param',ev.ventParam||''); sf('f-pao2',ev.pao2||'');
   sf('f-fio2',ev.fio2||''); sf('f-ph',ev.ph||''); sf('f-gaso',ev.gaso||'');
   sf('f-imagem',ev.imagem||''); sf('f-condutas',ev.condutas||'');
@@ -1420,7 +1430,7 @@ function coletarDados(){
     acv:gf('f-ef-acv'), ar:gf('f-ef-ar'), abd:gf('f-ef-abd'), ext:gf('f-ef-ext'),
     pele:gf('f-ef-pele'), genital:gf('f-ef-genital'),
     acessos:gf('f-acessos'), dispositivos:gf('f-dispositivos'), dieta:gf('f-dieta'),
-    dva:gf('f-dva'), sedacao:gf('f-sedacao'), transfusao:gf('f-transfusao'),
+    dva:gf('f-dva'), dvaQual:gf('f-dva-qual'), sedacao:gf('f-sedacao'), transfusao:gf('f-transfusao'),
     vent:gf('f-vent'), ventParam:gf('f-vent-param'), pao2:n('f-pao2'), fio2:n('f-fio2'),
     ph:n('f-ph'), gaso:gf('f-gaso'), imagem:gf('f-imagem'), condutas:gf('f-condutas'),
     microorg:gf('f-microorg'), culturas:_culturasForm, labLinhas:_labLinhas,
@@ -2028,7 +2038,7 @@ function _montarTextoEstruturado(d){
   if(d.ar) ef.push('AR: '+d.ar); if(d.abd) ef.push('ABD: '+d.abd); if(d.ext) ef.push('EXT: '+d.ext);
   if(ef.length) p.push('Ao exame: '+ef.join('; ')+'.');
   if(d.vent && d.vent!=='AA') p.push(`Suporte ventilatório: ${_ventTexto(d.vent)}${d.ventParam?' ('+d.ventParam+')':''}.`);
-  if(d.dva==='SIM') p.push('Em uso de droga vasoativa.');
+  if(d.dva==='SIM') p.push('Em uso de droga vasoativa'+(d.dvaQual?' ('+d.dvaQual+')':'')+'.'); 
   if(d.atb && !/sem atb/i.test(d.atb)) p.push('Antibioticoterapia: '+d.atb+'.');
   if(d.microorg) p.push('Culturas: '+d.microorg+'.');
   if(d.condutas) p.push('Condutas: '+d.condutas);
@@ -2069,7 +2079,7 @@ function abrirPreview(){
     <div class="pv-secao">Exame Físico</div>
     <div>${[['Ecto',d.ecto],['Neuro',d.neuro],['Pupilas',d.pupilas],['ACV',d.acv],['AR',d.ar],['ABD',d.abd],['EXT',d.ext],['Pele',d.pele]].filter(x=>x[1]).map(x=>`<strong>${x[0]}:</strong> ${x[1]}`).join(' · ')||'—'}</div>
     <div class="pv-secao">Dispositivos & Suporte</div>
-    <div>Acessos: ${d.acessos||'—'} · Dispositivos: ${d.dispositivos||'—'} · Dieta: ${d.dieta||'—'} · DVA: ${d.dva==='SIM'?'Sim':'Não'} · Ventilação: ${_ventTexto(d.vent)}${d.ventParam?' ('+d.ventParam+')':''}</div>
+    <div>Acessos: ${d.acessos||'—'} · Dispositivos: ${d.dispositivos||'—'} · Dieta: ${d.dieta||'—'} · DVA: ${d.dva==='SIM'?'Sim'+(d.dvaQual?' ('+d.dvaQual+')':''):'Não'} · Ventilação: ${_ventTexto(d.vent)}${d.ventParam?' ('+d.ventParam+')':''}</div>
     ${d.gaso?`<div class="pv-secao">Gasometria</div><div>${d.gaso}</div>`:''}
     <div class="pv-secao">Culturas</div><div>${cult}</div>
     ${labTab?`<div class="pv-secao">Exames Laboratoriais</div>${labTab}`:''}
@@ -6889,24 +6899,25 @@ function _imprimirParecerObj(p){
   <title>Requisição de Parecer — ${p.pac||''}</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0;}
-    body{font-family:'Times New Roman',Times,serif;font-size:11pt;color:#000;background:#fff;}
-    @page{size:A4 portrait;margin:2cm 2.2cm 2cm 2.2cm;}
-    .cab{text-align:center;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:14px;}
-    .cab-inst{font-size:9.5pt;font-weight:700;letter-spacing:.04em;}
-    .cab-titulo{font-size:13pt;font-weight:800;margin:4px 0;letter-spacing:.06em;text-transform:uppercase;}
-    .cab-sub{font-size:10pt;font-weight:700;text-decoration:underline;letter-spacing:.04em;}
+    body{font-family:'Times New Roman',Times,serif;font-size:9.5pt;color:#000;background:#fff;}
+    @page{size:A4 portrait;margin:1.2cm 1.5cm 1.2cm 1.5cm;}
+    html,body{height:auto;overflow:visible;}
+    .cab{text-align:center;border-bottom:2px solid #000;padding-bottom:5px;margin-bottom:8px;}
+    .cab-inst{font-size:8pt;font-weight:700;letter-spacing:.04em;}
+    .cab-titulo{font-size:11pt;font-weight:800;margin:3px 0;letter-spacing:.06em;text-transform:uppercase;}
+    .cab-sub{font-size:9pt;font-weight:700;text-decoration:underline;letter-spacing:.04em;}
     table.ident{width:100%;border-collapse:collapse;margin-bottom:0;}
-    table.ident td{border:1.5px solid #000;padding:4px 8px;font-size:10pt;vertical-align:top;}
-    .lbl{font-size:8pt;font-weight:700;display:block;margin-bottom:1px;letter-spacing:.04em;}
-    .val{font-size:10.5pt;font-weight:700;}
+    table.ident td{border:1.5px solid #000;padding:3px 7px;font-size:9pt;vertical-align:top;}
+    .lbl{font-size:7pt;font-weight:700;display:block;margin-bottom:1px;letter-spacing:.04em;}
+    .val{font-size:9.5pt;font-weight:700;}
     .bloco{border:1.5px solid #000;border-top:none;width:100%;}
-    .bloco-inner{padding:6px 10px;min-height:28px;font-size:10pt;line-height:1.55;}
-    .bloco-lbl{background:#000;color:#fff;font-size:8.5pt;font-weight:800;padding:3px 10px;letter-spacing:.06em;text-transform:uppercase;}
-    .rodape{margin-top:20px;display:flex;justify-content:space-between;align-items:flex-end;}
+    .bloco-inner{padding:4px 8px;min-height:20px;font-size:9pt;line-height:1.45;}
+    .bloco-lbl{background:#000;color:#fff;font-size:7.5pt;font-weight:800;padding:2px 8px;letter-spacing:.06em;text-transform:uppercase;}
+    .rodape{margin-top:10px;display:flex;justify-content:space-between;align-items:flex-end;}
     .assin{text-align:center;}
-    .assin-linha{border-top:1.5px solid #000;padding-top:3px;font-size:9pt;min-width:200px;margin-top:40px;}
-    .parecer-box{border:1.5px solid #000;border-top:none;min-height:120px;padding:8px 10px;}
-    @media print{body{margin:0;}}
+    .assin-linha{border-top:1.5px solid #000;padding-top:3px;font-size:8pt;min-width:180px;margin-top:28px;}
+    .parecer-box{border:1.5px solid #000;border-top:none;min-height:80px;padding:6px 8px;}
+    @media print{body{margin:0;}*{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
   </style></head><body>
 
   <!-- Cabeçalho institucional -->
@@ -6972,7 +6983,7 @@ function _imprimirParecerObj(p){
 
   <!-- Data e assinatura -->
   <div class="rodape">
-    <div style="font-size:10pt;">Data: ${dataFmt}</div>
+    <div style="font-size:9pt;">Data: ${dataFmt}</div>
     <div class="assin">
       <div class="assin-linha">
         ${_esc((p.medNome||'').toUpperCase())}${p.medCrm?' &nbsp;|&nbsp; CRM '+_esc(p.medCrm):''}<br>
@@ -6982,7 +6993,7 @@ function _imprimirParecerObj(p){
   </div>
 
   <!-- Espaço para o Parecer -->
-  <div style="margin-top:18px;">
+  <div style="margin-top:10px;">
     <div class="bloco-lbl" style="border:1.5px solid #000;border-bottom:none;">PARECER</div>
     <div class="parecer-box"></div>
   </div>
