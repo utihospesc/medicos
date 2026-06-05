@@ -246,6 +246,7 @@ const _PREFIXOS_LEITO = [
   'uti_med_sol_cult_',     // solicitações de cultura
   'uti_med_parecer_',       // pareceres
   'uti_med_trilogy_',       // plano terapêutico trilogy
+  'uti_med_me_',            // termo morte encefálica
   'uti_med_diarista_',     // evoluções diarista
   'uti_med_termo_',        // termos/consentimentos
   'uti_med_adm_log_',      // log de admissão
@@ -4766,16 +4767,23 @@ async function _renderGuiasFichas(){
     const hemos    = await dbListByPrefix(`uti_med_hemo_ficha_${leitoAtual}_`);
     const termos   = await dbListByPrefix(`uti_med_termo_${leitoAtual}_`);
     const trilogys = await dbListByPrefix(`uti_med_trilogy_${leitoAtual}_`);
+    const mes     = await dbListByPrefix(`uti_med_me_${leitoAtual}_`);
     const arr=[
       ...Object.entries(atbs).map(([k,v])=>({key:k,...v, _tipo:'atb'})),
       ...Object.entries(hemos).map(([k,v])=>({key:k,...v, _tipo:'hemo'})),
       ...Object.entries(termos).map(([k,v])=>({key:k,...v, _tipo:'termo'})),
-      ...Object.entries(trilogys).map(([k,v])=>({key:k,...v, _tipo:'trilogy'}))
+      ...Object.entries(trilogys).map(([k,v])=>({key:k,...v, _tipo:'trilogy'})),
+      ...Object.entries(mes).map(([k,v])=>({key:k,...v, _tipo:'me'}))
     ].filter(x=>x.pac||x.nome||x.resp).sort((a,b)=>(b.salvadoEm||'').localeCompare(a.salvadoEm||''));
     if(!arr.length){ w.innerHTML='<span style="font-size:.8rem;color:var(--muted);">Nenhuma ficha salva.</span>'; return; }
     w.innerHTML=arr.map(f=>{
       let icon, titulo, edit, impr;
-      if(f._tipo==='trilogy'){
+      if(f._tipo==='me'){
+        icon='🧠';
+        titulo=`Morte Encefálica: ${(f.pac||'').split(' ').slice(0,2).join(' ')||'—'}`;
+        edit=`_abrirMEExistente('${f.key}')`;
+        impr=`_imprimirMEChave('${f.key}')`;
+      } else if(f._tipo==='trilogy'){
         icon='🫁';
         titulo=`Plano Terapêutico (Trilogy): ${(f.pac||'').split(' ').slice(0,2).join(' ')||'—'}`;
         edit=`_abrirTrilogyExistente('${f.key}')`;
@@ -7244,6 +7252,432 @@ function _imprimirTrilogyObj(t){
   const w = window.open('', '_blank', 'width=850,height=1050');
   if(w){ w.document.write(html); w.document.close(); }
   else toast('Popup bloqueado — permita popups para imprimir.', true);
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   IMPRIMIR TODAS AS PRESCRIÇÕES (tela de leitos)
+   ════════════════════════════════════════════════════════════════════════════ */
+async function imprimirTodasPrescricoes(){
+  showLoading('Carregando prescrições...');
+  try{
+    const ld = await _getLeitos();
+    const data = hoje();
+    const htmls = [];
+    for(let i=1; i<=TOTAL_LEITOS; i++){
+      const L = ld[i]||{};
+      if(!L.ocupado || !L.pac) continue;
+      // Tenta prescrição de hoje; senão pega a mais recente
+      let saved = await dbGet(`uti_med_rx_${i}_${data}`);
+      if(!saved || !saved.itens || !saved.itens.length){
+        const todas = await dbListByPrefix(`uti_med_rx_${i}_`);
+        const ord = Object.values(todas).filter(r=>r&&r.itens&&r.itens.length)
+          .sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+        saved = ord[0] || null;
+      }
+      if(!saved || !saved.itens || !saved.itens.length) continue;
+      // Usa _gerarHtmlPrescricao mas com dados do leito i (não do formulário aberto)
+      const itens = saved.itens;
+      const pac   = L.pac || '';
+      const leito = pad(i);
+      const dataRx= saved.data || data;
+      const med   = saved.medNome || '';
+      const crm   = saved.medCrm  || '';
+      const linhas = itens.map((it,idx)=>{
+        const dose=[it.qtd,(it.apres&&it.apres!=='—'?it.apres:''),(it.dose&&it.dose!=='—'?it.dose:'')]
+          .filter(Boolean).join(' ')||'—';
+        const hors=_ordenarHorarios(it.hor||[]).join(' · ')||'—';
+        const bg=it.tipo==='dieta'?'#f0f7f0':it.tipo==='sn'?'#fffde7':it.tipo==='cuidados'?'#f5f5f5':'white';
+        const dBadge=it._cat==='ATB'&&it._ddia!=null
+          ?`<span style="background:${it._ddia>=10?'#b71c1c':it._ddia>=7?'#e65100':'#1565c0'};color:white;font-size:6pt;font-weight:800;padding:1px 5px;border-radius:4px;margin-left:5px;">D${it._ddia}</span>`:''
+        return `<tr style="background:${bg};"><td style="padding:4px 6px;border:1px solid #ccc;width:22px;color:#888;font-size:8pt;">${idx+1}</td>
+          <td style="padding:4px 6px;border:1px solid #ccc;font-weight:600;">${(it.farm||'—').toUpperCase()}${dBadge}${it.diluicao?`<div style="font-size:7pt;color:#1d4ed8;font-weight:600;">Diluente: ${it.diluicao.toUpperCase()}</div>`:''}</td>
+          <td style="padding:4px 6px;border:1px solid #ccc;">${dose.toUpperCase()}</td>
+          <td style="padding:4px 6px;border:1px solid #ccc;">${(it.via||'—').toUpperCase()}</td>
+          <td style="padding:4px 6px;border:1px solid #ccc;">${(it.freq||'—').toUpperCase()}</td>
+          <td style="padding:4px 6px;border:1px solid #ccc;font-size:8pt;">${hors}</td>
+          <td style="padding:4px 6px;border:1px solid #ccc;font-size:8pt;">${(it.obs||'').toUpperCase()}</td></tr>`;
+      }).join('');
+      htmls.push(`
+      <div style="font-family:'Arial Narrow',Arial,sans-serif;font-size:9pt;padding:0 4px;page-break-after:always;">
+        <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #7a1020;padding-bottom:6px;margin-bottom:8px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <img src="logo.png" alt="" style="height:44px;width:auto;" onerror="this.style.display='none'">
+            <div><div style="font-weight:800;color:#7a1020;font-size:11pt;">PRESCRIÇÃO MÉDICA — UTI GERAL</div>
+            <div style="font-size:7.5pt;color:#555;">HOSPITAL DOS PESCADORES · NATAL/RN</div></div>
+          </div>
+          <div style="text-align:right;font-size:8pt;color:#444;"><strong>DATA:</strong> ${_fmtDataCurta(dataRx)||'—'}&nbsp;&nbsp;<strong>LEITO:</strong> ${leito}</div>
+        </div>
+        <div style="margin-bottom:8px;font-size:9pt;"><strong>Paciente:</strong> ${pac.toUpperCase()}</div>
+        <table style="width:100%;border-collapse:collapse;font-size:8.5pt;">
+          <thead><tr style="background:#7a1020;color:white;">
+            <th style="padding:4px 6px;text-align:left;font-size:7.5pt;">#</th>
+            <th style="padding:4px 6px;text-align:left;font-size:7.5pt;">FÁRMACO / ITEM</th>
+            <th style="padding:4px 6px;text-align:left;font-size:7.5pt;">DOSE/APRES</th>
+            <th style="padding:4px 6px;text-align:left;font-size:7.5pt;">VIA</th>
+            <th style="padding:4px 6px;text-align:left;font-size:7.5pt;">FREQ</th>
+            <th style="padding:4px 6px;text-align:left;font-size:7.5pt;">HORÁRIOS</th>
+            <th style="padding:4px 6px;text-align:left;font-size:7.5pt;">OBS</th>
+          </tr></thead>
+          <tbody>${linhas}</tbody>
+        </table>
+        <div style="margin-top:24px;display:flex;justify-content:flex-end;">
+          <div style="text-align:center;">
+            <div style="border-top:1px solid #555;width:220px;padding-top:4px;font-size:8pt;">
+              ${med?med.toUpperCase()+'<br>':''}${crm?'CRM '+crm:'Médico Responsável'}
+            </div>
+          </div>
+        </div>
+      </div>`);
+    }
+    hideLoading();
+    if(!htmls.length){ toast('Nenhum leito com prescrição encontrado.',true); return; }
+    _abrirJanelaBranca(htmls.join(''), `Prescrições — ${_fmtDataCurta(data)} (${htmls.length} leitos)`);
+  }catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   TERMO DE DECLARAÇÃO DE MORTE ENCEFÁLICA — CFM 2.173/2017
+   ════════════════════════════════════════════════════════════════════════════ */
+
+function abrirModalMorteEncefalica(){
+  if(!leitoAtual){ toast('Abra o prontuário de um paciente.',true); return; }
+  // Pré-preenche dados do paciente
+  sf('me-pac',  (gf('f-pac')||'').toUpperCase());
+  sf('me-dn',   gf('f-dn')||'');
+  const sexoRaw = (gf('f-sexo')||'').toUpperCase();
+  const sexoEl = $('me-sexo');
+  if(sexoEl) sexoEl.value = sexoRaw.includes('FEM')?'FEM':sexoRaw.includes('MAS')?'MAS':'';
+  sf('me-mae',  '');
+  sf('me-diag1',(gf('f-diag')||'').toUpperCase());
+  sf('me-cid1', (gf('f-cid') ||'').toUpperCase());
+  sf('me-diag2','');
+  sf('me-cid2', '');
+  // Data padrão = hoje para os exames
+  const hj = hoje();
+  ['me-e1-data','me-e2-data','me-ap-data','me-ec-data'].forEach(id=>sf(id,hj));
+  $('modal-me').classList.add('show');
+}
+
+function fecharModalME(){ $('modal-me').classList.remove('show'); }
+
+function _gfMe(id){ const el=$(id); if(!el) return ''; return (el.value||'').trim(); }
+function _chkMe(id){ const el=$(id); return el?el.checked:false; }
+
+function _coletarME(){
+  return {
+    hosp: _gfMe('me-hosp'), cnes:_gfMe('me-cnes'), mun:_gfMe('me-mun'), uf:_gfMe('me-uf'),
+    pac:  _gfMe('me-pac'),  dn:_gfMe('me-dn'), sexo:_gfMe('me-sexo'),
+    mae:  _gfMe('me-mae'),  idTipo:_gfMe('me-id-tipo'), idNum:_gfMe('me-id-num'),
+    diag1:_gfMe('me-diag1'),cid1:_gfMe('me-cid1'),
+    diag2:_gfMe('me-diag2'),cid2:_gfMe('me-cid2'),
+    confTC:_chkMe('me-conf-tc'),confRM:_chkMe('me-conf-rm'),confAngio:_chkMe('me-conf-angio'),
+    confDTC:_chkMe('me-conf-dtc'),confLiquor:_chkMe('me-conf-liquor'),confEEG:_chkMe('me-conf-eeg'),
+    confOutro:_gfMe('me-conf-outro'),
+    pre1:_gfMe('me-pre1'),pre2:_gfMe('me-pre2'),pre3:_gfMe('me-pre3'),
+    pre4:_gfMe('me-pre4'),pre5:_gfMe('me-pre5'),pre6:_gfMe('me-pre6'),
+    e1Pa:_gfMe('me-e1-pa'),e1Temp:_gfMe('me-e1-temp'),e1Data:_gfMe('me-e1-data'),
+    e1Hora:_gfMe('me-e1-hora'),e1Coma:_gfMe('me-e1-coma'),
+    e1PupD:_gfMe('me-e1-pup-d'),e1PupE:_gfMe('me-e1-pup-e'),
+    e1CorD:_gfMe('me-e1-cor-d'),e1CorE:_gfMe('me-e1-cor-e'),
+    e1OcD:_gfMe('me-e1-oc-d'),e1OcE:_gfMe('me-e1-oc-e'),
+    e1VestD:_gfMe('me-e1-vest-d'),e1VestE:_gfMe('me-e1-vest-e'),
+    e1Tosse:_gfMe('me-e1-tosse'),e1Just:_gfMe('me-e1-just'),
+    e1Med:_gfMe('me-e1-med'),e1Crm:_gfMe('me-e1-crm'),
+    apPa:_gfMe('me-ap-pa'),apTemp:_gfMe('me-ap-temp'),apData:_gfMe('me-ap-data'),
+    apHora:_gfMe('me-ap-hora'),apPco2i:_gfMe('me-ap-pco2i'),apPco2f:_gfMe('me-ap-pco2f'),
+    apPo2i:_gfMe('me-ap-po2i'),apPo2f:_gfMe('me-ap-po2f'),apResp:_gfMe('me-ap-resp'),
+    apMed:_gfMe('me-ap-med'),apCrm:_gfMe('me-ap-crm'),
+    e2Pa:_gfMe('me-e2-pa'),e2Temp:_gfMe('me-e2-temp'),e2Data:_gfMe('me-e2-data'),
+    e2Hora:_gfMe('me-e2-hora'),e2Coma:_gfMe('me-e2-coma'),
+    e2PupD:_gfMe('me-e2-pup-d'),e2PupE:_gfMe('me-e2-pup-e'),
+    e2CorD:_gfMe('me-e2-cor-d'),e2CorE:_gfMe('me-e2-cor-e'),
+    e2OcD:_gfMe('me-e2-oc-d'),e2OcE:_gfMe('me-e2-oc-e'),
+    e2VestD:_gfMe('me-e2-vest-d'),e2VestE:_gfMe('me-e2-vest-e'),
+    e2Tosse:_gfMe('me-e2-tosse'),e2Just:_gfMe('me-e2-just'),
+    e2Med:_gfMe('me-e2-med'),e2Crm:_gfMe('me-e2-crm'),
+    ecPa:_gfMe('me-ec-pa'),ecTemp:_gfMe('me-ec-temp'),ecData:_gfMe('me-ec-data'),
+    ecHora:_gfMe('me-ec-hora'),
+    ecDTC:_chkMe('me-ec-dtc'),ecEEG:_chkMe('me-ec-eeg'),ecAngio:_chkMe('me-ec-angio'),
+    ecCintilo:_chkMe('me-ec-cintilo'),ecOutro:_gfMe('me-ec-outro'),ecRes:_gfMe('me-ec-res'),
+    ecMed:_gfMe('me-ec-med'),ecCrm:_gfMe('me-ec-crm'),
+    autor:usuarioEmail, autorNome:perfilUsuario?perfilUsuario.nome:'',
+    salvadoEm:new Date().toISOString(), data: hoje(),
+  };
+}
+
+async function salvarME(){
+  const m = _coletarME();
+  if(!m.pac){ toast('Informe o paciente.',true); return; }
+  if(!leitoAtual){ toast('Abra o prontuário.',true); return; }
+  showLoading('Salvando...');
+  try{
+    const key = `uti_med_me_${leitoAtual}_${m.data}_${Date.now()}`;
+    await dbSet(key, m);
+    hideLoading(); toast('✓ Termo de morte encefálica salvo.');
+    _renderGuiasFichas();
+  }catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
+}
+
+function imprimirME(){ _imprimirMEObj(_coletarME()); }
+
+async function _imprimirMEChave(key){
+  showLoading('Carregando...');
+  try{ const m=await dbGet(key); hideLoading(); if(m) _imprimirMEObj(m); }
+  catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
+}
+
+async function _abrirMEExistente(key){
+  showLoading('Carregando...');
+  try{
+    const m=await dbGet(key); hideLoading();
+    if(!m){toast('Não encontrado.',true);return;}
+    const ids=['hosp','cnes','mun','uf','pac','dn','mae','id-tipo','id-num',
+               'diag1','cid1','diag2','cid2',
+               'pre1','pre2','pre3','pre4','pre5','pre6',
+               'e1-pa','e1-temp','e1-data','e1-hora','e1-coma','e1-just','e1-med','e1-crm',
+               'e1-pup-d','e1-pup-e','e1-cor-d','e1-cor-e','e1-oc-d','e1-oc-e',
+               'e1-vest-d','e1-vest-e','e1-tosse',
+               'ap-pa','ap-temp','ap-data','ap-hora','ap-pco2i','ap-pco2f','ap-po2i','ap-po2f','ap-resp','ap-med','ap-crm',
+               'e2-pa','e2-temp','e2-data','e2-hora','e2-coma','e2-just','e2-med','e2-crm',
+               'e2-pup-d','e2-pup-e','e2-cor-d','e2-cor-e','e2-oc-d','e2-oc-e',
+               'e2-vest-d','e2-vest-e','e2-tosse',
+               'ec-pa','ec-temp','ec-data','ec-hora','ec-res','ec-med','ec-crm','ec-outro'];
+    ids.forEach(id=>{
+      const camel=id.replace(/-([a-z0-9])/g,(_,c)=>c.toUpperCase());
+      sf('me-'+id, m[camel]||'');
+    });
+    // sexo
+    const sx=$('me-sexo'); if(sx) sx.value=m.sexo||'';
+    // checkboxes conf
+    const chkMap={
+      'me-conf-tc':'confTC','me-conf-rm':'confRM','me-conf-angio':'confAngio',
+      'me-conf-dtc':'confDTC','me-conf-liquor':'confLiquor','me-conf-eeg':'confEEG',
+      'me-ec-dtc':'ecDTC','me-ec-eeg':'ecEEG','me-ec-angio':'ecAngio','me-ec-cintilo':'ecCintilo'
+    };
+    Object.entries(chkMap).forEach(([id,key])=>{ const el=$(id); if(el) el.checked=!!m[key]; });
+    $('modal-me').classList.add('show');
+  }catch(e){hideLoading();toast('Erro: '+(e.message||e),true);}
+}
+
+function _imprimirMEObj(m){
+  if(!m.pac){ toast('Informe o paciente antes de imprimir.',true); return; }
+  const _e = s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const _dn= s=>{ if(!s) return ''; const p=s.split('-'); return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:s; };
+  const _dt= s=>{ if(!s) return '___/___/______'; const p=s.split('-'); return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:s; };
+  const _mk= v=>v?'(X)':'( )';
+  const _sn= v=>v==='SIM'?'SIM(X) NÃO( )':v==='NAO'?'SIM( ) NÃO(X)':'SIM( ) NÃO( )';
+  const _ref=(d,e,nt)=>{ // d=direito, e=esquerdo, nt=tem opção NT?
+    const fmtD=nt?(d==='SIM'?'SIM(X)':d==='NAO'?'SIM( )':d==='NT'?'SIM( )':'SIM( )'):'';
+    const fmtDN=nt?(d==='NAO'?'NÃO(X)':d==='NT'?'NÃO( )':'NÃO( )'):d==='NAO'?'NÃO(X)':'NÃO( )';
+    const fmtDT=nt?(d==='NT'?'NT(X)':'NT( )'):'';
+    const fmtE=nt?(e==='SIM'?'SIM(X)':'SIM( )'):(e==='SIM'?'SIM(X)':'SIM( )');
+    const fmtEN=(e==='NAO'?'NÃO(X)':'NÃO( )');
+    const fmtET=nt?(e==='NT'?'NT(X)':'NT( )'):'';
+    return `${fmtD||'SIM( )'} ${fmtDN} ${fmtDT} | ${fmtE} ${fmtEN} ${fmtET}`;
+  };
+
+  const CSS_COMUM = `*{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:Arial,sans-serif;font-size:9pt;color:#000;background:#fff;}
+    @page{size:A4 portrait;margin:1.2cm 1.4cm;}
+    .cab{text-align:center;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:10px;}
+    .cab-gov{font-size:8pt;font-weight:700;letter-spacing:.04em;}
+    .cab-org{font-size:8.5pt;font-weight:700;margin:2px 0;}
+    .cab-titulo{font-size:12pt;font-weight:900;text-decoration:underline;margin:6px 0 2px;}
+    .cab-res{font-size:8pt;}
+    .bloco{margin-bottom:8px;}
+    .bloco-titulo{font-weight:800;font-size:9pt;border-bottom:1px solid #000;margin-bottom:4px;padding-bottom:2px;}
+    .campo-linha{display:flex;align-items:baseline;gap:4px;margin-bottom:3px;flex-wrap:wrap;font-size:9pt;}
+    .campo-lbl{font-weight:700;white-space:nowrap;}
+    .campo-val{border-bottom:1px solid #555;flex:1;min-width:40px;padding:0 2px;}
+    table.refl{width:100%;border-collapse:collapse;font-size:8.5pt;margin:4px 0;}
+    table.refl th,table.refl td{border:1px solid #000;padding:3px 5px;vertical-align:middle;}
+    table.refl th{background:#eee;font-weight:700;text-align:center;}
+    .assin{margin-top:10px;font-size:8.5pt;}
+    .assin-linha{display:inline-block;border-top:1px solid #000;min-width:200px;padding-top:2px;margin-top:8px;}
+    .check-row{display:flex;gap:14px;flex-wrap:wrap;font-size:8.5pt;margin:3px 0;}
+    @media print{body{margin:0;}}`;
+
+  // ── FRENTE ─────────────────────────────────────────────────────────────
+  const conf=[_mk(m.confTC),'TC',_mk(m.confRM),'RM',_mk(m.confAngio),'Angiografia',
+    _mk(m.confDTC),'DTC',_mk(m.confLiquor),'Liquor',_mk(m.confEEG),'EEG',
+    m.confOutro?`Outro: ${_e(m.confOutro)}`:''].filter(Boolean);
+  const confStr = [_mk(m.confTC)+' TC',_mk(m.confRM)+' RM',_mk(m.confAngio)+' Angiografia',
+    _mk(m.confDTC)+' DTC',_mk(m.confLiquor)+' Liquor',_mk(m.confEEG)+' EEG',
+    m.confOutro?`Outro: ${_e(m.confOutro)}`:''].filter(Boolean).join('  ');
+
+  const preReqRows = [
+    ['Presença de lesão encefálica de causa conhecida, irreversível e capaz de causar a morte encefálica?',m.pre1],
+    ['Ausência de causas tratáveis que possam confundir o diagnóstico de morte encefálica?',m.pre2],
+    ['Tratamento e observação hospitalar ≥ 6 horas ou ≥ 24 horas em encefalopatia hipóxico-isquêmica?',m.pre3],
+    ['Temperatura corporal > 35°C + SaO2 > 94% + PAS ≥ 100mmHg ou PA média ≥ 65mmHg (ou pela faixa etária <16 anos)?',m.pre4],
+    ['Ausência de hipotermia?',m.pre5],
+    ['Ausência de drogas depressoras do SNC ou de bloqueadores neuromusculares?',m.pre6],
+  ].map(([q,v])=>`<tr><td style="padding:3px 6px;">${_e(q)}</td><td style="padding:3px 6px;text-align:center;white-space:nowrap;">${_sn(v)}</td></tr>`).join('');
+
+  const frente = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Morte Encefálica — Frente</title>
+  <style>${CSS_COMUM}</style></head><body>
+  <div class="cab">
+    <div class="cab-gov">GOVERNO DO ESTADO DO RIO GRANDE DO NORTE &nbsp;·&nbsp; SECRETARIA DE ESTADO DA SAÚDE PÚBLICA</div>
+    <div class="cab-org">CENTRAL DE TRANSPLANTES DO RN</div>
+    <div class="cab-titulo">TERMO DE DECLARAÇÃO DE MORTE ENCEFÁLICA</div>
+    <div class="cab-res">Resolução. CFM nº 2.173 &nbsp; 15/12/2017</div>
+  </div>
+
+  <div style="display:flex;gap:20px;margin-bottom:8px;">
+    <div style="flex:1;"><div class="bloco-titulo">HOSPITAL</div>
+      <div class="campo-linha"><span class="campo-lbl">Nome:</span><span class="campo-val">${_e(m.hosp)}</span><span class="campo-lbl" style="margin-left:12px;">CNES:</span><span class="campo-val" style="max-width:80px;">${_e(m.cnes)}</span></div>
+      <div class="campo-linha"><span class="campo-lbl">Município:</span><span class="campo-val">${_e(m.mun)}</span><span class="campo-lbl" style="margin-left:8px;">UF:</span><span class="campo-val" style="max-width:40px;">${_e(m.uf)}</span></div>
+    </div>
+  </div>
+
+  <div class="bloco-titulo">PACIENTE</div>
+  <div class="campo-linha"><span class="campo-lbl">Nome:</span><span class="campo-val">${_e(m.pac)}</span><span class="campo-lbl" style="margin-left:12px;">Nascimento:</span><span class="campo-val" style="max-width:90px;">${_dn(m.dn)}</span></div>
+  <div class="campo-linha"><span class="campo-lbl">Mãe:</span><span class="campo-val">${_e(m.mae)}</span><span class="campo-lbl" style="margin-left:8px;">Sexo:</span><span>MAS${m.sexo==='MAS'?' (X)':'( )'} FEM${m.sexo==='FEM'?' (X)':'( )'}</span></div>
+  <div class="campo-linha"><span class="campo-lbl">Identidade:</span><span>Tipo: <span class="campo-val" style="min-width:60px;">${_e(m.idTipo)}</span></span><span style="margin-left:8px;">Nº <span class="campo-val" style="min-width:80px;">${_e(m.idNum)}</span></span></div>
+
+  <div class="bloco-titulo" style="margin-top:6px;">CAUSA DO COMA</div>
+  <div class="campo-linha"><span class="campo-lbl">Diagnóstico principal:</span><span class="campo-val">${_e(m.diag1)}</span><span class="campo-lbl" style="margin-left:8px;">CID</span><span class="campo-val" style="max-width:60px;font-weight:700;">${_e(m.cid1)}</span></div>
+  <div class="campo-linha"><span class="campo-lbl">Diagnóstico secundário:</span><span class="campo-val">${_e(m.diag2)}</span><span class="campo-lbl" style="margin-left:8px;">CID</span><span class="campo-val" style="max-width:60px;font-weight:700;">${_e(m.cid2)}</span></div>
+  <div class="campo-linha"><span class="campo-lbl">Confirmação:</span><span style="font-size:8.5pt;">${confStr}</span></div>
+
+  <div class="bloco-titulo" style="margin-top:6px;">PRÉ-REQUISITOS</div>
+  <table style="width:100%;border-collapse:collapse;font-size:8.5pt;"><tbody>${preReqRows}</tbody></table>
+
+  <div class="bloco-titulo" style="margin-top:8px;">1º EXAME CLÍNICO</div>
+  <div class="campo-linha">
+    <span class="campo-lbl">PA (mmHg):</span><span class="campo-val" style="max-width:80px;">${_e(m.e1Pa)}</span>
+    <span class="campo-lbl" style="margin-left:8px;">TEMP (°C):</span><span class="campo-val" style="max-width:50px;">${_e(m.e1Temp)}</span>
+    <span class="campo-lbl" style="margin-left:8px;">DATA:</span><span style="font-size:9pt;">${_dt(m.e1Data)}</span>
+    <span class="campo-lbl" style="margin-left:8px;">HORA:</span><span>${m.e1Hora||'__:__'}</span>
+  </div>
+  <div style="font-size:9pt;margin-bottom:3px;">Coma não perceptivo? ${_sn(m.e1Coma)}</div>
+  <div style="font-weight:700;font-size:8.5pt;margin-bottom:3px;">EXAME NEUROLÓGICO (exame dos reflexos):</div>
+  <table class="refl"><thead><tr><th style="text-align:left;">Reflexo</th><th>Direito</th><th>Esquerdo</th></tr></thead><tbody>
+    <tr><td>Pupila fixa e arreativa</td><td>${m.e1PupD==='SIM'?'SIM(X) NÃO( )':'SIM( ) NÃO(X)'}</td><td>${m.e1PupE==='SIM'?'SIM(X) NÃO( )':'SIM( ) NÃO(X)'}</td></tr>
+    <tr><td>Ausência de reflexo córneo-palpebral</td><td>${_ref(m.e1CorD,null,true).split('|')[0]}</td><td>${_ref(null,m.e1CorE,true).split('|')[1]||''}</td></tr>
+    <tr><td>Ausência de reflexo óculo-cefálico</td><td>${_ref(m.e1OcD,null,true).split('|')[0]}</td><td>${_ref(null,m.e1OcE,true).split('|')[1]||''}</td></tr>
+    <tr><td>Ausência de reflexo vestíbulo-calórico</td><td>${_ref(m.e1VestD,null,true).split('|')[0]}</td><td>${_ref(null,m.e1VestE,true).split('|')[1]||''}</td></tr>
+    <tr><td colspan="3">Ausência de reflexo da tosse: &nbsp; ${_sn(m.e1Tosse)}</td></tr>
+  </tbody></table>
+  <div class="campo-linha" style="margin-top:4px;"><span class="campo-lbl">Justificativa NT:</span><span class="campo-val">${_e(m.e1Just)}</span></div>
+  <div class="assin"><div class="campo-linha"><span class="campo-lbl">Médico:</span><span class="campo-val">${_e(m.e1Med)}</span><span class="campo-lbl" style="margin-left:8px;">CRM:</span><span class="campo-val" style="max-width:80px;">${_e(m.e1Crm)}</span></div>
+  <span class="assin-linha">Assinatura Identificada</span></div>
+
+  <div class="bloco-titulo" style="margin-top:8px;">TESTE DE APNEIA (examinador 1 ou 2)</div>
+  <div class="campo-linha">
+    <span class="campo-lbl">PA (mmHg):</span><span class="campo-val" style="max-width:80px;">${_e(m.apPa)}</span>
+    <span class="campo-lbl" style="margin-left:8px;">TEMP (°C):</span><span class="campo-val" style="max-width:50px;">${_e(m.apTemp)}</span>
+    <span class="campo-lbl" style="margin-left:8px;">DATA:</span><span>${_dt(m.apData)}</span>
+    <span class="campo-lbl" style="margin-left:8px;">HORA:</span><span>${m.apHora||'__:__'}</span>
+  </div>
+  <table style="width:100%;border-collapse:collapse;font-size:8.5pt;margin:4px 0;">
+    <tr><td style="border:1px solid #000;padding:3px 6px;"></td>
+        <td style="border:1px solid #000;padding:3px 6px;text-align:center;font-weight:700;">Inicial</td>
+        <td style="border:1px solid #000;padding:3px 6px;text-align:center;font-weight:700;">Final</td>
+        <td style="border:1px solid #000;padding:3px 6px;"></td>
+        <td style="border:1px solid #000;padding:3px 6px;text-align:center;font-weight:700;">Inicial</td>
+        <td style="border:1px solid #000;padding:3px 6px;text-align:center;font-weight:700;">Final</td></tr>
+    <tr><td style="border:1px solid #000;padding:3px 6px;font-weight:700;">PaCO₂</td>
+        <td style="border:1px solid #000;padding:3px 6px;text-align:center;">${_e(m.apPco2i)}</td>
+        <td style="border:1px solid #000;padding:3px 6px;text-align:center;">${_e(m.apPco2f)}</td>
+        <td style="border:1px solid #000;padding:3px 6px;font-weight:700;">PaO₂</td>
+        <td style="border:1px solid #000;padding:3px 6px;text-align:center;">${_e(m.apPo2i)}</td>
+        <td style="border:1px solid #000;padding:3px 6px;text-align:center;">${_e(m.apPo2f)}</td></tr>
+  </table>
+  <div style="font-size:9pt;margin-bottom:4px;">Ausência de movimentos respiratórios com PaCO₂ &gt; 55 mmHg? ${_sn(m.apResp)}</div>
+  <div class="assin"><div class="campo-linha"><span class="campo-lbl">Médico:</span><span class="campo-val">${_e(m.apMed)}</span><span class="campo-lbl" style="margin-left:8px;">CRM:</span><span class="campo-val" style="max-width:80px;">${_e(m.apCrm)}</span></div>
+  <span class="assin-linha">Assinatura Identificada</span></div>
+
+  <script>window.onload=()=>{window.print();window.onafterprint=()=>window.close();}<\/script>
+  </body></html>`;
+
+  // ── VERSO ──────────────────────────────────────────────────────────────
+  const ecTipos=[_mk(m.ecDTC)+' DTC',_mk(m.ecEEG)+' EEG',_mk(m.ecAngio)+' Angiografia',
+    _mk(m.ecCintilo)+' Cintilografia',m.ecOutro?'Outro: '+_e(m.ecOutro):''].filter(Boolean).join('  ');
+
+  const verso = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Morte Encefálica — Verso</title>
+  <style>${CSS_COMUM}</style></head><body>
+  <div class="cab">
+    <div class="cab-gov">GOVERNO DO ESTADO DO RIO GRANDE DO NORTE &nbsp;·&nbsp; SECRETARIA DE ESTADO DA SAÚDE PÚBLICA</div>
+    <div class="cab-org">CENTRAL DE TRANSPLANTES DO RN</div>
+    <div class="cab-titulo">TERMO DE DECLARAÇÃO DE MORTE ENCEFÁLICA</div>
+    <div class="cab-res">Resolução. CFM nº 2.173 &nbsp; 15/12/2017</div>
+  </div>
+
+  <div class="bloco-titulo">PACIENTE</div>
+  <div class="campo-linha"><span class="campo-lbl">Nome:</span><span class="campo-val">${_e(m.pac)}</span><span class="campo-lbl" style="margin-left:12px;">Nascimento:</span><span class="campo-val" style="max-width:90px;">${_dn(m.dn)}</span></div>
+
+  <div class="bloco-titulo" style="margin-top:8px;">2º EXAME CLÍNICO</div>
+  <div class="campo-linha">
+    <span class="campo-lbl">PA (mmHg):</span><span class="campo-val" style="max-width:80px;">${_e(m.e2Pa)}</span>
+    <span class="campo-lbl" style="margin-left:8px;">TEMP (°C):</span><span class="campo-val" style="max-width:50px;">${_e(m.e2Temp)}</span>
+    <span class="campo-lbl" style="margin-left:8px;">DATA:</span><span>${_dt(m.e2Data)}</span>
+    <span class="campo-lbl" style="margin-left:8px;">HORA:</span><span>${m.e2Hora||'__:__'}</span>
+  </div>
+  <div style="font-size:9pt;margin-bottom:3px;">Coma não perceptivo? ${_sn(m.e2Coma)}</div>
+  <div style="font-weight:700;font-size:8.5pt;margin-bottom:3px;">EXAME NEUROLÓGICO (exame dos reflexos):</div>
+  <table class="refl"><thead><tr><th style="text-align:left;">Reflexo</th><th>Direito</th><th>Esquerdo</th></tr></thead><tbody>
+    <tr><td>Pupila fixa e arreativa</td><td>${m.e2PupD==='SIM'?'SIM(X) NÃO( )':'SIM( ) NÃO(X)'}</td><td>${m.e2PupE==='SIM'?'SIM(X) NÃO( )':'SIM( ) NÃO(X)'}</td></tr>
+    <tr><td>Ausência de reflexo córneo-palpebral</td><td>${_ref(m.e2CorD,null,true).split('|')[0]}</td><td>${_ref(null,m.e2CorE,true).split('|')[1]||''}</td></tr>
+    <tr><td>Ausência de reflexo óculo-cefálico</td><td>${_ref(m.e2OcD,null,true).split('|')[0]}</td><td>${_ref(null,m.e2OcE,true).split('|')[1]||''}</td></tr>
+    <tr><td>Ausência de reflexo vestíbulo-calórico</td><td>${_ref(m.e2VestD,null,true).split('|')[0]}</td><td>${_ref(null,m.e2VestE,true).split('|')[1]||''}</td></tr>
+    <tr><td colspan="3">Ausência de reflexo da tosse: &nbsp; ${_sn(m.e2Tosse)}</td></tr>
+  </tbody></table>
+  <div class="campo-linha" style="margin-top:4px;"><span class="campo-lbl">Justificativa NT:</span><span class="campo-val">${_e(m.e2Just)}</span></div>
+  <div class="assin"><div class="campo-linha"><span class="campo-lbl">Médico:</span><span class="campo-val">${_e(m.e2Med)}</span><span class="campo-lbl" style="margin-left:8px;">CRM:</span><span class="campo-val" style="max-width:80px;">${_e(m.e2Crm)}</span></div>
+  <span class="assin-linha">Assinatura Identificada</span></div>
+
+  <div class="bloco-titulo" style="margin-top:8px;">EXAME COMPLEMENTAR</div>
+  <div class="campo-linha">
+    <span class="campo-lbl">PA (mmHg):</span><span class="campo-val" style="max-width:80px;">${_e(m.ecPa)}</span>
+    <span class="campo-lbl" style="margin-left:8px;">TEMP (°C):</span><span class="campo-val" style="max-width:50px;">${_e(m.ecTemp)}</span>
+    <span class="campo-lbl" style="margin-left:8px;">DATA:</span><span>${_dt(m.ecData)}</span>
+    <span class="campo-lbl" style="margin-left:8px;">HORA:</span><span>${m.ecHora||'__:__'}</span>
+  </div>
+  <div class="campo-linha"><span class="campo-lbl">Tipo:</span><span style="font-size:8.5pt;">${ecTipos}</span></div>
+  <div style="font-size:9pt;margin-bottom:4px;">Ausência de perfusão sanguínea ou de atividade metabólica ou elétrica encefálica? ${_sn(m.ecRes)}</div>
+  <div class="assin"><div class="campo-linha"><span class="campo-lbl">Médico:</span><span class="campo-val">${_e(m.ecMed)}</span><span class="campo-lbl" style="margin-left:8px;">CRM:</span><span class="campo-val" style="max-width:80px;">${_e(m.ecCrm)}</span></div>
+  <span class="assin-linha">Assinatura Identificada</span></div>
+
+  <!-- Tabelas de referência -->
+  <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+    <div>
+      <div class="bloco-titulo">A. CONTROLE DA PRESSÃO ARTERIAL</div>
+      <table style="width:100%;border-collapse:collapse;font-size:8pt;">
+        <thead><tr style="background:#eee;"><th style="border:1px solid #000;padding:2px 5px;">IDADE</th><th style="border:1px solid #000;padding:2px 5px;">Sistólica</th><th style="border:1px solid #000;padding:2px 5px;">PAM</th></tr></thead>
+        <tbody>
+          <tr><td style="border:1px solid #000;padding:2px 5px;">Até 5 meses incompletos</td><td style="border:1px solid #000;padding:2px 5px;text-align:center;">60</td><td style="border:1px solid #000;padding:2px 5px;text-align:center;">43</td></tr>
+          <tr><td style="border:1px solid #000;padding:2px 5px;">De 5 meses a 2 anos incompletos</td><td style="border:1px solid #000;padding:2px 5px;text-align:center;">80</td><td style="border:1px solid #000;padding:2px 5px;text-align:center;">60</td></tr>
+          <tr><td style="border:1px solid #000;padding:2px 5px;">De 2 anos a 7 anos incompletos</td><td style="border:1px solid #000;padding:2px 5px;text-align:center;">85</td><td style="border:1px solid #000;padding:2px 5px;text-align:center;">62</td></tr>
+          <tr><td style="border:1px solid #000;padding:2px 5px;">De 7 anos a 15 anos</td><td style="border:1px solid #000;padding:2px 5px;text-align:center;">90</td><td style="border:1px solid #000;padding:2px 5px;text-align:center;">65</td></tr>
+          <tr><td style="border:1px solid #000;padding:2px 5px;">De 16 anos em diante</td><td style="border:1px solid #000;padding:2px 5px;text-align:center;">100</td><td style="border:1px solid #000;padding:2px 5px;text-align:center;">65</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <div class="bloco-titulo">B. INTERVALOS ENTRE EXAMES CLÍNICOS</div>
+      <table style="width:100%;border-collapse:collapse;font-size:8pt;">
+        <thead><tr style="background:#eee;"><th style="border:1px solid #000;padding:2px 5px;">FAIXA ETÁRIA</th><th style="border:1px solid #000;padding:2px 5px;">MÍNIMO</th></tr></thead>
+        <tbody>
+          <tr><td style="border:1px solid #000;padding:2px 5px;">7 dias completos (RN a termo) a 2 meses incompletos</td><td style="border:1px solid #000;padding:2px 5px;text-align:center;">24 horas</td></tr>
+          <tr><td style="border:1px solid #000;padding:2px 5px;">De 2 meses a 24 meses incompletos</td><td style="border:1px solid #000;padding:2px 5px;text-align:center;">12 horas</td></tr>
+          <tr><td style="border:1px solid #000;padding:2px 5px;">Mais de 24 meses</td><td style="border:1px solid #000;padding:2px 5px;text-align:center;">1 hora</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>window.onload=()=>{window.print();window.onafterprint=()=>window.close();}<\/script>
+  </body></html>`;
+
+  // Abre frente em nova aba; verso em outra
+  const w1 = window.open('','_blank','width=820,height=1000');
+  if(w1){ w1.document.write(frente); w1.document.close(); }
+  else { toast('Popup bloqueado — permita popups para imprimir.',true); return; }
+  setTimeout(()=>{
+    const w2 = window.open('','_blank','width=820,height=1000');
+    if(w2){ w2.document.write(verso); w2.document.close(); }
+  }, 800);
 }
 
 async function salvarSolicitacaoCultura(){
