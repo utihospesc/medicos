@@ -2129,7 +2129,7 @@ function _autoResizeTA(el){
 }
 
 function _ativarCaixaAlta(){
-  const sel='#t-form input[type=text], #t-form textarea, #modal-adm input[type=text], #modal-adm textarea';
+  const sel='#t-form input[type=text], #t-form textarea, #modal-adm input[type=text], #modal-adm textarea, #modal-trilogy input[type=text], #modal-trilogy textarea, #modal-me textarea, #modal-termo input[type=text], #modal-termo textarea, #modal-parecer input[type=text], #modal-parecer textarea, #modal-diarista-ev textarea';
   document.querySelectorAll(sel).forEach(el=>{
     if(el.id==='f-evol-diarista') return;
     if(el.dataset.upperBound) return; el.dataset.upperBound='1';
@@ -2147,17 +2147,30 @@ function _resizeTodosTextareas(){
   // segundo cobre casos de layout tardio (fontes, imagens inline)
   requestAnimationFrame(()=>{
     requestAnimationFrame(()=>{
-      document.querySelectorAll('#t-form textarea').forEach(el=>{
+      document.querySelectorAll('#t-form textarea, #modal-adm textarea, #modal-trilogy textarea, #modal-me textarea, #modal-termo textarea, #modal-parecer textarea, #modal-diarista-ev textarea').forEach(el=>{
         if(!el.hasAttribute('readonly')) _autoResizeTA(el);
       });
     });
   });
   // Fallback com delay para navegadores lentos
   setTimeout(()=>{
-    document.querySelectorAll('#t-form textarea').forEach(el=>{
+    document.querySelectorAll('#t-form textarea, #modal-adm textarea, #modal-trilogy textarea, #modal-me textarea, #modal-termo textarea, #modal-parecer textarea, #modal-diarista-ev textarea').forEach(el=>{
       if(!el.hasAttribute('readonly')) _autoResizeTA(el);
     });
   }, 200);
+}
+
+/* Resize todos os textareas dentro de um modal específico após abri-lo */
+function _resizeModalTextareas(modalId){
+  const modal = document.getElementById(modalId);
+  if(!modal) return;
+  const resize = () => modal.querySelectorAll('textarea').forEach(el=>{
+    if(!el.hasAttribute('readonly')) _autoResizeTA(el);
+  });
+  requestAnimationFrame(()=>{ requestAnimationFrame(resize); });
+  setTimeout(resize, 200);
+  // Garante que inputs de caixa alta estão registrados neste modal
+  _ativarCaixaAlta();
 }
 
 
@@ -5847,6 +5860,7 @@ function abrirTermos(tipo){
   sf('termo-data',  hoje());
   if(tipo){ sf('termo-tipo', tipo); _termoMudar(); }
   $('modal-termo').classList.add('show');
+  _resizeModalTextareas('modal-termo');
 }
 
 function fecharTermo(){ $('modal-termo').classList.remove('show'); }
@@ -5916,6 +5930,7 @@ async function _abrirTermoExistente(key){
     sf('termo-t1-nome',t.t1Nome||''); sf('termo-t1-cpf',t.t1Cpf||'');
     sf('termo-t2-nome',t.t2Nome||''); sf('termo-t2-cpf',t.t2Cpf||'');
     $('modal-termo').classList.add('show');
+    _resizeModalTextareas('modal-termo');
   }catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
 }
 
@@ -5930,19 +5945,19 @@ function _termoCabecalho(){
 function _termoEstilos(){
   return `<style>
     *{box-sizing:border-box;margin:0;padding:0;font-family:'Arial',sans-serif;}
-    @page{size:A4 portrait;margin:1.5cm}
-    body{font-size:10pt;color:#000;line-height:1.55;text-align:justify;}
-    .cab{text-align:center;border-bottom:2px solid #7a1020;padding-bottom:8px;margin-bottom:14px;}
-    h2.titulo{text-align:center;font-size:11pt;font-weight:800;margin:14px 0 10px;text-transform:uppercase;letter-spacing:.04em;}
-    p{margin-bottom:8px;}
-    .item{margin-bottom:7px;text-align:justify;}
+    @page{size:A4 portrait;margin:1.2cm 1.5cm}
+    body{font-size:9.5pt;color:#000;line-height:1.45;text-align:justify;}
+    .cab{text-align:center;border-bottom:2px solid #7a1020;padding-bottom:6px;margin-bottom:10px;}
+    h2.titulo{text-align:center;font-size:10.5pt;font-weight:800;margin:10px 0 8px;text-transform:uppercase;letter-spacing:.04em;}
+    p{margin-bottom:6px;}
+    .item{margin-bottom:5px;text-align:justify;}
     .item b{display:inline-block;min-width:18px;}
-    .linha-dados{margin:10px 0;line-height:1.9;}
+    .linha-dados{margin:8px 0;line-height:1.8;}
     .campo{display:inline-block;border-bottom:1px solid #555;padding:0 4px;min-width:120px;}
-    .campo-grande{display:inline-block;border-bottom:1px solid #555;padding:0 4px;min-width:280px;}
-    .assin{margin-top:24px;text-align:center;}
-    .assin .linha{border-top:1px solid #555;display:inline-block;min-width:280px;padding-top:3px;font-size:9pt;}
-    .duas-assin{display:flex;justify-content:space-between;gap:20px;margin-top:20px;}
+    .campo-grande{display:inline-block;border-bottom:1px solid #555;padding:0 4px;min-width:260px;}
+    .assin{margin-top:16px;text-align:center;}
+    .assin .linha{border-top:1px solid #555;display:inline-block;min-width:260px;padding-top:3px;font-size:9pt;}
+    .duas-assin{display:flex;justify-content:space-between;gap:20px;margin-top:14px;}
     .duas-assin > div{flex:1;text-align:center;}
     .duas-assin .linha{border-top:1px solid #555;padding-top:3px;font-size:9pt;}
     @media print{body{margin:0;}}
@@ -6798,6 +6813,7 @@ async function abrirModalParecer(){
   await _parPreencherMeds();
 
   $('modal-parecer').classList.add('show');
+  _resizeModalTextareas('modal-parecer');
 }
 
 function fecharModalParecer(){ $('modal-parecer').classList.remove('show'); }
@@ -7142,6 +7158,7 @@ function abrirModalTrilogy(){
   }
 
   $('modal-trilogy').classList.add('show');
+  _resizeModalTextareas('modal-trilogy');
 }
 
 function fecharModalTrilogy(){ $('modal-trilogy').classList.remove('show'); }
@@ -7225,6 +7242,7 @@ async function _abrirTrilogyExistente(key){
     sf('tri-obs-tec', t.obsTec||'');
     sf('tri-med', t.medNome||''); sf('tri-crm', t.medCrm||'');
     $('modal-trilogy').classList.add('show');
+    _resizeModalTextareas('modal-trilogy');
   }catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
 }
 
@@ -7246,22 +7264,24 @@ function _imprimirTrilogyObj(t){
   <title>Plano Terapêutico — ${t.pac||''}</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0;}
-    body{font-family:'Times New Roman',Times,serif;font-size:11pt;color:#000;background:#fff;line-height:1.55;}
-    @page{size:A4 portrait;margin:2cm 2.2cm;}
-    .cab{display:flex;gap:12px;align-items:flex-start;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:14px;}
-    .cab-logo{width:70px;flex-shrink:0;}
+    body{font-family:'Times New Roman',Times,serif;font-size:10.5pt;color:#000;background:#fff;line-height:1.45;}
+    @page{size:A4 portrait;margin:1.4cm 1.6cm;}
+    .cab{display:flex;gap:10px;align-items:flex-start;border-bottom:2px solid #000;padding-bottom:7px;margin-bottom:10px;}
+    .cab-logo{width:60px;flex-shrink:0;}
     .cab-logo img{width:100%;height:auto;}
     .cab-txt{text-align:center;flex:1;}
-    .cab-txt .inst{font-size:9pt;font-weight:700;letter-spacing:.03em;}
-    .cab-txt .end{font-size:8pt;margin-top:2px;}
-    h1{text-align:center;font-size:13pt;font-weight:800;letter-spacing:.05em;margin:10px 0 4px;}
-    h2{text-align:center;font-size:11.5pt;font-weight:700;text-decoration:underline;margin-bottom:14px;letter-spacing:.04em;}
-    p{margin:0 0 8px;text-align:justify;}
-    ul{margin:6px 0 10px 20px;}
-    ul li{margin-bottom:3px;}
-    .cids{margin:10px 0;}
-    .rodape{margin-top:24px;text-align:center;}
-    .assin-linha{border-top:1.5px solid #000;width:260px;margin:36px auto 2px;padding-top:3px;font-size:10pt;}
+    .cab-txt .inst{font-size:8.5pt;font-weight:700;letter-spacing:.02em;}
+    .cab-txt .end{font-size:7.5pt;margin-top:1px;}
+    h1{text-align:center;font-size:12pt;font-weight:800;letter-spacing:.04em;margin:7px 0 3px;}
+    h2{text-align:center;font-size:11pt;font-weight:700;text-decoration:underline;margin-bottom:10px;letter-spacing:.03em;}
+    p{margin:0 0 6px;text-align:justify;font-size:10.5pt;}
+    ul{margin:4px 0 8px 18px;}
+    ul li{margin-bottom:2px;font-size:10.5pt;}
+    .cids{margin:7px 0;font-size:10pt;}
+    .cids p{margin:0;}
+    .rodape{margin-top:18px;text-align:center;}
+    .assin-linha{border-top:1.5px solid #000;width:240px;margin:28px auto 2px;padding-top:3px;font-size:9.5pt;}
+    .info-box{margin-top:18px;border:1px solid #999;border-radius:4px;padding:7px 12px;font-size:8.5pt;background:#f9f9f9;line-height:1.45;}
     @media print{body{margin:0;}}
   </style></head><body>
 
@@ -7310,7 +7330,7 @@ function _imprimirTrilogyObj(t){
     </div>
   </div>
 
-  <div style="margin-top:30px;border:1px solid #999;border-radius:4px;padding:10px 14px;font-size:9pt;background:#f9f9f9;">
+  <div class="info-box">
     <strong>ORIENTAÇÕES PARA SOLICITAÇÃO DO VENTILADOR:</strong><br>
     Enviar este relatório (prescrição médica) por e-mail para <strong>oxigenoterapiarn@gmail.com</strong>.<br>
     Haverá troca de e-mails para completar o cadastro. Necessário documentação do familiar responsável.<br>
@@ -7433,6 +7453,7 @@ function abrirModalMorteEncefalica(){
   const hj = hoje();
   ['me-e1-data','me-e2-data','me-ap-data','me-ec-data'].forEach(id=>sf(id,hj));
   $('modal-me').classList.add('show');
+  _resizeModalTextareas('modal-me');
 }
 
 function fecharModalME(){ $('modal-me').classList.remove('show'); }
@@ -7533,6 +7554,7 @@ async function _abrirMEExistente(key){
     };
     Object.entries(chkMap).forEach(([id,key])=>{ const el=$(id); if(el) el.checked=!!m[key]; });
     $('modal-me').classList.add('show');
+    _resizeModalTextareas('modal-me');
   }catch(e){hideLoading();toast('Erro: '+(e.message||e),true);}
 }
 
@@ -7672,8 +7694,7 @@ function _imprimirMEObj(m){
   const ecTipos=[_mk(m.ecDTC)+' DTC',_mk(m.ecEEG)+' EEG',_mk(m.ecAngio)+' Angiografia',
     _mk(m.ecCintilo)+' Cintilografia',m.ecOutro?'Outro: '+_e(m.ecOutro):''].filter(Boolean).join('  ');
 
-  const verso = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Morte Encefálica — Verso</title>
-  <style>${CSS_COMUM}</style></head><body>
+  const versoCorp = `
   <div class="cab">
     <div class="cab-gov">GOVERNO DO ESTADO DO RIO GRANDE DO NORTE &nbsp;·&nbsp; SECRETARIA DE ESTADO DA SAÚDE PÚBLICA</div>
     <div class="cab-org">CENTRAL DE TRANSPLANTES DO RN</div>
@@ -7742,19 +7763,20 @@ function _imprimirMEObj(m){
         </tbody>
       </table>
     </div>
-  </div>
+  </div>`;
 
-  <script>window.onload=()=>{window.print();window.onafterprint=()=>window.close();}<\/script>
+  // ── Documento único: frente + page-break + verso em uma só janela ──────
+  // Extrai o <body> da frente e injeta o verso numa nova página
+  const frenteBody = frente.replace(/<script>.*?<\/script>/s,'').replace(/<\/body>.*?<\/html>/s,'');
+  const combinedHtml = frenteBody +
+    `<div style="page-break-before:always;"></div>` +
+    versoCorp +
+    `<script>window.onload=()=>{window.print();window.onafterprint=()=>window.close();}<\/script>
   </body></html>`;
 
-  // Abre frente em nova aba; verso em outra
   const w1 = window.open('','_blank','width=820,height=1000');
-  if(w1){ w1.document.write(frente); w1.document.close(); }
-  else { toast('Popup bloqueado — permita popups para imprimir.',true); return; }
-  setTimeout(()=>{
-    const w2 = window.open('','_blank','width=820,height=1000');
-    if(w2){ w2.document.write(verso); w2.document.close(); }
-  }, 800);
+  if(w1){ w1.document.write(combinedHtml); w1.document.close(); }
+  else toast('Popup bloqueado — permita popups para imprimir.',true);
 }
 
 async function salvarSolicitacaoCultura(){
