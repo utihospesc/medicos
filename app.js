@@ -1019,18 +1019,19 @@ async function renderLeitos(){
       // tenta achar o SAPS salvo na admissão para exibir badge
       const sapsBadge = L.saps3 ? _sapsBadge(L.saps3) : '';
       const sapsCanto = L.saps3 ? `<div class="leito-saps">SAPS ${L.saps3}</div>` : '';
+      const idadeNum = _idadeDeDN(L.dn);
+      const idadeStr = idadeNum!=null ? `${idadeNum}a` : '';
+      const sexoStr = L.sexo==='FEMININO' ? '♀' : L.sexo==='MASCULINO' ? '♂' : '';
+      const demogTag = (idadeStr||sexoStr) ? `<span class="leito-tag" style="font-weight:700;letter-spacing:.02em;">${[idadeStr,sexoStr].filter(Boolean).join(' ')}</span>` : '';
       h+=`<div class="leito-card ocupado" onclick="abrirFormulario(${i})">
         ${sapsCanto}
         <div class="leito-num">LEITO ${pad(i)}</div>
         <div class="leito-pac">${L.pac}</div>
         <div class="leito-diag">${L.diag||'—'}</div>
-        <div class="leito-tags">${sapsBadge}${L.adm?`<span class="leito-tag">UTI ${_fmtDataCurta(L.adm)}</span>`:''}</div>
+        <div class="leito-tags">${demogTag}${sapsBadge}${L.adm?`<span class="leito-tag">UTI ${_fmtDataCurta(L.adm)}</span>`:''}</div>
         <div class="leito-card-actions" style="margin-top:8px;display:flex;gap:4px;width:100%;z-index:10;" onclick="event.stopPropagation();">
-          <button class="btn btn-sm" style="flex:1;font-size:0.62rem;padding:2px 4px;border-radius:4px;background:rgba(122,16,32,0.1);border:1px solid var(--vinho);color:var(--vinho);" onclick="abrirFormularioDirect(${i},'evolucao')">📋 Evolução</button>
-          <button class="btn btn-sm" style="flex:1;font-size:0.62rem;padding:2px 4px;border-radius:4px;background:rgba(122,16,32,0.1);border:1px solid var(--vinho);color:var(--vinho);" onclick="abrirFormularioDirect(${i},'prescricao')">💊 Presc.</button>
-          <button class="btn btn-sm" style="flex:1;font-size:0.62rem;padding:2px 4px;border-radius:4px;background:rgba(122,16,32,0.1);border:1px solid var(--vinho);color:var(--vinho);" onclick="abrirFormularioDirect(${i},'guias')">📄 Guias</button>
-          <button class="btn btn-sm" style="flex:0 0 auto;font-size:0.65rem;padding:2px 7px;border-radius:4px;background:#f3f4f6;border:1px solid #9ca3af;color:#374151;" onclick="abrirGestaoLeito(${i})" title="Alta, óbito ou transferência">⚙</button>
-          ${_isDiarista()?`<button class="btn btn-sm" style="flex:0 0 auto;font-size:0.62rem;padding:2px 7px;border-radius:4px;background:#dcfce7;border:1px solid #86efac;color:#166534;font-weight:700;" onclick="abrirModalDiaristaEv(${i})" title="Preencher evolução diarista">👨‍⚕️</button>`:''}
+          <button class="btn btn-sm" style="flex:1;font-size:0.65rem;padding:3px 6px;border-radius:4px;background:#f3f4f6;border:1px solid #9ca3af;color:#374151;" onclick="abrirGestaoLeito(${i})" title="Alta, óbito ou transferência">⚙ Alta/Transf.</button>
+          ${_isDiarista()?`<button class="btn btn-sm" style="flex:1;font-size:0.65rem;padding:3px 6px;border-radius:4px;background:#dcfce7;border:1px solid #86efac;color:#166534;font-weight:700;" onclick="abrirModalDiaristaEv(${i})" title="Preencher evolução diarista">👨‍⚕️ Diarista</button>`:''}
         </div>
       </div>`;
     } else {
