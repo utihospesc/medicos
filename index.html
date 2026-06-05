@@ -227,40 +227,47 @@
               <span class="cloud-tag" id="cloud-tag" style="display:none;">☁ nuvem</span>
             </div>
             <div class="secao-c">
-              <div class="fl"><label>Paciente</label><input type="text" id="f-pac" placeholder="Nome completo" data-adm-field></div>
+              <div class="fl"><label>Paciente <span class="req-star">*</span></label><input type="text" id="f-pac" placeholder="Nome completo" data-adm-field></div>
               <div class="dc">
-                <div class="fl"><label>Data da evolução</label><input type="date" id="f-data"></div>
+                <div class="fl"><label>Data da evolução</label><input type="date" id="f-data" readonly style="background:var(--bg2);color:var(--muted);cursor:not-allowed;"></div>
                 <div class="fl"><label>Leito</label><input type="text" id="f-leito" readonly></div>
               </div>
               <div class="dc">
-                <div class="fl"><label>DN</label>
+                <div class="fl"><label>DN <span class="req-star">*</span></label>
                   <div style="display:flex;gap:6px;align-items:center;">
                     <input type="date" id="f-dn" onchange="_calcIdadeDisplay('f-dn','f-idade');_recalcSAPS()" data-adm-field>
                     <span id="f-idade" style="font-family:var(--font-mono);font-size:.74rem;font-weight:600;color:var(--vinho);white-space:nowrap;min-width:48px;"></span>
                   </div>
                 </div>
-                <div class="fl"><label>Sexo</label>
+                <div class="fl"><label>Sexo <span class="req-star">*</span></label>
                   <select id="f-sexo" data-adm-field><option value="">—</option><option>FEMININO</option><option>MASCULINO</option></select>
                 </div>
               </div>
               <div class="dc">
                 <div class="fl"><label>CNS</label><input type="text" id="f-cns" placeholder="Cartão SUS" data-adm-field></div>
-                <div class="fl"><label>Adm. UTI</label><input type="date" id="f-adm" data-adm-field></div>
+                <div class="fl"><label>Adm. UTI</label><input type="date" id="f-adm" readonly style="background:var(--bg2);color:var(--muted);cursor:not-allowed;" data-adm-field></div>
               </div>
-              <div class="fl"><label>Adm. Hospitalar</label><input type="date" id="f-adm-hosp" data-adm-field></div>
-              <div class="fl"><label>Hipóteses Diagnósticas</label>
+              <div class="fl"><label>Adm. Hospitalar</label><input type="date" id="f-adm-hosp" readonly style="background:var(--bg2);color:var(--muted);cursor:not-allowed;" data-adm-field></div>
+              <div class="fl"><label>Hipóteses Diagnósticas <span class="req-star">*</span></label>
                 <div style="display:flex;gap:6px;align-items:flex-start;">
                   <input type="text" id="f-diag" placeholder="Diagnóstico principal" style="flex:1;" onblur="_sugerirCID('f-diag','f-cid')" data-adm-field>
                   <div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0;min-width:110px;">
-                    <input type="text" id="f-cid" placeholder="CID-10" style="width:100%;font-family:var(--font-mono);font-weight:600;" maxlength="8" data-adm-field>
+                    <input type="text" id="f-cid" placeholder="CID-10 *" style="width:100%;font-family:var(--font-mono);font-weight:600;" maxlength="8" data-adm-field>
                     <span id="f-cid-status" style="font-family:var(--font-mono);font-size:.58rem;color:var(--muted);text-align:center;min-height:12px;letter-spacing:.04em;"></span>
                   </div>
                 </div>
               </div>
-              <div class="fl"><label>Comorbidades</label><input type="text" id="f-comor" data-adm-field></div>
-              <div class="dc">
-                <div class="fl"><label>Alergias</label><input type="text" id="f-alergia" placeholder="NEGA" data-adm-field></div>
-                <div class="fl"><label>Medicamentos de uso contínuo</label><input type="text" id="f-medcont" data-adm-field></div>
+              <div class="fl"><label>Comorbidades <span class="req-star">*</span></label><input type="text" id="f-comor" data-adm-field></div>
+              <div class="fl"><label>Alergias <span class="req-star">*</span></label><input type="text" id="f-alergia" placeholder="NEGA" data-adm-field></div>
+              <div class="fl">
+                <label>Medicamentos de uso contínuo <span class="req-star">*</span></label>
+                <div style="display:flex;gap:6px;align-items:center;">
+                  <input type="text" id="f-medcont" readonly data-adm-field
+                    style="flex:1;background:var(--bg2);cursor:pointer;font-size:.78rem;"
+                    placeholder="Clique em ✎ para adicionar medicamentos..."
+                    onclick="abrirModalMedcont()">
+                  <button class="btn btn-sm" style="flex-shrink:0;padding:4px 10px;" onclick="abrirModalMedcont()">✎ Editar</button>
+                </div>
               </div>
               <div class="dc">
                 <div class="fl"><label>Peso (kg)</label><input type="number" step="0.1" id="f-peso" oninput="_atualizarTFG()" data-adm-field></div>
@@ -1726,3 +1733,40 @@
 
 </body>
 </html>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     MODAL — MEDICAMENTOS DE USO CONTÍNUO
+     ════════════════════════════════════════════════════════════════ -->
+<div class="modal" id="modal-medcont">
+  <div class="modal-c" style="max-width:640px;">
+    <div class="modal-h">
+      <h3>💊 Medicamentos de Uso Contínuo</h3>
+      <button class="btn-close" onclick="fecharModalMedcont()">×</button>
+    </div>
+    <div class="modal-b">
+      <div class="tip i" style="margin-bottom:12px;font-size:.8rem;">
+        Liste os medicamentos de uso contínuo (domiciliar/crônico). Inclua dose e via quando souber.
+      </div>
+      <div id="medcont-lista" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;min-height:40px;"></div>
+      <div style="display:flex;gap:6px;align-items:center;background:var(--bg2);border:1px dashed var(--borda);border-radius:8px;padding:8px 10px;">
+        <input type="text" id="medcont-input" placeholder="Ex: Metformina 850mg VO 12/12h" style="flex:1;margin:0;"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();_medcontAdicionar();}">
+        <button class="btn btn-pri btn-sm" onclick="_medcontAdicionar()">＋ Adicionar</button>
+      </div>
+      <p style="font-size:.72rem;color:var(--muted);margin-top:6px;">Pressione Enter ou clique em Adicionar. Clique em ✕ para remover.</p>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;padding:12px 20px;border-top:1px solid var(--borda);">
+      <button class="btn" onclick="fecharModalMedcont()">Cancelar</button>
+      <button class="btn btn-pri" onclick="salvarModalMedcont()">✓ Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<style>
+.req-star{color:var(--vinho,#7a1020);font-weight:700;margin-left:2px;}
+.medcont-item{display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--borda);border-radius:6px;padding:6px 10px;font-size:.82rem;}
+.medcont-item span{flex:1;}
+.medcont-item .mc-rm{background:none;border:none;color:var(--vinho);cursor:pointer;font-size:1rem;line-height:1;padding:0 2px;opacity:.7;}
+.medcont-item .mc-rm:hover{opacity:1;}
+.field-invalid input,.field-invalid select{border-color:var(--vinho,#7a1020)!important;box-shadow:0 0 0 2px rgba(122,16,32,.18)!important;}
+</style>
