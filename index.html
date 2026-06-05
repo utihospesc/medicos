@@ -321,7 +321,7 @@
               <div class="fl"><label>SpO₂ (%)</label><input type="number" id="f-spo2" min="50" max="100"></div>
               <div class="fl"><label>Diurese</label><input type="text" id="f-diurese"></div>
               <div class="fl"><label>Balanço Hídrico 24h</label><input type="text" id="f-bh"></div>
-              <div class="fl"><label>Evacuações</label><input type="text" id="f-evac" placeholder="ex: 2x, diarreia, ausente"></div>
+              <div class="fl"><label>Evacuações</label><input type="number" id="f-evac" min="0" max="20"></div>
               <div class="fl"><label>HGT (mg/dL)</label><input type="text" id="f-hgt"></div>
             </div>
           </div>
@@ -396,12 +396,8 @@
                   <select id="f-dieta"><option value="">—</option><option>ORAL</option><option>ENTERAL (SNE/SNG)</option><option>PARENTERAL</option><option>JEJUM</option><option>ZERO</option></select>
                 </div>
                 <div class="fl"><label>Droga vasoativa (DVA) <span class="saps-flag">SAPS3</span></label>
-                  <select id="f-dva" onchange="_recalcSAPS();_toggleDVAcampo()"><option value="NAO">NÃO</option><option value="SIM">SIM</option></select>
+                  <select id="f-dva" onchange="_recalcSAPS()"><option value="NAO">NÃO</option><option value="SIM">SIM</option></select>
                 </div>
-              </div>
-              <div class="fl" id="f-dva-campo-wrap" style="display:none;">
-                <label>Qual(is) DVA(s) em uso</label>
-                <input type="text" id="f-dva-qual" placeholder="Ex: Noradrenalina 0,1mcg/kg/min, Vasopressina...">
               </div>
               <div class="dc">
                 <div class="fl"><label>Sedação</label><textarea id="f-sedacao" rows="2" placeholder="sem / esquema"></textarea></div>
@@ -716,7 +712,7 @@
 
 <!-- ══════════════ MODAL FICHA DE ANTIMICROBIANO ══════════════ -->
 <div class="modal" id="modal-atb-ficha">
-  <div class="modal-box" style="max-width:760px;max-height:92vh;overflow-y:auto;">
+  <div class="modal-box modal-tall" style="max-width:920px;">
     <div class="modal-head">
       <h3 style="display:flex;align-items:center;gap:8px;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="M5 5l1.5 1.5"></path><path d="M17.5 17.5L19 19"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="M5 19l1.5-1.5"></path><path d="M17.5 6.5L19 5"></path></svg> Ficha de Solicitação de Antimicrobiano</h3>
       <button class="modal-x" onclick="fecharFichaATB()">×</button>
@@ -837,7 +833,7 @@
 
 <!-- ══════════════ MODAL SOLICITAÇÃO DE EXAMES ══════════════ -->
 <div class="modal" id="modal-sol-exames">
-  <div class="modal-box" style="max-width:680px;max-height:92vh;overflow-y:auto;">
+  <div class="modal-box modal-tall" style="max-width:800px;">
     <div class="modal-head">
       <h3 style="display:flex;align-items:center;gap:8px;">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H15"></path><path d="M10 3V10L5 20H19L14 10V3"></path></svg>
@@ -903,7 +899,7 @@
 
 <!-- ══════════════ MODAL TERMOS DE CONSENTIMENTO ══════════════ -->
 <div class="modal" id="modal-termo">
-  <div class="modal-box" style="max-width:760px;max-height:94vh;overflow-y:auto;">
+  <div class="modal-box modal-tall" style="max-width:880px;">
     <div class="modal-head">
       <h3 style="display:flex;align-items:center;gap:8px;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg> Termos de Consentimento</h3>
       <button class="modal-x" onclick="fecharTermo()">×</button>
@@ -973,7 +969,7 @@
 
 <!-- ══════════════ MODAL SOLICITAÇÃO DE HEMOTERÁPICOS ══════════════ -->
 <div class="modal" id="modal-hemo-ficha">
-  <div class="modal-box" style="max-width:780px;max-height:94vh;overflow-y:auto;">
+  <div class="modal-box modal-tall" style="max-width:920px;">
     <div class="modal-head">
       <h3 style="display:flex;align-items:center;gap:8px;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path><line x1="12" y1="11" x2="12" y2="17"></line><line x1="9" y1="14" x2="15" y2="14"></line></svg> Solicitação de Hemoterápicos — HEMONORTE</h3>
       <button class="modal-x" onclick="fecharFichaHemo()">×</button>
@@ -1702,12 +1698,12 @@
 
 <!-- ═══════════ MODAL DE GESTÃO DO LEITO (alta / óbito / transferência) ═══════════ -->
 <div class="modal" id="modal-gestao-leito">
-  <div class="modal-c" style="max-width:560px;">
-    <div class="modal-h">
+  <div class="modal-box" style="max-width:680px;width:100%;">
+    <div class="modal-head">
       <h3 id="gestao-titulo">Gerenciar leito</h3>
-      <button class="btn-close" onclick="fecharGestaoLeito()">×</button>
+      <button class="modal-x" onclick="fecharGestaoLeito()">×</button>
     </div>
-    <div class="modal-b">
+    <div class="modal-body">
       <div id="gestao-info" style="background:#f8f4f5;border:1px solid #d4b8be;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:.85rem;color:#3a2226;"></div>
 
       <!-- MENU INICIAL — escolha do tipo de movimentação -->
@@ -1798,12 +1794,12 @@
      MODAL — MEDICAMENTOS DE USO CONTÍNUO
      ════════════════════════════════════════════════════════════════ -->
 <div class="modal" id="modal-medcont">
-  <div class="modal-c" style="max-width:640px;">
-    <div class="modal-h">
+  <div class="modal-box" style="max-width:780px;width:100%;">
+    <div class="modal-head">
       <h3>💊 Medicamentos de Uso Contínuo</h3>
-      <button class="btn-close" onclick="fecharModalMedcont()">×</button>
+      <button class="modal-x" onclick="fecharModalMedcont()">×</button>
     </div>
-    <div class="modal-b">
+    <div class="modal-body">
       <div class="tip i" style="margin-bottom:12px;font-size:.8rem;">
         Liste os medicamentos de uso contínuo (domiciliar/crônico). Inclua dose e via quando souber.
       </div>
@@ -1815,7 +1811,7 @@
       </div>
       <p style="font-size:.72rem;color:var(--muted);margin-top:6px;">Pressione Enter ou clique em Adicionar. Clique em ✕ para remover.</p>
     </div>
-    <div style="display:flex;justify-content:flex-end;gap:8px;padding:12px 20px;border-top:1px solid var(--borda);">
+    <div class="modal-foot">
       <button class="btn" onclick="fecharModalMedcont()">Cancelar</button>
       <button class="btn btn-pri" onclick="salvarModalMedcont()">✓ Confirmar</button>
     </div>
@@ -1835,12 +1831,12 @@
      MODAL — REQUISIÇÃO DE PARECER
      ════════════════════════════════════════════════════════════════ -->
 <div class="modal" id="modal-parecer">
-  <div class="modal-c" style="max-width:780px;max-height:94vh;overflow-y:auto;">
-    <div class="modal-h">
+  <div class="modal-box modal-tall" style="max-width:900px;">
+    <div class="modal-head">
       <h3>📋 Requisição de Parecer</h3>
-      <button class="btn-close" onclick="fecharModalParecer()">×</button>
+      <button class="modal-x" onclick="fecharModalParecer()">×</button>
     </div>
-    <div class="modal-b" style="padding:16px 20px;display:flex;flex-direction:column;gap:12px;">
+    <div class="modal-body" style="padding:16px 20px;display:flex;flex-direction:column;gap:12px;">
 
       <!-- Especialidade -->
       <div class="fl" style="margin:0;">
@@ -1922,7 +1918,7 @@
       </div>
 
     </div><!-- /modal-b -->
-    <div style="display:flex;justify-content:flex-end;gap:8px;padding:12px 20px;border-top:1px solid var(--borda);flex-wrap:wrap;">
+    <div class="modal-foot">
       <button class="btn" onclick="fecharModalParecer()">Fechar</button>
       <button class="btn btn-sec" onclick="salvarParecer()">⌘ Salvar</button>
       <button class="btn btn-pri" onclick="imprimirParecer()">🖨 Imprimir</button>
@@ -1934,12 +1930,12 @@
      MODAL — PLANO TERAPÊUTICO / SOLICITAÇÃO DE VENTILADOR (TRILOGY)
      ════════════════════════════════════════════════════════════════ -->
 <div class="modal" id="modal-trilogy">
-  <div class="modal-c" style="max-width:780px;max-height:94vh;overflow-y:auto;">
-    <div class="modal-h">
+  <div class="modal-box modal-tall" style="max-width:900px;">
+    <div class="modal-head">
       <h3>🫁 Plano Terapêutico — Solicitação de Ventilador (Trilogy)</h3>
-      <button class="btn-close" onclick="fecharModalTrilogy()">×</button>
+      <button class="modal-x" onclick="fecharModalTrilogy()">×</button>
     </div>
-    <div class="modal-b" style="padding:16px 20px;display:flex;flex-direction:column;gap:12px;">
+    <div class="modal-body" style="padding:16px 20px;display:flex;flex-direction:column;gap:12px;">
 
       <!-- Dados do paciente (pré-preenchidos) -->
       <div style="background:var(--bg2);border:1px solid var(--borda);border-radius:8px;padding:10px 12px;display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;">
@@ -2019,7 +2015,7 @@
       </div>
 
     </div>
-    <div style="display:flex;justify-content:flex-end;gap:8px;padding:12px 20px;border-top:1px solid var(--borda);flex-wrap:wrap;">
+    <div class="modal-foot">
       <button class="btn" onclick="fecharModalTrilogy()">Fechar</button>
       <button class="btn btn-sec" onclick="salvarTrilogy()">⌘ Salvar</button>
       <button class="btn btn-pri" onclick="imprimirTrilogy()">🖨 Imprimir</button>
@@ -2032,12 +2028,12 @@
      CFM Res. 2.173/2017 · Central de Transplantes RN
      ════════════════════════════════════════════════════════════════ -->
 <div class="modal" id="modal-me">
-  <div class="modal-c" style="max-width:860px;max-height:96vh;overflow-y:auto;">
-    <div class="modal-h">
+  <div class="modal-box modal-tall" style="max-width:1000px;">
+    <div class="modal-head">
       <h3>🧠 Termo de Declaração de Morte Encefálica — CFM 2.173/2017</h3>
-      <button class="btn-close" onclick="fecharModalME()">×</button>
+      <button class="modal-x" onclick="fecharModalME()">×</button>
     </div>
-    <div class="modal-b" style="padding:16px 20px;display:flex;flex-direction:column;gap:14px;">
+    <div class="modal-body" style="padding:16px 20px;display:flex;flex-direction:column;gap:14px;">
 
       <!-- HOSPITAL / REGISTRO -->
       <div style="background:var(--bg2);border:1px solid var(--borda);border-radius:8px;padding:10px 14px;">
@@ -2223,7 +2219,7 @@
       </div>
 
     </div><!-- /modal-b -->
-    <div style="display:flex;justify-content:flex-end;gap:8px;padding:12px 20px;border-top:1px solid var(--borda);flex-wrap:wrap;">
+    <div class="modal-foot">
       <button class="btn" onclick="fecharModalME()">Fechar</button>
       <button class="btn btn-sec" onclick="salvarME()">⌘ Salvar</button>
       <button class="btn btn-pri" onclick="imprimirME()">🖨 Imprimir (Frente + Verso)</button>
