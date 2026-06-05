@@ -1654,7 +1654,7 @@
         <!-- Categoria -->
         <div class="mrx-field">
           <label class="mrx-lbl">Categoria</label>
-          <select id="mrx-cat" class="mrx-select" onchange="_mrxAtualizarBadgeCat()">
+          <select id="mrx-cat" class="mrx-select" onchange="_mrxCatChange()">
             <option>Medicação Geral</option>
             <option>ATB</option>
             <option>Dieta</option>
@@ -1664,6 +1664,26 @@
             <option>Protocolo</option>
             <option>Cuidados</option>
           </select>
+        </div>
+
+        <!-- Volume rápido (só Hidratação) -->
+        <div class="mrx-field" id="mrx-vol-wrap" style="display:none;">
+          <label class="mrx-lbl">Volume (ml) — atalho</label>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button type="button" class="mrx-vol-btn" onclick="_mrxSetVol('100')">100 ml</button>
+            <button type="button" class="mrx-vol-btn" onclick="_mrxSetVol('250')">250 ml</button>
+            <button type="button" class="mrx-vol-btn" onclick="_mrxSetVol('500')">500 ml</button>
+            <button type="button" class="mrx-vol-btn" onclick="_mrxSetVol('1000')">1000 ml</button>
+          </div>
+        </div>
+
+        <!-- Vazão (só Hidratação) -->
+        <div class="mrx-field" id="mrx-vazao-wrap" style="display:none;">
+          <label class="mrx-lbl">Vazão (ml/h)</label>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <input type="text" id="mrx-vazao" class="mrx-input" placeholder="Ex: 42" style="max-width:100px;">
+            <span style="font-size:.8rem;color:var(--muted);font-weight:600;">ml/h</span>
+          </div>
         </div>
 
         <!-- Observações -->
