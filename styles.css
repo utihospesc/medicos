@@ -390,6 +390,32 @@ a:hover{text-decoration:underline}
   @page{ margin:1cm; size:A4 portrait; }
 }
 
+
+/* ════════════════════════════════════════════════════════════════════════════
+   EXAME FÍSICO — layout em linhas
+   ════════════════════════════════════════════════════════════════════════════ */
+.ef-row{
+  display:grid;
+  gap:.4rem .6rem;
+  margin-bottom:.4rem;
+}
+.ef-row-3{
+  grid-template-columns:1fr 1fr 1fr;
+}
+.ef-col-narrow{
+  max-width:100px;
+}
+.ef-ta{
+  resize:none;
+  overflow:hidden;
+  min-height:2rem;
+  line-height:1.45;
+  font-size:.85rem;
+}
+@media(max-width:700px){
+  .ef-row-3{ grid-template-columns:1fr; }
+  .ef-col-narrow{ max-width:100%; }
+}
 /* ── ACESSO/SCROLL: scrollbars discretas ────────────────────── */
 ::-webkit-scrollbar{width:10px;height:10px}
 ::-webkit-scrollbar-track{background:transparent}
