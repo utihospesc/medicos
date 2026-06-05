@@ -244,6 +244,7 @@ const _PREFIXOS_LEITO = [
   'uti_med_hemo_ficha_',   // fichas hemoterapia
   'uti_med_sol_exam_',     // solicitações de exame
   'uti_med_sol_cult_',     // solicitações de cultura
+  'uti_med_parecer_',       // pareceres
   'uti_med_diarista_',     // evoluções diarista
   'uti_med_termo_',        // termos/consentimentos
   'uti_med_adm_log_',      // log de admissão
@@ -1558,13 +1559,15 @@ async function _renderHistoricoSolicitacoes(){
   wrap.innerHTML='<div style="font-size:.8rem;color:var(--muted);">Carregando...</div>';
   try{
     // Busca exames convencionais E culturas
-    const [todasExam, todasCult] = await Promise.all([
+    const [todasExam, todasCult, todasPar] = await Promise.all([
       dbListByPrefix(`uti_med_sol_exam_${leitoAtual}_`),
-      dbListByPrefix(`uti_med_sol_cult_${leitoAtual}_`)
+      dbListByPrefix(`uti_med_sol_cult_${leitoAtual}_`),
+      dbListByPrefix(`uti_med_parecer_${leitoAtual}_`)
     ]);
     const arrExam = Object.entries(todasExam).map(([k,v])=>({key:k,...v,_tipo:'exam'})).filter(s=>s&&s.exames&&s.exames.length);
     const arrCult = Object.entries(todasCult).map(([k,v])=>({key:k,...v,_tipo:'cult'})).filter(s=>s&&s.pac);
-    const arr=[...arrExam,...arrCult].sort((a,b)=>(b.salvadoEm||'').localeCompare(a.salvadoEm||''));
+    const arrPar  = Object.entries(todasPar).map(([k,v])=>({key:k,...v,_tipo:'parecer'})).filter(s=>s&&s.espec);
+    const arr=[...arrExam,...arrCult,...arrPar].sort((a,b)=>(b.salvadoEm||'').localeCompare(a.salvadoEm||''));
     if(!arr.length){
       wrap.innerHTML='<div style="font-size:.8rem;color:var(--muted);padding:8px 0;">Nenhuma solicitação registrada para este paciente.</div>';
       return;
@@ -1577,6 +1580,21 @@ async function _renderHistoricoSolicitacoes(){
       .sort((a,b)=>b[0].localeCompare(a[0]))
       .map(([data,sols])=>{
         const cards=sols.map(s=>{
+          if(s._tipo==='parecer'){
+            return `<div class="sol-hist-card" style="border-left:3px solid #1a56db;">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                <span style="font-size:.7rem;font-weight:800;color:#1a56db;letter-spacing:.04em;">📋 PARECER</span>
+                <span style="font-size:.75rem;font-weight:700;">${s.espec||'?'}</span>
+              </div>
+              ${s.motivo?`<div class="sol-hist-ind" style="font-size:.78rem;color:#1a56db;">💬 ${s.motivo.slice(0,120)}${s.motivo.length>120?'…':''}</div>`:''}
+              <div class="sol-hist-meta">
+                ${s.medNome||s.autor||'?'}
+                <span style="margin-left:auto;">
+                  <button class="btn btn-sm" style="font-size:.72rem;padding:3px 8px;" onclick="_imprimirParecerChave('${s.key}')">🖨</button>
+                </span>
+              </div>
+            </div>`;
+          }
           if(s._tipo==='cult'){
             // Card de cultura — resumido
             const exames=_cultResumir(s);
@@ -6595,6 +6613,349 @@ function _cultResumir(c){
   if(c.fresco) lista.push('Microscopia fresco');
   if(c.ziehl) lista.push('ZIEHL-NEELSEN');
   return lista.length?lista:['Cultura'];
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   REQUISIÇÃO DE PARECER
+   ════════════════════════════════════════════════════════════════════════════ */
+
+// Especialidades com filtros de medicações relevantes para cada uma
+const _PARECER_MEDS_FILTROS = {
+  'Nefrologia':        /furosemida|hidroclorotiazida|espironolactona|torasemida|diuret|nefro|tacrolimo|ciclosporina|vancomicina|amicacina|gentamicina|anfotericina|polimixina|contraste|aciclovir|metformina|ieca|sartan|losartana|enalapril|captopril|sódio|potássio|bicarbonato/i,
+  'Infectologia':      /antibio|atb|meropenem|imipenem|piperacilina|vancomicina|polimixina|tigeciclin|colistin|ceftriaxona|cefepime|ceftazidima|amicacina|gentamicina|metronidazol|fluconazol|voriconazol|anidulafungin|aciclovir|ganciclovir|oseltamivir|clindamicina|azitromicina|linezolida|daptomicin|ertapenem/i,
+  'Cardiologia':       /noradrenalina|adrenalina|dopamina|dobutamina|vasopressin|nora|amiodarona|lidocaina|adenosina|metoprolol|atenolol|carvedilol|bisoprolol|digoxin|furosemida|captopril|enalapril|losartana|hidralazina|nitroprussiato|nitroglicerina|heparina|enoxaparina|varfarina|aspirina|clopidogrel|estatina|sinvastatina|atorvastatina/i,
+  'Pneumologia':       /salbutamol|fenoterol|ipratropio|budesonida|fluticasona|beclometasona|teofilina|aminofilina|acetilcisteina|dornase|sildenafila|bosentan|prostaciclin|surfactante/i,
+  'Endocrinologia':    /insulina|metformina|glibenclamida|sitagliptina|empagliflozina|dexametasona|hidrocortisona|metilprednisolona|prednisolona|prednisona|levotiroxina|amiodarona|glucagon|ocreotida/i,
+  'Gastroenterologia': /omeprazol|pantoprazol|esomeprazol|ranitidina|metoclopramida|domperidona|ondansetrona|lactulose|neomicina|rifaximina|octreotida|somatostatina|sucralfato/i,
+  'Hematologia':       /heparina|enoxaparina|varfarina|rivaroxabana|apixabana|acido tranexamico|vitamina k|desmopressin|filgrastim|eritropoetina|hidroxiureia|vincristina|rituximabe/i,
+  'Neurologia':        /fenitoina|acido valproico|levetiracetam|carbamazepina|midazolam|propofol|fentanil|morfina|tramadol|gabapentina|pregabalina|amitriptilina|haloperidol|quetiapina|clonazepam|nimodipina/i,
+  'default':           /noradrenalina|adrenalina|dopamina|dobutamina|vasopressin|nora|furosemida|heparina|enoxaparina|vancomicina|meropenem|imipenem|piperacilina|ceftriaxona|cefepime|amicacina|gentamicina|polimixina|metronidazol|fluconazol|insulina|hidrocortisona|omeprazol|pantoprazol/i
+};
+
+// Categorias sempre relevantes (independente da especialidade)
+const _PARECER_CATS_SEMPRE = ['ATB','Droga Vasoativa'];
+
+function _parEspecChange(){
+  const sel = $('par-espec');
+  const outra = $('par-espec-outra');
+  if(!sel || !outra) return;
+  if(sel.value === '__outra__'){
+    outra.style.display = '';
+    outra.focus();
+  } else {
+    outra.style.display = 'none';
+    outra.value = '';
+  }
+  // Atualiza medicações relevantes ao trocar especialidade
+  _parPreencherMeds();
+}
+
+async function abrirModalParecer(){
+  if(!leitoAtual){ toast('Abra o prontuário de um paciente.',true); return; }
+
+  // Dados básicos do paciente
+  const pac    = gf('f-pac') || '';
+  const dn     = gf('f-dn')  || '';
+  const leito  = gf('f-leito') || pad(leitoAtual);
+  const adm    = gf('f-adm')  || '';
+  const diag   = gf('f-diag') || '';
+  const alergia= gf('f-alergia') || '';
+  const comor  = gf('f-comor') || '';
+  const hda    = gf('f-hda')  || '';
+  const admDesc= gf('f-adm-desc') || '';
+  const evol   = gf('f-evol') || '';
+  const condutas=gf('f-condutas') || '';
+
+  // Idade
+  const idadeNum = _idadeDeDN(dn);
+  const idadeStr = idadeNum != null ? `${idadeNum} ANOS` : '';
+
+  // Popula cabeçalho somente leitura
+  sf('par-nome',    pac.toUpperCase());
+  sf('par-leito',   'UTI ' + leito);
+  sf('par-idade',   idadeStr);
+  sf('par-adm',     adm ? _fmtDataCurta(adm) : '');
+  sf('par-diag',    diag.toUpperCase());
+  sf('par-alergia', alergia.toUpperCase());
+  sf('par-comor',   comor.toUpperCase());
+  sf('par-data',    gf('f-data') || hoje());
+
+  // Médico
+  if(perfilUsuario){
+    sf('par-med', (perfilUsuario.nome||'').toUpperCase());
+    sf('par-crm', perfilUsuario.crm||'');
+  }
+
+  // Monta resumo clínico automático
+  const admDataFmt = adm ? _fmtDataCurta(adm) : '?';
+  let resumo = '';
+  if(admDesc && admDesc.trim()) resumo += `ADMISSÃO NA UTI (${admDataFmt}):\n${admDesc.trim()}\n\n`;
+  else if(hda && hda.trim())    resumo += `HISTÓRIA DA DOENÇA ATUAL:\n${hda.trim()}\n\n`;
+  if(evol && evol.trim())       resumo += `EVOLUÇÃO ATUAL:\n${evol.trim()}\n\n`;
+  if(condutas && condutas.trim()) resumo += `CONDUTA:\n${condutas.trim()}`;
+  sf('par-resumo', resumo.trim());
+
+  // Exames laboratoriais
+  _parRecarregarLab();
+
+  // Especialidade — limpa seleção anterior
+  const selEspec = $('par-espec');
+  if(selEspec) selEspec.value = '';
+  const outraInp = $('par-espec-outra');
+  if(outraInp){ outraInp.style.display = 'none'; outraInp.value = ''; }
+
+  // Limpa motivo
+  sf('par-motivo', '');
+
+  // Medicações (carrega as default por ora; atualiza quando escolher especialidade)
+  await _parPreencherMeds();
+
+  $('modal-parecer').classList.add('show');
+}
+
+function fecharModalParecer(){ $('modal-parecer').classList.remove('show'); }
+
+// Monta string de exames laboratoriais a partir de _labLinhas
+function _parRecarregarLab(){
+  if(!_labLinhas || !_labLinhas.length){ sf('par-lab',''); return; }
+  const campLbl = Object.fromEntries(LAB_CAMPOS.map(c=>[c.k,c.l]));
+  const sorted = _labLinhas.slice().sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+  const txt = sorted.map(lin=>{
+    const vals = Object.entries(lin.valores||{})
+      .filter(([,v])=>v!=null&&v!=='')
+      .map(([k,v])=>`${campLbl[k]||k}: ${v}`)
+      .join('  |  ');
+    return vals ? `${_fmtDataCurta(lin.data)||'?'}: ${vals}` : null;
+  }).filter(Boolean).join('\n');
+  sf('par-lab', txt);
+}
+
+// Filtra medicações relevantes para a especialidade selecionada
+async function _parPreencherMeds(){
+  // Tenta usar _rxItens (já carregados); se vazio, busca do Firebase
+  let itens = _rxItens && _rxItens.length ? _rxItens : [];
+  if(!itens.length && leitoAtual){
+    try{
+      const data = gf('f-data') || hoje();
+      const key = `uti_med_rx_${leitoAtual}_${data}`;
+      let saved = await dbGet(key);
+      if(!saved || !saved.itens || !saved.itens.length){
+        const todas = await dbListByPrefix(`uti_med_rx_${leitoAtual}_`);
+        const ord = Object.values(todas).filter(r=>r&&r.itens&&r.itens.length).sort((a,b)=>b.data.localeCompare(a.data));
+        saved = ord[0] || null;
+      }
+      itens = saved && saved.itens ? saved.itens : [];
+    } catch(e){ itens = []; }
+  }
+
+  // Medicamentos de uso contínuo (do campo f-medcont)
+  const medcont = (gf('f-medcont')||'').split(/\s*\|\s*|[,;]+/).map(s=>s.trim()).filter(Boolean);
+
+  // Determina regex do filtro conforme especialidade
+  const espec = ($('par-espec')||{}).value || '';
+  const especNome = espec === '__outra__' ? ($('par-espec-outra')||{}).value||'' : espec;
+  const re = _PARECER_MEDS_FILTROS[especNome] || _PARECER_MEDS_FILTROS['default'];
+
+  // Filtra: categorias sempre relevantes OU bate no regex da especialidade
+  const selecionados = itens.filter(it=>{
+    if(!it.farm) return false;
+    if(_PARECER_CATS_SEMPRE.includes(it._cat)) return true;
+    return re.test(it.farm);
+  });
+
+  // Formata cada medicação: "FARMACO DOSE via FREQ (CAT)"
+  const linhas = selecionados.map(it=>{
+    const parts = [it.farm.toUpperCase()];
+    if(it.dose)  parts.push(it.dose.toUpperCase());
+    if(it.via)   parts.push(it.via);
+    if(it.freq)  parts.push(it.freq);
+    if(it._cat && it._cat !== 'Medicação Geral') parts.push(`(${it._cat.toUpperCase()})`);
+    // Dias de ATB se houver
+    if(it.ddInicio){
+      const dias = Math.round((new Date()-new Date(it.ddInicio+'T00:00:00'))/86400000);
+      if(dias>=0) parts.push(`D${dias+1}`);
+    }
+    return '• ' + parts.join(' ');
+  });
+
+  // Adiciona uso contínuo não sobreposto
+  medcont.forEach(m=>{
+    const mUp = m.toUpperCase();
+    const jatem = linhas.some(l=>l.toUpperCase().includes(mUp.split(/\s+/)[0]));
+    if(!jatem && re.test(m)) linhas.push('• ' + mUp + ' (USO CONTÍNUO)');
+  });
+
+  sf('par-meds', linhas.join('\n'));
+}
+
+// Coleta todos os dados do modal
+function _coletarParecer(){
+  const espec = ($('par-espec')||{}).value || '';
+  const especNome = espec === '__outra__'
+    ? (($('par-espec-outra')||{}).value||'').toUpperCase()
+    : espec.toUpperCase();
+  return {
+    espec:    especNome,
+    pac:      gf('par-nome'),
+    leito:    gf('par-leito'),
+    idade:    gf('par-idade'),
+    adm:      gf('par-adm'),
+    diag:     gf('par-diag'),
+    alergia:  gf('par-alergia'),
+    comor:    gf('par-comor'),
+    resumo:   gf('par-resumo'),
+    lab:      gf('par-lab'),
+    meds:     gf('par-meds'),
+    motivo:   gf('par-motivo'),
+    data:     gf('par-data') || hoje(),
+    medNome:  gf('par-med'),
+    medCrm:   gf('par-crm'),
+    autor:    usuarioEmail,
+    salvadoEm: new Date().toISOString(),
+  };
+}
+
+async function salvarParecer(){
+  const p = _coletarParecer();
+  if(!p.espec){ toast('Selecione a especialidade.',true); return; }
+  if(!p.motivo.trim()){ toast('Preencha o motivo da solicitação.',true); return; }
+  if(!leitoAtual){ toast('Abra o prontuário.',true); return; }
+  showLoading('Salvando parecer...');
+  try{
+    const key = `uti_med_parecer_${leitoAtual}_${p.data}_${Date.now()}`;
+    await dbSet(key, p);
+    hideLoading();
+    toast('✓ Parecer salvo.');
+    _renderHistoricoSolicitacoes();
+  } catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
+}
+
+function imprimirParecer(){ _imprimirParecerObj(_coletarParecer()); }
+
+async function _imprimirParecerChave(key){
+  showLoading('Carregando...');
+  try{ const p=await dbGet(key); hideLoading(); if(p) _imprimirParecerObj(p); }
+  catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
+}
+
+function _imprimirParecerObj(p){
+  if(!p.espec){ toast('Selecione a especialidade antes de imprimir.',true); return; }
+  const dataFmt = p.data ? _fmtDataCurta(p.data) : '___/___/______';
+  const admFmt  = p.adm  || '___/___/______';
+
+  // Serviço: HOSPESC – UNIDADE DE TERAPIA INTENSIVA
+  // Formata o resumo preservando quebras de linha
+  const _esc  = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const _nl2br= s => _esc(s).replace(/\n/g,'<br>');
+
+  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+  <title>Requisição de Parecer — ${p.pac||''}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Times New Roman',Times,serif;font-size:11pt;color:#000;background:#fff;}
+    @page{size:A4 portrait;margin:2cm 2.2cm 2cm 2.2cm;}
+    .cab{text-align:center;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:14px;}
+    .cab-inst{font-size:9.5pt;font-weight:700;letter-spacing:.04em;}
+    .cab-titulo{font-size:13pt;font-weight:800;margin:4px 0;letter-spacing:.06em;text-transform:uppercase;}
+    .cab-sub{font-size:10pt;font-weight:700;text-decoration:underline;letter-spacing:.04em;}
+    table.ident{width:100%;border-collapse:collapse;margin-bottom:0;}
+    table.ident td{border:1.5px solid #000;padding:4px 8px;font-size:10pt;vertical-align:top;}
+    .lbl{font-size:8pt;font-weight:700;display:block;margin-bottom:1px;letter-spacing:.04em;}
+    .val{font-size:10.5pt;font-weight:700;}
+    .bloco{border:1.5px solid #000;border-top:none;width:100%;}
+    .bloco-inner{padding:6px 10px;min-height:28px;font-size:10pt;line-height:1.55;}
+    .bloco-lbl{background:#000;color:#fff;font-size:8.5pt;font-weight:800;padding:3px 10px;letter-spacing:.06em;text-transform:uppercase;}
+    .rodape{margin-top:20px;display:flex;justify-content:space-between;align-items:flex-end;}
+    .assin{text-align:center;}
+    .assin-linha{border-top:1.5px solid #000;padding-top:3px;font-size:9pt;min-width:200px;margin-top:40px;}
+    .parecer-box{border:1.5px solid #000;border-top:none;min-height:120px;padding:8px 10px;}
+    @media print{body{margin:0;}}
+  </style></head><body>
+
+  <!-- Cabeçalho institucional -->
+  <div class="cab">
+    <div class="cab-inst">SECRETARIA MUNICIPAL DE SAÚDE · HOSPITAL DOS PESCADORES · NÚCLEO INTERNO DE REGULAÇÃO – NIR</div>
+    <div class="cab-titulo">Requisição de Parecer</div>
+  </div>
+
+  <!-- Identificação -->
+  <table class="ident">
+    <tr>
+      <td style="width:70%;">
+        <span class="lbl">NOME</span>
+        <span class="val">${_esc(p.pac||'')}</span>
+      </td>
+      <td style="width:30%;">
+        <span class="lbl">IDADE</span>
+        <span class="val">${_esc(p.idade||'')}</span>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <span class="lbl">SERVIÇO</span>
+        <span class="val">HOSPESC – UNIDADE DE TERAPIA INTENSIVA</span>
+      </td>
+      <td>
+        <span class="lbl">LEITO</span>
+        <span class="val">${_esc(p.leito||'')}</span>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="2">
+        <span class="lbl">AO SERVIÇO DE</span>
+        <span class="val">${_esc(p.espec||'')}</span>
+      </td>
+    </tr>
+  </table>
+
+  <!-- Bloco de anamnese unificado -->
+  <div style="border:1.5px solid #000;border-top:none;">
+    <div class="bloco-lbl">ADMISSÃO NA UTI HOSPESC: ${admFmt} &nbsp;|&nbsp; HIPÓTESE DIAGNÓSTICA: ${_esc((p.diag||'').toUpperCase())}</div>
+    <div style="padding:3px 10px 4px;font-size:9pt;border-bottom:1px solid #ccc;">
+      <strong>ALERGIAS:</strong> ${_esc(p.alergia||'NEGA')} &nbsp;&nbsp;
+      <strong>COMORBIDADES:</strong> ${_esc(p.comor||'')}
+    </div>
+    ${p.meds && p.meds.trim() ? `
+    <div style="padding:3px 10px 4px;font-size:9pt;border-bottom:1px solid #ccc;">
+      <strong>EM USO (MEDICAÇÕES RELEVANTES):</strong><br>
+      <span style="white-space:pre-wrap;font-size:9pt;">${_esc(p.meds)}</span>
+    </div>` : ''}
+    <div class="bloco-inner" style="white-space:pre-wrap;">${_nl2br(p.resumo||'')}</div>
+    ${p.lab && p.lab.trim() ? `
+    <div style="border-top:1px solid #ccc;">
+      <div style="background:#f0f0f0;font-size:7.5pt;font-weight:800;padding:2px 10px;letter-spacing:.04em;">EXAMES LABORATORIAIS</div>
+      <div style="padding:4px 10px;font-family:monospace;font-size:8.5pt;white-space:pre-wrap;line-height:1.5;">${_esc(p.lab)}</div>
+    </div>` : ''}
+    ${p.motivo && p.motivo.trim() ? `
+    <div style="border-top:1px solid #000;">
+      <div class="bloco-lbl">MOTIVO DA SOLICITAÇÃO</div>
+      <div class="bloco-inner" style="white-space:pre-wrap;">${_nl2br(p.motivo)}</div>
+    </div>` : ''}
+  </div>
+
+  <!-- Data e assinatura -->
+  <div class="rodape">
+    <div style="font-size:10pt;">Data: ${dataFmt}</div>
+    <div class="assin">
+      <div class="assin-linha">
+        ${_esc((p.medNome||'').toUpperCase())}${p.medCrm?' &nbsp;|&nbsp; CRM '+_esc(p.medCrm):''}<br>
+        Médico Solicitante
+      </div>
+    </div>
+  </div>
+
+  <!-- Espaço para o Parecer -->
+  <div style="margin-top:18px;">
+    <div class="bloco-lbl" style="border:1.5px solid #000;border-bottom:none;">PARECER</div>
+    <div class="parecer-box"></div>
+  </div>
+
+  <script>window.onload=()=>{window.print();window.onafterprint=()=>window.close();}<\/script>
+  </body></html>`;
+
+  const w = window.open('', '_blank', 'width=850,height=1000');
+  if(w){ w.document.write(html); w.document.close(); }
+  else toast('Popup bloqueado — permita popups para imprimir.', true);
 }
 
 async function salvarSolicitacaoCultura(){
