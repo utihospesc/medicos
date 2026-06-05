@@ -2619,16 +2619,16 @@ const RX_BANCO = [
   {nome:'AMICACINA 500MG', qtd:'1', apres:'FA', dose:'500MG', diluicao:'+ 100ML SF 0,9%', via:'EV', freq:'24/24H', hor:['08'], cat:'ATB', obs:'dosar nível'},
   {nome:'ALBENDAZOL 4MG/ML 10ML', qtd:'10', apres:'ML', dose:'4MG/ML', diluicao:'', via:'VO', freq:'12/12H', hor:['08','20'], cat:'ATB', obs:'junto à refeição'},
   {nome:'PERMETRINA 5% LOÇÃO 60ML', qtd:'', apres:'FR', dose:'5%', diluicao:'', via:'TD', freq:'ACM', hor:['ACM'], cat:'ATB', obs:'lavar após 8-14h'},
-  {nome:'SF 0,9% 120ML EV EM BIC ~5ML/H', qtd:'120', apres:'ML', dose:'0,9%', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Hidratação', obs:''},
-  {nome:'SF 0,9% 250ML EV EM BIC', qtd:'250', apres:'ML', dose:'0,9%', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Hidratação', obs:''},
-  {nome:'SF 0,9% 500ML EV EM BIC', qtd:'500', apres:'ML', dose:'0,9%', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Hidratação', obs:''},
-  {nome:'SF 0,9% 1000ML EV EM BIC 42ML/H', qtd:'1000', apres:'ML', dose:'0,9%', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Hidratação', obs:''},
-  {nome:'SG 5% 420ML + BICARBONATO DE SÓDIO 8,4% 80ML', qtd:'500', apres:'ML', dose:'5%', diluicao:'+ 80ML BIC 8,4%', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Hidratação', obs:'~84ML/H'},
-  {nome:'RINGER LACTATO 500ML ETAPA RÁPIDA', qtd:'500', apres:'ML', dose:'—', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Hidratação', obs:''},
-  {nome:'RINGER LACTATO 1500ML EV EM BIC ~63ML/H', qtd:'1500', apres:'ML', dose:'—', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Hidratação', obs:''},
-  {nome:'RINGER LACTATO 120ML EV EM BIC 5ML/H', qtd:'120', apres:'ML', dose:'—', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Hidratação', obs:''},
-  {nome:'SORO FISIOLÓGICO 0,9% EV EM BIC A 4ML/H', qtd:'', apres:'ML', dose:'0,9%', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Hidratação', obs:''},
-  {nome:'JELCO HIDRATADO', qtd:'', apres:'—', dose:'', diluicao:'', via:'EV', freq:'—', hor:[], cat:'Hidratação', obs:''},
+  {nome:'SF 0,9% EV EM BIC', qtd:'120', apres:'ML', dose:'0,9%', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Hidratação', obs:'', vazao:'5'},
+  {nome:'SF 0,9% EV EM BIC', qtd:'250', apres:'ML', dose:'0,9%', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Hidratação', obs:'', vazao:''},
+  {nome:'SF 0,9% EV EM BIC', qtd:'500', apres:'ML', dose:'0,9%', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Hidratação', obs:'', vazao:''},
+  {nome:'SF 0,9% EV EM BIC', qtd:'1000', apres:'ML', dose:'0,9%', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Hidratação', obs:'', vazao:'42'},
+  {nome:'SG 5% 420ML + BICARBONATO DE SÓDIO 8,4% 80ML', qtd:'500', apres:'ML', dose:'5%', diluicao:'+ 80ML BIC 8,4%', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Hidratação', obs:'', vazao:'84'},
+  {nome:'RINGER LACTATO ETAPA RÁPIDA', qtd:'500', apres:'ML', dose:'—', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Hidratação', obs:'', vazao:''},
+  {nome:'RINGER LACTATO EV EM BIC', qtd:'1000', apres:'ML', dose:'—', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Hidratação', obs:'', vazao:'42'},
+  {nome:'RINGER LACTATO EV EM BIC', qtd:'120', apres:'ML', dose:'—', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Hidratação', obs:'', vazao:'5'},
+  {nome:'SORO FISIOLÓGICO 0,9% EV EM BIC', qtd:'', apres:'ML', dose:'0,9%', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Hidratação', obs:'', vazao:'4'},
+  {nome:'JELCO HIDRATADO', qtd:'', apres:'—', dose:'', diluicao:'', via:'EV', freq:'—', hor:[], cat:'Hidratação', obs:'', vazao:''},
   {nome:'NORADRENALINA (NOREPINEFRINA) 4MG/4ML', qtd:'4', apres:'AMP', dose:'4MG/4ML', diluicao:'+ 234ML SF 0,9%', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Droga Vasoativa', obs:'BIC — titular PAM'},
   {nome:'NOREPINEFRINA 2MG/ML', qtd:'16', apres:'ML', dose:'2MG/ML', diluicao:'+ 234ML SG 5%', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Droga Vasoativa', obs:'BIC'},
   {nome:'DOBUTAMINA 50MG/20ML', qtd:'4', apres:'AMP', dose:'50MG/20ML', diluicao:'+ 170ML SF 0,9%', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Droga Vasoativa', obs:'BIC'},
@@ -3100,7 +3100,7 @@ function _rxOrdenar(){
 }
 
 function _rxNovoItem(tipo){
-  return { id:Date.now()+Math.random(), farm:'', qtd:'', apres:'', dose:'', diluicao:'', via:'EV', freq:'24/24H', hor:[], obs:'', tipo:tipo||'normal', _cat:'Medicação Geral', ddInicio:'' };
+  return { id:Date.now()+Math.random(), farm:'', qtd:'', apres:'', dose:'', diluicao:'', via:'EV', freq:'24/24H', hor:[], obs:'', tipo:tipo||'normal', _cat:'Medicação Geral', ddInicio:'', vazao:'' };
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
@@ -3375,6 +3375,7 @@ function abrirModalRxItem(id, tipo){
     sf('mrx-dose', it.dose||'');
     sf('mrx-dil',  it.diluicao||'');
     sf('mrx-obs',  it.obs||'');
+    sf('mrx-vazao', it.vazao||'');
     $('mrx-via').value  = it.via||'EV';
     $('mrx-freq').value = it.freq||'24/24H';
     $('mrx-apres').value= it.apres||'—';
@@ -3385,7 +3386,7 @@ function abrirModalRxItem(id, tipo){
     $('modal-rx-titulo').textContent = 'Adicionar item';
     const lbl1=$('mrx-btn-label'); if(lbl1) lbl1.textContent='Confirmar item'; $('modal-rx-titulo').textContent='Adicionar item';
     sf('mrx-farm',''); sf('mrx-qtd','1'); sf('mrx-dose','');
-    sf('mrx-dil',''); sf('mrx-obs','');
+    sf('mrx-dil',''); sf('mrx-obs',''); sf('mrx-vazao','');
     const via  = tipo==='dieta'?'VO':tipo==='cuidados'?'—':'EV';
     const freq = tipo==='dieta'?'SND':tipo==='sn'?'SN':tipo==='cuidados'?'SND':'24/24H';
     $('mrx-via').value  = via;
@@ -3399,6 +3400,7 @@ function abrirModalRxItem(id, tipo){
   _mrxViaChange();
   _mrxFreqChange();
   _mrxAtualizarBadgeCat();
+  _mrxAtualizarCamposHidratacao();
   $('modal-rx-item').classList.add('show');
   setTimeout(()=>{ $('mrx-farm').focus(); $('mrx-farm').select(); }, 100);
 }
@@ -3414,6 +3416,26 @@ function _mrxViaChange(){
   const via = $('mrx-via').value;
   const mostraDil = RX_VIAS_DILUICAO.has(via.trim().toUpperCase());
   $('mrx-dil-wrap').style.display = mostraDil ? '' : 'none';
+}
+
+function _mrxCatChange(){
+  _mrxAtualizarBadgeCat();
+  _mrxAtualizarCamposHidratacao();
+}
+
+function _mrxAtualizarCamposHidratacao(){
+  const cat = ($('mrx-cat')||{}).value || '';
+  const isHidrat = cat === 'Hidratação';
+  const wrapVazao = $('mrx-vazao-wrap');
+  const wrapVol   = $('mrx-vol-wrap');
+  if(wrapVazao) wrapVazao.style.display = isHidrat ? '' : 'none';
+  if(wrapVol)   wrapVol.style.display   = isHidrat ? '' : 'none';
+}
+
+function _mrxSetVol(vol){
+  sf('mrx-qtd', vol);
+  const apresEl = $('mrx-apres');
+  if(apresEl) apresEl.value = 'ML';
 }
 
 function _mrxFreqChange(){
@@ -3490,6 +3512,7 @@ function _mrxSalvar(){
       it.hor      = [..._mrxHorSel];
       it.obs      = ($('mrx-obs').value||'').trim().toUpperCase();
       it._cat     = $('mrx-cat').value;
+      it.vazao    = ($('mrx-vazao').value||'').trim().replace(/[^\d.,]/g,'');
     }
   } else {
     // Novo item
@@ -3504,6 +3527,7 @@ function _mrxSalvar(){
     item.hor      = [..._mrxHorSel];
     item.obs      = ($('mrx-obs').value||'').trim().toUpperCase();
     item._cat     = $('mrx-cat').value;
+    item.vazao    = ($('mrx-vazao').value||'').trim().replace(/[^\d.,]/g,'');
     item.tipo     = 'normal';
     // Auto-ordena ao inserir (por prioridade de categoria)
     _rxItens.push(item);
@@ -3659,6 +3683,12 @@ function _rxFocusUltimo(){
 
 function _rxRemover(id){ _rxItens=_rxItens.filter(i=>i.id!==id); _renderPrescricao(); }
 
+function _rxSetVol(id, vol){
+  const it=_rxItens.find(i=>i.id===id); if(!it) return;
+  it.qtd=vol; it.apres='ML';
+  _renderPrescricao();
+}
+
 // Detecta categoria do medicamento digitado manualmente
 function _rxDetectarCategoria(nome) {
   if (!nome) return 'Medicação Geral';
@@ -3802,7 +3832,11 @@ function _renderPrescricao(){
             oninput="_rxSetField(${it.id},'qtd',this.value)">
           <select class="rx-apres-sel" onchange="_rxSetField(${it.id},'apres',this.value)">${apresOpts}</select>
         </div>
+        ${it._cat==='Hidratação'?`<div class="rx-vol-quick">
+          ${['100','250','500','1000'].map(v=>`<button type="button" class="rx-vol-btn${it.qtd===v?' rx-vol-btn-on':''}" onclick="_rxSetVol(${it.id},'${v}')">${v}</button>`).join('')}
+        </div>`:''}
         ${_rxMostrarDiluicao(it)?`<div class="rx-dil-inline"><span class="rx-dil-label">DILUENTE:</span><input type="text" class="rx-dil-input" value="${it.diluicao||''}" placeholder="ex: + 100ML SF 0,9%" oninput="_rxSetField(${it.id},'diluicao',this.value.toUpperCase())" style="text-transform:uppercase;"></div>`:''}
+        ${it._cat==='Hidratação'?`<div class="rx-vazao-inline"><span class="rx-vazao-label">VAZÃO:</span><input type="text" class="rx-vazao-input" value="${it.vazao||''}" placeholder="ml/h" oninput="_rxSetField(${it.id},'vazao',this.value.replace(/[^\\d.,]/g,''))"><span class="rx-vazao-unit">ml/h</span></div>`:''}
       </td>
       <td>
         <input type="text" value="${it.dose||''}" placeholder="DOSE *"
@@ -3896,8 +3930,8 @@ function _rxAcEscolher(idx){
   it.qtd=m.qtd||''; it.apres=m.apres||''; it.dose=m.dose||'';
   it.diluicao=m.diluicao||''; it.via=m.via||'EV';
   it.freq=m.freq||'24/24H'; it.hor=[...(m.hor||[])];
-  // Obs: só o texto clínico do banco (sem diluição — fica em it.diluicao)
   it.obs=m.obs||'';
+  it.vazao=m.vazao||'';
   it._cat=m.cat||'Medicação Geral';
   // Marca D0 automaticamente se for ATB novo (sem ddInicio anterior)
   if(m.cat==='ATB' && !it.ddInicio){
@@ -5896,19 +5930,19 @@ function _termoCabecalho(){
 function _termoEstilos(){
   return `<style>
     *{box-sizing:border-box;margin:0;padding:0;font-family:'Arial',sans-serif;}
-    @page{size:A4 portrait;margin:1.1cm}
-    body{font-size:9.5pt;color:#000;line-height:1.45;text-align:justify;}
-    .cab{text-align:center;border-bottom:2px solid #7a1020;padding-bottom:6px;margin-bottom:10px;}
-    h2.titulo{text-align:center;font-size:10.5pt;font-weight:800;margin:10px 0 8px;text-transform:uppercase;letter-spacing:.04em;}
-    p{margin-bottom:6px;}
-    .item{margin-bottom:5px;text-align:justify;}
+    @page{size:A4 portrait;margin:1.5cm}
+    body{font-size:10pt;color:#000;line-height:1.55;text-align:justify;}
+    .cab{text-align:center;border-bottom:2px solid #7a1020;padding-bottom:8px;margin-bottom:14px;}
+    h2.titulo{text-align:center;font-size:11pt;font-weight:800;margin:14px 0 10px;text-transform:uppercase;letter-spacing:.04em;}
+    p{margin-bottom:8px;}
+    .item{margin-bottom:7px;text-align:justify;}
     .item b{display:inline-block;min-width:18px;}
-    .linha-dados{margin:8px 0;line-height:1.8;}
+    .linha-dados{margin:10px 0;line-height:1.9;}
     .campo{display:inline-block;border-bottom:1px solid #555;padding:0 4px;min-width:120px;}
     .campo-grande{display:inline-block;border-bottom:1px solid #555;padding:0 4px;min-width:280px;}
-    .assin{margin-top:18px;text-align:center;}
+    .assin{margin-top:24px;text-align:center;}
     .assin .linha{border-top:1px solid #555;display:inline-block;min-width:280px;padding-top:3px;font-size:9pt;}
-    .duas-assin{display:flex;justify-content:space-between;gap:20px;margin-top:14px;}
+    .duas-assin{display:flex;justify-content:space-between;gap:20px;margin-top:20px;}
     .duas-assin > div{flex:1;text-align:center;}
     .duas-assin .linha{border-top:1px solid #555;padding-top:3px;font-size:9pt;}
     @media print{body{margin:0;}}
@@ -6227,8 +6261,14 @@ function _gerarHtmlPrescricao(){
   const pac=gf('f-pac'), leito=gf('f-leito'), data=gf('f-data');
   const med=perfilUsuario?perfilUsuario.nome:'', crm=perfilUsuario?perfilUsuario.crm||'':'';
   const linhas=_rxItens.map((it,i)=>{
-    const dose=[it.qtd,(it.apres&&it.apres!=='—'?it.apres:''),(it.dose&&it.dose!=='—'?it.dose:'')]
-      .filter(Boolean).join(' ')||'—';
+    const isHidrat = it._cat === 'Hidratação';
+    const dosePartes = isHidrat
+      ? [it.qtd ? it.qtd+'ML' : '', it.dose&&it.dose!=='—'?it.dose:''].filter(Boolean)
+      : [it.qtd,(it.apres&&it.apres!=='—'?it.apres:''),(it.dose&&it.dose!=='—'?it.dose:'')].filter(Boolean);
+    const dose = dosePartes.join(' ') || '—';
+    const vazaoHtml = isHidrat && it.vazao
+      ? `<div style="font-size:7pt;color:#0d47a1;font-weight:700;margin-top:1px;">Vazão: ${it.vazao} ml/h</div>`
+      : '';
     const hors=_ordenarHorarios(it.hor||[]).join(' · ')||'—';
     const bg = it.tipo==='dieta'?'#f0f7f0':it.tipo==='sn'?'#fffde7':it.tipo==='cuidados'?'#f5f5f5':'white';
     const dBadge=it._cat==='ATB'&&it._ddia!=null
@@ -6240,7 +6280,7 @@ function _gerarHtmlPrescricao(){
     return `<tr style="background:${bg};">
       <td style="padding:4px 6px;border:1px solid #ccc;width:24px;color:#888;font-size:8pt;">${i+1}</td>
       <td style="padding:4px 6px;border:1px solid #ccc;font-weight:600;">${(it.farm||'—').toUpperCase()}${dBadge}${dilHtml}</td>
-      <td style="padding:4px 6px;border:1px solid #ccc;">${dose.toUpperCase()}</td>
+      <td style="padding:4px 6px;border:1px solid #ccc;">${dose.toUpperCase()}${vazaoHtml}</td>
       <td style="padding:4px 6px;border:1px solid #ccc;">${(it.via||'—').toUpperCase()}</td>
       <td style="padding:4px 6px;border:1px solid #ccc;">${(it.freq||'—').toUpperCase()}</td>
       <td style="padding:4px 6px;border:1px solid #ccc;font-size:8pt;">${hors}</td>
@@ -6916,8 +6956,8 @@ function _imprimirParecerObj(p){
     .rodape{margin-top:10px;display:flex;justify-content:space-between;align-items:flex-end;}
     .assin{text-align:center;}
     .assin-linha{border-top:1.5px solid #000;padding-top:3px;font-size:8pt;min-width:180px;margin-top:28px;}
-    .parecer-box{border:1.5px solid #000;border-top:none;min-height:60px;padding:6px 8px;}
-    @media print{body{margin:0;}*{-webkit-print-color-adjust:exact;print-color-adjust:exact;}@page{size:A4 portrait;margin:1.1cm 1.2cm;}}
+    .parecer-box{border:1.5px solid #000;border-top:none;min-height:80px;padding:6px 8px;}
+    @media print{body{margin:0;}*{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
   </style></head><body>
 
   <!-- Cabeçalho institucional -->
@@ -7206,22 +7246,22 @@ function _imprimirTrilogyObj(t){
   <title>Plano Terapêutico — ${t.pac||''}</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0;}
-    body{font-family:'Times New Roman',Times,serif;font-size:10.5pt;color:#000;background:#fff;line-height:1.48;}
-    @page{size:A4 portrait;margin:1.5cm 1.8cm;}
-    .cab{display:flex;gap:12px;align-items:flex-start;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:10px;}
+    body{font-family:'Times New Roman',Times,serif;font-size:11pt;color:#000;background:#fff;line-height:1.55;}
+    @page{size:A4 portrait;margin:2cm 2.2cm;}
+    .cab{display:flex;gap:12px;align-items:flex-start;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:14px;}
     .cab-logo{width:70px;flex-shrink:0;}
     .cab-logo img{width:100%;height:auto;}
     .cab-txt{text-align:center;flex:1;}
     .cab-txt .inst{font-size:9pt;font-weight:700;letter-spacing:.03em;}
     .cab-txt .end{font-size:8pt;margin-top:2px;}
-    h1{text-align:center;font-size:12pt;font-weight:800;letter-spacing:.05em;margin:8px 0 3px;}
-    h2{text-align:center;font-size:11pt;font-weight:700;text-decoration:underline;margin-bottom:10px;letter-spacing:.04em;}
-    p{margin:0 0 6px;text-align:justify;}
-    ul{margin:4px 0 8px 20px;}
-    ul li{margin-bottom:2px;}
-    .cids{margin:8px 0;}
-    .rodape{margin-top:18px;text-align:center;}
-    .assin-linha{border-top:1.5px solid #000;width:260px;margin:28px auto 2px;padding-top:3px;font-size:10pt;}
+    h1{text-align:center;font-size:13pt;font-weight:800;letter-spacing:.05em;margin:10px 0 4px;}
+    h2{text-align:center;font-size:11.5pt;font-weight:700;text-decoration:underline;margin-bottom:14px;letter-spacing:.04em;}
+    p{margin:0 0 8px;text-align:justify;}
+    ul{margin:6px 0 10px 20px;}
+    ul li{margin-bottom:3px;}
+    .cids{margin:10px 0;}
+    .rodape{margin-top:24px;text-align:center;}
+    .assin-linha{border-top:1.5px solid #000;width:260px;margin:36px auto 2px;padding-top:3px;font-size:10pt;}
     @media print{body{margin:0;}}
   </style></head><body>
 
@@ -7315,15 +7355,20 @@ async function imprimirTodasPrescricoes(){
       const med   = saved.medNome || '';
       const crm   = saved.medCrm  || '';
       const linhas = itens.map((it,idx)=>{
-        const dose=[it.qtd,(it.apres&&it.apres!=='—'?it.apres:''),(it.dose&&it.dose!=='—'?it.dose:'')]
-          .filter(Boolean).join(' ')||'—';
+        const isHidrat = it._cat === 'Hidratação';
+        const dosePartes = isHidrat
+          ? [it.qtd ? it.qtd+'ML' : '', it.dose&&it.dose!=='—'?it.dose:''].filter(Boolean)
+          : [it.qtd,(it.apres&&it.apres!=='—'?it.apres:''),(it.dose&&it.dose!=='—'?it.dose:'')].filter(Boolean);
+        const dose = dosePartes.join(' ') || '—';
+        const vazaoHtml = isHidrat && it.vazao
+          ? `<div style="font-size:6pt;color:#0d47a1;font-weight:700;margin-top:1px;">Vazão: ${it.vazao} ml/h</div>` : '';
         const hors=_ordenarHorarios(it.hor||[]).join(' · ')||'—';
         const bg=it.tipo==='dieta'?'#f0f7f0':it.tipo==='sn'?'#fffde7':it.tipo==='cuidados'?'#f5f5f5':'white';
         const dBadge=it._cat==='ATB'&&it._ddia!=null
           ?`<span style="background:${it._ddia>=10?'#b71c1c':it._ddia>=7?'#e65100':'#1565c0'};color:white;font-size:6pt;font-weight:800;padding:1px 5px;border-radius:4px;margin-left:5px;">D${it._ddia}</span>`:''
         return `<tr style="background:${bg};"><td style="padding:4px 6px;border:1px solid #ccc;width:22px;color:#888;font-size:8pt;">${idx+1}</td>
           <td style="padding:4px 6px;border:1px solid #ccc;font-weight:600;">${(it.farm||'—').toUpperCase()}${dBadge}${it.diluicao?`<div style="font-size:7pt;color:#1d4ed8;font-weight:600;">Diluente: ${it.diluicao.toUpperCase()}</div>`:''}</td>
-          <td style="padding:4px 6px;border:1px solid #ccc;">${dose.toUpperCase()}</td>
+          <td style="padding:4px 6px;border:1px solid #ccc;">${dose.toUpperCase()}${vazaoHtml}</td>
           <td style="padding:4px 6px;border:1px solid #ccc;">${(it.via||'—').toUpperCase()}</td>
           <td style="padding:4px 6px;border:1px solid #ccc;">${(it.freq||'—').toUpperCase()}</td>
           <td style="padding:4px 6px;border:1px solid #ccc;font-size:8pt;">${hors}</td>
@@ -7546,7 +7591,8 @@ function _imprimirMEObj(m){
     ['Ausência de drogas depressoras do SNC ou de bloqueadores neuromusculares?',m.pre6],
   ].map(([q,v])=>`<tr><td style="padding:3px 6px;">${_e(q)}</td><td style="padding:3px 6px;text-align:center;white-space:nowrap;">${_sn(v)}</td></tr>`).join('');
 
-  const frenteBody = `
+  const frente = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Morte Encefálica — Frente</title>
+  <style>${CSS_COMUM}</style></head><body>
   <div class="cab">
     <div class="cab-gov">GOVERNO DO ESTADO DO RIO GRANDE DO NORTE &nbsp;·&nbsp; SECRETARIA DE ESTADO DA SAÚDE PÚBLICA</div>
     <div class="cab-org">CENTRAL DE TRANSPLANTES DO RN</div>
@@ -7617,13 +7663,17 @@ function _imprimirMEObj(m){
   </table>
   <div style="font-size:9pt;margin-bottom:4px;">Ausência de movimentos respiratórios com PaCO₂ &gt; 55 mmHg? ${_sn(m.apResp)}</div>
   <div class="assin"><div class="campo-linha"><span class="campo-lbl">Médico:</span><span class="campo-val">${_e(m.apMed)}</span><span class="campo-lbl" style="margin-left:8px;">CRM:</span><span class="campo-val" style="max-width:80px;">${_e(m.apCrm)}</span></div>
-  <span class="assin-linha">Assinatura Identificada</span></div>`;
+  <span class="assin-linha">Assinatura Identificada</span></div>
+
+  <script>window.onload=()=>{window.print();window.onafterprint=()=>window.close();}<\/script>
+  </body></html>`;
 
   // ── VERSO ──────────────────────────────────────────────────────────────
   const ecTipos=[_mk(m.ecDTC)+' DTC',_mk(m.ecEEG)+' EEG',_mk(m.ecAngio)+' Angiografia',
     _mk(m.ecCintilo)+' Cintilografia',m.ecOutro?'Outro: '+_e(m.ecOutro):''].filter(Boolean).join('  ');
 
-  const versoBody = `
+  const verso = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Morte Encefálica — Verso</title>
+  <style>${CSS_COMUM}</style></head><body>
   <div class="cab">
     <div class="cab-gov">GOVERNO DO ESTADO DO RIO GRANDE DO NORTE &nbsp;·&nbsp; SECRETARIA DE ESTADO DA SAÚDE PÚBLICA</div>
     <div class="cab-org">CENTRAL DE TRANSPLANTES DO RN</div>
@@ -7692,23 +7742,19 @@ function _imprimirMEObj(m){
         </tbody>
       </table>
     </div>
-  </div>`;
-
-  // ── DOCUMENTO COMPLETO (frente + verso num único arquivo, 2 páginas) ──
-  const docCompleto = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
-  <title>Morte Encefálica — ${_e(m.pac)}</title>
-  <style>${CSS_COMUM}</style></head><body>
-  ${frenteBody}
-  <div style="page-break-before:always;">
-  ${versoBody}
   </div>
+
   <script>window.onload=()=>{window.print();window.onafterprint=()=>window.close();}<\/script>
   </body></html>`;
 
-  // Abre frente + verso em uma única janela (impressão em 2 páginas)
+  // Abre frente em nova aba; verso em outra
   const w1 = window.open('','_blank','width=820,height=1000');
-  if(w1){ w1.document.write(docCompleto); w1.document.close(); }
-  else { toast('Popup bloqueado — permita popups para imprimir.',true); }
+  if(w1){ w1.document.write(frente); w1.document.close(); }
+  else { toast('Popup bloqueado — permita popups para imprimir.',true); return; }
+  setTimeout(()=>{
+    const w2 = window.open('','_blank','width=820,height=1000');
+    if(w2){ w2.document.write(verso); w2.document.close(); }
+  }, 800);
 }
 
 async function salvarSolicitacaoCultura(){
