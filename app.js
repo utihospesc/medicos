@@ -5896,19 +5896,19 @@ function _termoCabecalho(){
 function _termoEstilos(){
   return `<style>
     *{box-sizing:border-box;margin:0;padding:0;font-family:'Arial',sans-serif;}
-    @page{size:A4 portrait;margin:1.5cm}
-    body{font-size:10pt;color:#000;line-height:1.55;text-align:justify;}
-    .cab{text-align:center;border-bottom:2px solid #7a1020;padding-bottom:8px;margin-bottom:14px;}
-    h2.titulo{text-align:center;font-size:11pt;font-weight:800;margin:14px 0 10px;text-transform:uppercase;letter-spacing:.04em;}
-    p{margin-bottom:8px;}
-    .item{margin-bottom:7px;text-align:justify;}
+    @page{size:A4 portrait;margin:1.1cm}
+    body{font-size:9.5pt;color:#000;line-height:1.45;text-align:justify;}
+    .cab{text-align:center;border-bottom:2px solid #7a1020;padding-bottom:6px;margin-bottom:10px;}
+    h2.titulo{text-align:center;font-size:10.5pt;font-weight:800;margin:10px 0 8px;text-transform:uppercase;letter-spacing:.04em;}
+    p{margin-bottom:6px;}
+    .item{margin-bottom:5px;text-align:justify;}
     .item b{display:inline-block;min-width:18px;}
-    .linha-dados{margin:10px 0;line-height:1.9;}
+    .linha-dados{margin:8px 0;line-height:1.8;}
     .campo{display:inline-block;border-bottom:1px solid #555;padding:0 4px;min-width:120px;}
     .campo-grande{display:inline-block;border-bottom:1px solid #555;padding:0 4px;min-width:280px;}
-    .assin{margin-top:24px;text-align:center;}
+    .assin{margin-top:18px;text-align:center;}
     .assin .linha{border-top:1px solid #555;display:inline-block;min-width:280px;padding-top:3px;font-size:9pt;}
-    .duas-assin{display:flex;justify-content:space-between;gap:20px;margin-top:20px;}
+    .duas-assin{display:flex;justify-content:space-between;gap:20px;margin-top:14px;}
     .duas-assin > div{flex:1;text-align:center;}
     .duas-assin .linha{border-top:1px solid #555;padding-top:3px;font-size:9pt;}
     @media print{body{margin:0;}}
@@ -6916,8 +6916,8 @@ function _imprimirParecerObj(p){
     .rodape{margin-top:10px;display:flex;justify-content:space-between;align-items:flex-end;}
     .assin{text-align:center;}
     .assin-linha{border-top:1.5px solid #000;padding-top:3px;font-size:8pt;min-width:180px;margin-top:28px;}
-    .parecer-box{border:1.5px solid #000;border-top:none;min-height:80px;padding:6px 8px;}
-    @media print{body{margin:0;}*{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
+    .parecer-box{border:1.5px solid #000;border-top:none;min-height:60px;padding:6px 8px;}
+    @media print{body{margin:0;}*{-webkit-print-color-adjust:exact;print-color-adjust:exact;}@page{size:A4 portrait;margin:1.1cm 1.2cm;}}
   </style></head><body>
 
   <!-- Cabeçalho institucional -->
@@ -7206,22 +7206,22 @@ function _imprimirTrilogyObj(t){
   <title>Plano Terapêutico — ${t.pac||''}</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0;}
-    body{font-family:'Times New Roman',Times,serif;font-size:11pt;color:#000;background:#fff;line-height:1.55;}
-    @page{size:A4 portrait;margin:2cm 2.2cm;}
-    .cab{display:flex;gap:12px;align-items:flex-start;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:14px;}
+    body{font-family:'Times New Roman',Times,serif;font-size:10.5pt;color:#000;background:#fff;line-height:1.48;}
+    @page{size:A4 portrait;margin:1.5cm 1.8cm;}
+    .cab{display:flex;gap:12px;align-items:flex-start;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:10px;}
     .cab-logo{width:70px;flex-shrink:0;}
     .cab-logo img{width:100%;height:auto;}
     .cab-txt{text-align:center;flex:1;}
     .cab-txt .inst{font-size:9pt;font-weight:700;letter-spacing:.03em;}
     .cab-txt .end{font-size:8pt;margin-top:2px;}
-    h1{text-align:center;font-size:13pt;font-weight:800;letter-spacing:.05em;margin:10px 0 4px;}
-    h2{text-align:center;font-size:11.5pt;font-weight:700;text-decoration:underline;margin-bottom:14px;letter-spacing:.04em;}
-    p{margin:0 0 8px;text-align:justify;}
-    ul{margin:6px 0 10px 20px;}
-    ul li{margin-bottom:3px;}
-    .cids{margin:10px 0;}
-    .rodape{margin-top:24px;text-align:center;}
-    .assin-linha{border-top:1.5px solid #000;width:260px;margin:36px auto 2px;padding-top:3px;font-size:10pt;}
+    h1{text-align:center;font-size:12pt;font-weight:800;letter-spacing:.05em;margin:8px 0 3px;}
+    h2{text-align:center;font-size:11pt;font-weight:700;text-decoration:underline;margin-bottom:10px;letter-spacing:.04em;}
+    p{margin:0 0 6px;text-align:justify;}
+    ul{margin:4px 0 8px 20px;}
+    ul li{margin-bottom:2px;}
+    .cids{margin:8px 0;}
+    .rodape{margin-top:18px;text-align:center;}
+    .assin-linha{border-top:1.5px solid #000;width:260px;margin:28px auto 2px;padding-top:3px;font-size:10pt;}
     @media print{body{margin:0;}}
   </style></head><body>
 
@@ -7546,8 +7546,7 @@ function _imprimirMEObj(m){
     ['Ausência de drogas depressoras do SNC ou de bloqueadores neuromusculares?',m.pre6],
   ].map(([q,v])=>`<tr><td style="padding:3px 6px;">${_e(q)}</td><td style="padding:3px 6px;text-align:center;white-space:nowrap;">${_sn(v)}</td></tr>`).join('');
 
-  const frente = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Morte Encefálica — Frente</title>
-  <style>${CSS_COMUM}</style></head><body>
+  const frenteBody = `
   <div class="cab">
     <div class="cab-gov">GOVERNO DO ESTADO DO RIO GRANDE DO NORTE &nbsp;·&nbsp; SECRETARIA DE ESTADO DA SAÚDE PÚBLICA</div>
     <div class="cab-org">CENTRAL DE TRANSPLANTES DO RN</div>
@@ -7618,17 +7617,13 @@ function _imprimirMEObj(m){
   </table>
   <div style="font-size:9pt;margin-bottom:4px;">Ausência de movimentos respiratórios com PaCO₂ &gt; 55 mmHg? ${_sn(m.apResp)}</div>
   <div class="assin"><div class="campo-linha"><span class="campo-lbl">Médico:</span><span class="campo-val">${_e(m.apMed)}</span><span class="campo-lbl" style="margin-left:8px;">CRM:</span><span class="campo-val" style="max-width:80px;">${_e(m.apCrm)}</span></div>
-  <span class="assin-linha">Assinatura Identificada</span></div>
-
-  <script>window.onload=()=>{window.print();window.onafterprint=()=>window.close();}<\/script>
-  </body></html>`;
+  <span class="assin-linha">Assinatura Identificada</span></div>`;
 
   // ── VERSO ──────────────────────────────────────────────────────────────
   const ecTipos=[_mk(m.ecDTC)+' DTC',_mk(m.ecEEG)+' EEG',_mk(m.ecAngio)+' Angiografia',
     _mk(m.ecCintilo)+' Cintilografia',m.ecOutro?'Outro: '+_e(m.ecOutro):''].filter(Boolean).join('  ');
 
-  const verso = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Morte Encefálica — Verso</title>
-  <style>${CSS_COMUM}</style></head><body>
+  const versoBody = `
   <div class="cab">
     <div class="cab-gov">GOVERNO DO ESTADO DO RIO GRANDE DO NORTE &nbsp;·&nbsp; SECRETARIA DE ESTADO DA SAÚDE PÚBLICA</div>
     <div class="cab-org">CENTRAL DE TRANSPLANTES DO RN</div>
@@ -7697,19 +7692,23 @@ function _imprimirMEObj(m){
         </tbody>
       </table>
     </div>
-  </div>
+  </div>`;
 
+  // ── DOCUMENTO COMPLETO (frente + verso num único arquivo, 2 páginas) ──
+  const docCompleto = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+  <title>Morte Encefálica — ${_e(m.pac)}</title>
+  <style>${CSS_COMUM}</style></head><body>
+  ${frenteBody}
+  <div style="page-break-before:always;">
+  ${versoBody}
+  </div>
   <script>window.onload=()=>{window.print();window.onafterprint=()=>window.close();}<\/script>
   </body></html>`;
 
-  // Abre frente em nova aba; verso em outra
+  // Abre frente + verso em uma única janela (impressão em 2 páginas)
   const w1 = window.open('','_blank','width=820,height=1000');
-  if(w1){ w1.document.write(frente); w1.document.close(); }
-  else { toast('Popup bloqueado — permita popups para imprimir.',true); return; }
-  setTimeout(()=>{
-    const w2 = window.open('','_blank','width=820,height=1000');
-    if(w2){ w2.document.write(verso); w2.document.close(); }
-  }, 800);
+  if(w1){ w1.document.write(docCompleto); w1.document.close(); }
+  else { toast('Popup bloqueado — permita popups para imprimir.',true); }
 }
 
 async function salvarSolicitacaoCultura(){
