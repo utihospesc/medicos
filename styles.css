@@ -259,34 +259,44 @@ a:hover{text-decoration:underline}
 
 /* ── MODAIS ────────────────────────────────────────────────── */
 .modal{display:none;position:fixed;inset:0;background:rgba(8,12,20,.65);z-index:200;
-  align-items:flex-start;justify-content:center;padding:2rem 1rem;overflow-y:auto;
+  align-items:flex-start;justify-content:center;padding:1.5rem 1rem;overflow-y:auto;
   backdrop-filter:blur(2px)}
 .modal.show{display:flex}
 .modal-box{background:#fff;border-radius:12px;max-width:620px;width:100%;
   box-shadow:0 28px 80px rgba(0,0,0,.5);margin:auto;animation:modalIn .22s;
   border:1px solid var(--borda)}
-/* Alias: modal-c = modal-box (usado em parecer, trilogy, etc.) */
+/* Tall/wide modal-box (guide modals) — flex column so body scrolls */
+.modal-box.modal-tall{display:flex;flex-direction:column;max-height:92vh}
+.modal-box.modal-tall .modal-head{flex-shrink:0}
+.modal-box.modal-tall .modal-body{flex:1;overflow-y:auto;min-height:0}
+.modal-box.modal-tall .modal-foot{flex-shrink:0}
+/* Alias: modal-c = modal-box (legacy) */
 .modal-c{background:#fff;border-radius:12px;width:100%;
   box-shadow:0 28px 80px rgba(0,0,0,.5);margin:auto;animation:modalIn .22s;
   border:1px solid var(--borda)}
 @keyframes modalIn{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:none}}
 .modal-head{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.2rem;
-  border-bottom:1px solid var(--borda);background:var(--bg2);border-radius:12px 12px 0 0}
-/* Alias: modal-h = modal-head */
+  border-bottom:1px solid var(--borda);background:var(--bg2);border-radius:12px 12px 0 0;
+  flex-shrink:0}
+/* Alias: modal-h = modal-head (legacy) */
 .modal-h{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.2rem;
   border-bottom:1px solid var(--borda);background:var(--bg2);border-radius:12px 12px 0 0;flex-shrink:0}
-.modal-h h3{font-size:.95rem;color:var(--tinta);font-weight:600;letter-spacing:-.005em}
-.modal-head h3{font-size:.95rem;color:var(--tinta);font-weight:600;letter-spacing:-.005em}
+.modal-h h3,.modal-head h3{font-size:.92rem;color:var(--tinta);font-weight:600;letter-spacing:-.005em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:calc(100% - 40px)}
 .modal-x{background:none;border:none;font-size:1.55rem;color:var(--muted);cursor:pointer;line-height:1;padding:0 4px}
 .modal-x:hover{color:var(--tinta)}
-/* Alias: btn-close = modal-x */
+/* Alias: btn-close = modal-x (legacy) */
 .btn-close{background:none;border:none;font-size:1.55rem;color:var(--muted);cursor:pointer;line-height:1;padding:0 4px}
 .btn-close:hover{color:var(--tinta)}
-.modal-body{padding:1.1rem 1.2rem;max-height:65vh;overflow-y:auto}
-/* Alias: modal-b = modal-body */
+.modal-body{padding:1.1rem 1.2rem;max-height:70vh;overflow-y:auto}
+/* Alias: modal-b = modal-body (legacy) */
 .modal-b{padding:1.1rem 1.2rem;overflow-y:auto}
 .modal-foot{padding:.8rem 1.2rem;border-top:1px solid var(--borda);display:flex;gap:.5rem;
-  justify-content:flex-end;flex-wrap:wrap;background:var(--bg2);border-radius:0 0 12px 12px}
+  justify-content:flex-end;flex-wrap:wrap;background:var(--bg2);border-radius:0 0 12px 12px;flex-shrink:0}
+/* Desktop: modais das guias ficam centrados */
+@media(min-width:768px){
+  .modal{padding:1.5rem 2rem;align-items:center}
+}
 
 /* ── PREVIEW DOC (mantido clássico p/ impressão) ───────────── */
 .preview-doc{font-family:var(--font-serif);font-size:.84rem;line-height:1.6;color:#222}
@@ -729,8 +739,16 @@ a:hover{text-decoration:underline}
   .leito-num{ font-size:.74rem; }
 
   /* ── MODAIS ─────────────────────────────────────────────────────────────── */
-  .modal-head h3{ font-size:1.1rem; }
+  .modal-head h3,.modal-h h3{ font-size:.98rem; white-space:normal; }
   .modal-body{ font-size:.94rem; }
+  /* Campos dentro dos modais das guias — mais legíveis no desktop */
+  .modal-tall .fl label{ font-size:.72rem !important; }
+  .modal-tall .fl input,
+  .modal-tall .fl select,
+  .modal-tall .fl textarea{ padding:.55rem .75rem !important; font-size:.92rem !important; }
+  .modal-tall .secao-c{ padding:1rem 1.1rem; }
+  .modal-tall .secao-t{ font-size:.8rem !important; }
+  .modal-tall .tip{ font-size:.84rem; }
 }
 
 /* Desktop grande (≥1280px) — mais espaço ainda */
