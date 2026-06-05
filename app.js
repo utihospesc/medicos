@@ -5945,21 +5945,21 @@ function _termoCabecalho(){
 function _termoEstilos(){
   return `<style>
     *{box-sizing:border-box;margin:0;padding:0;font-family:'Arial',sans-serif;}
-    @page{size:A4 portrait;margin:1.2cm 1.5cm}
-    body{font-size:9.5pt;color:#000;line-height:1.45;text-align:justify;}
-    .cab{text-align:center;border-bottom:2px solid #7a1020;padding-bottom:6px;margin-bottom:10px;}
-    h2.titulo{text-align:center;font-size:10.5pt;font-weight:800;margin:10px 0 8px;text-transform:uppercase;letter-spacing:.04em;}
-    p{margin-bottom:6px;}
-    .item{margin-bottom:5px;text-align:justify;}
+    @page{size:A4 portrait;margin:0.7cm 1.2cm}
+    body{font-size:8.5pt;color:#000;line-height:1.35;text-align:justify;}
+    .cab{text-align:center;border-bottom:2px solid #7a1020;padding-bottom:4px;margin-bottom:6px;}
+    h2.titulo{text-align:center;font-size:9.5pt;font-weight:800;margin:6px 0 5px;text-transform:uppercase;letter-spacing:.04em;}
+    p{margin-bottom:4px;}
+    .item{margin-bottom:3px;text-align:justify;}
     .item b{display:inline-block;min-width:18px;}
-    .linha-dados{margin:8px 0;line-height:1.8;}
+    .linha-dados{margin:5px 0;line-height:1.7;}
     .campo{display:inline-block;border-bottom:1px solid #555;padding:0 4px;min-width:120px;}
     .campo-grande{display:inline-block;border-bottom:1px solid #555;padding:0 4px;min-width:260px;}
-    .assin{margin-top:16px;text-align:center;}
-    .assin .linha{border-top:1px solid #555;display:inline-block;min-width:260px;padding-top:3px;font-size:9pt;}
-    .duas-assin{display:flex;justify-content:space-between;gap:20px;margin-top:14px;}
+    .assin{margin-top:8px;text-align:center;}
+    .assin .linha{border-top:1px solid #555;display:inline-block;min-width:260px;padding-top:3px;font-size:8pt;}
+    .duas-assin{display:flex;justify-content:space-between;gap:20px;margin-top:8px;}
     .duas-assin > div{flex:1;text-align:center;}
-    .duas-assin .linha{border-top:1px solid #555;padding-top:3px;font-size:9pt;}
+    .duas-assin .linha{border-top:1px solid #555;padding-top:3px;font-size:8pt;}
     @media print{body{margin:0;}}
   </style>`;
 }
@@ -5999,7 +5999,7 @@ function _imprimirTermoPaliativo(t){
     NATAL-RN, <span class="campo">${d}</span> de <span class="campo">${m}</span> de <span class="campo">${y}</span>.
   </div>
 
-  <h3 style="font-size:10pt;margin-top:14px;text-decoration:underline;">Preenchimento Obrigatório pelo Paciente ou Representante Legal</h3>
+  <h3 style="font-size:9pt;margin-top:8px;text-decoration:underline;">Preenchimento Obrigatório pelo Paciente ou Representante Legal</h3>
   <div class="linha-dados">
     Nome legível: <span class="campo-grande">${(t.resp||'').toUpperCase()}</span><br>
     Grau de parentesco/vínculo: <span class="campo-grande">${(t.vinculo||'').toUpperCase()}</span><br>
@@ -6007,14 +6007,14 @@ function _imprimirTermoPaliativo(t){
     Assinatura: <span class="campo-grande">&nbsp;</span>
   </div>
 
-  <h3 style="font-size:10pt;margin-top:14px;text-decoration:underline;">Preenchimento Obrigatório pela Equipe Médica</h3>
+  <h3 style="font-size:9pt;margin-top:8px;text-decoration:underline;">Preenchimento Obrigatório pela Equipe Médica</h3>
   <p style="font-size:9.5pt;">Expliquei o procedimento ao qual o paciente acima referido está sujeito, ao próprio paciente ou seu representante legal, sobre os benefícios, riscos e alternativas, tendo respondido às perguntas formuladas. De acordo com o meu entendimento, o paciente e/ou seu representante legal, está em condições de compreender o que lhes foi informado.</p>
 
   <div class="assin">
     <div class="linha">${(t.autorNome||'').toUpperCase()}<br>Assinatura e carimbo do Médico${t.medCrm?' — CRM '+t.medCrm:''}</div>
   </div>
 
-  <h3 style="font-size:10pt;margin-top:16px;text-decoration:underline;">Testemunhas</h3>
+  <h3 style="font-size:9pt;margin-top:8px;text-decoration:underline;">Testemunhas</h3>
   <div class="duas-assin">
     <div>
       Nome: <span class="campo-grande">${(t.t1Nome||'').toUpperCase()}</span><br>
@@ -6028,7 +6028,7 @@ function _imprimirTermoPaliativo(t){
     </div>
   </div>
 
-  <div style="margin-top:16px;font-size:9pt;">
+  <div style="margin-top:8px;font-size:8.5pt;">
     Revogação: <span class="campo">________________</span>, <span class="campo">____</span> de <span class="campo">________________</span> de <span class="campo">______</span><br>
     <div class="assin" style="margin-top:8px;"><div class="linha">Paciente ou Representante Legal</div></div>
   </div>
@@ -6955,24 +6955,24 @@ function _imprimirParecerObj(p){
   <title>Requisição de Parecer — ${p.pac||''}</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0;}
-    body{font-family:'Times New Roman',Times,serif;font-size:9.5pt;color:#000;background:#fff;}
-    @page{size:A4 portrait;margin:1.2cm 1.5cm 1.2cm 1.5cm;}
+    body{font-family:'Times New Roman',Times,serif;font-size:9pt;color:#000;background:#fff;}
+    @page{size:A4 portrait;margin:0.7cm 1.2cm 0.7cm 1.2cm;}
     html,body{height:auto;overflow:visible;}
-    .cab{text-align:center;border-bottom:2px solid #000;padding-bottom:5px;margin-bottom:8px;}
-    .cab-inst{font-size:8pt;font-weight:700;letter-spacing:.04em;}
-    .cab-titulo{font-size:11pt;font-weight:800;margin:3px 0;letter-spacing:.06em;text-transform:uppercase;}
-    .cab-sub{font-size:9pt;font-weight:700;text-decoration:underline;letter-spacing:.04em;}
+    .cab{text-align:center;border-bottom:2px solid #000;padding-bottom:4px;margin-bottom:6px;}
+    .cab-inst{font-size:7.5pt;font-weight:700;letter-spacing:.04em;}
+    .cab-titulo{font-size:10.5pt;font-weight:800;margin:2px 0;letter-spacing:.06em;text-transform:uppercase;}
+    .cab-sub{font-size:8.5pt;font-weight:700;text-decoration:underline;letter-spacing:.04em;}
     table.ident{width:100%;border-collapse:collapse;margin-bottom:0;}
-    table.ident td{border:1.5px solid #000;padding:3px 7px;font-size:9pt;vertical-align:top;}
-    .lbl{font-size:7pt;font-weight:700;display:block;margin-bottom:1px;letter-spacing:.04em;}
-    .val{font-size:9.5pt;font-weight:700;}
+    table.ident td{border:1.5px solid #000;padding:2px 6px;font-size:8.5pt;vertical-align:top;}
+    .lbl{font-size:6.5pt;font-weight:700;display:block;margin-bottom:1px;letter-spacing:.04em;}
+    .val{font-size:9pt;font-weight:700;}
     .bloco{border:1.5px solid #000;border-top:none;width:100%;}
-    .bloco-inner{padding:4px 8px;min-height:20px;font-size:9pt;line-height:1.45;}
-    .bloco-lbl{background:#000;color:#fff;font-size:7.5pt;font-weight:800;padding:2px 8px;letter-spacing:.06em;text-transform:uppercase;}
-    .rodape{margin-top:10px;display:flex;justify-content:space-between;align-items:flex-end;}
+    .bloco-inner{padding:3px 8px;min-height:16px;font-size:8.5pt;line-height:1.4;}
+    .bloco-lbl{background:#000;color:#fff;font-size:7pt;font-weight:800;padding:2px 8px;letter-spacing:.06em;text-transform:uppercase;}
+    .rodape{margin-top:7px;display:flex;justify-content:space-between;align-items:flex-end;}
     .assin{text-align:center;}
-    .assin-linha{border-top:1.5px solid #000;padding-top:3px;font-size:8pt;min-width:180px;margin-top:28px;}
-    .parecer-box{border:1.5px solid #000;border-top:none;min-height:80px;padding:6px 8px;}
+    .assin-linha{border-top:1.5px solid #000;padding-top:3px;font-size:7.5pt;min-width:180px;margin-top:20px;}
+    .parecer-box{border:1.5px solid #000;border-top:none;min-height:50px;padding:6px 8px;}
     @media print{body{margin:0;}*{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
   </style></head><body>
 
@@ -7264,24 +7264,24 @@ function _imprimirTrilogyObj(t){
   <title>Plano Terapêutico — ${t.pac||''}</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0;}
-    body{font-family:'Times New Roman',Times,serif;font-size:10.5pt;color:#000;background:#fff;line-height:1.45;}
-    @page{size:A4 portrait;margin:1.4cm 1.6cm;}
-    .cab{display:flex;gap:10px;align-items:flex-start;border-bottom:2px solid #000;padding-bottom:7px;margin-bottom:10px;}
+    body{font-family:'Times New Roman',Times,serif;font-size:9.5pt;color:#000;background:#fff;line-height:1.35;}
+    @page{size:A4 portrait;margin:0.7cm 1.4cm;}
+    .cab{display:flex;gap:10px;align-items:flex-start;border-bottom:2px solid #000;padding-bottom:5px;margin-bottom:7px;}
     .cab-logo{width:60px;flex-shrink:0;}
     .cab-logo img{width:100%;height:auto;}
     .cab-txt{text-align:center;flex:1;}
-    .cab-txt .inst{font-size:8.5pt;font-weight:700;letter-spacing:.02em;}
-    .cab-txt .end{font-size:7.5pt;margin-top:1px;}
-    h1{text-align:center;font-size:12pt;font-weight:800;letter-spacing:.04em;margin:7px 0 3px;}
-    h2{text-align:center;font-size:11pt;font-weight:700;text-decoration:underline;margin-bottom:10px;letter-spacing:.03em;}
-    p{margin:0 0 6px;text-align:justify;font-size:10.5pt;}
-    ul{margin:4px 0 8px 18px;}
-    ul li{margin-bottom:2px;font-size:10.5pt;}
-    .cids{margin:7px 0;font-size:10pt;}
+    .cab-txt .inst{font-size:8pt;font-weight:700;letter-spacing:.02em;}
+    .cab-txt .end{font-size:7pt;margin-top:1px;}
+    h1{text-align:center;font-size:11pt;font-weight:800;letter-spacing:.04em;margin:5px 0 2px;}
+    h2{text-align:center;font-size:10pt;font-weight:700;text-decoration:underline;margin-bottom:7px;letter-spacing:.03em;}
+    p{margin:0 0 4px;text-align:justify;font-size:9.5pt;}
+    ul{margin:3px 0 6px 18px;}
+    ul li{margin-bottom:1px;font-size:9.5pt;}
+    .cids{margin:5px 0;font-size:9.5pt;}
     .cids p{margin:0;}
-    .rodape{margin-top:18px;text-align:center;}
-    .assin-linha{border-top:1.5px solid #000;width:240px;margin:28px auto 2px;padding-top:3px;font-size:9.5pt;}
-    .info-box{margin-top:18px;border:1px solid #999;border-radius:4px;padding:7px 12px;font-size:8.5pt;background:#f9f9f9;line-height:1.45;}
+    .rodape{margin-top:12px;text-align:center;}
+    .assin-linha{border-top:1.5px solid #000;width:240px;margin:20px auto 2px;padding-top:3px;font-size:9pt;}
+    .info-box{margin-top:12px;border:1px solid #999;border-radius:4px;padding:5px 10px;font-size:8pt;background:#f9f9f9;line-height:1.4;}
     @media print{body{margin:0;}}
   </style></head><body>
 
