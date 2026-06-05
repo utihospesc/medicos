@@ -258,13 +258,8 @@
               <div class="fl"><label>Alergias <span class="req-star">*</span></label><input type="text" id="f-alergia" placeholder="NEGA" data-adm-field></div>
               <div class="fl">
                 <label>Medicamentos de uso contínuo <span class="req-star">*</span></label>
-                <div style="display:flex;gap:6px;align-items:center;">
-                  <input type="text" id="f-medcont" readonly data-adm-field
-                    style="flex:1;background:var(--bg2);cursor:pointer;font-size:.78rem;"
-                    placeholder="Clique em ✎ para adicionar medicamentos..."
-                    onclick="abrirModalMedcont()">
-                  <button class="btn btn-sm" style="flex-shrink:0;padding:4px 10px;" onclick="abrirModalMedcont()">✎ Editar</button>
-                </div>
+                <textarea id="f-medcont" rows="2" data-adm-field
+                  placeholder="Ex: Metformina 850mg VO 12/12h, Losartana 50mg VO 1x/dia..."></textarea>
               </div>
               <div class="dc">
                 <div class="fl"><label>Peso (kg)</label><input type="number" step="0.1" id="f-peso" oninput="_atualizarTFG()" data-adm-field></div>
@@ -334,17 +329,57 @@
           <!-- EXAME FÍSICO -->
           <div class="secao">
             <div class="secao-t">Exame Físico</div>
-            <div class="secao-c grid2">
-              <div class="fl"><label>Ectoscopia</label><input type="text" id="f-ef-ecto"></div>
-              <div class="fl"><label>Neurológico</label><input type="text" id="f-ef-neuro"></div>
-              <div class="fl"><label>Glasgow <span class="saps-flag">SAPS3</span></label><input type="number" id="f-glasgow" min="3" max="15" oninput="_recalcSAPS()"></div>
-              <div class="fl"><label>Pupilas</label><input type="text" id="f-ef-pupilas"></div>
-              <div class="fl"><label>ACV (cardiovascular)</label><input type="text" id="f-ef-acv"></div>
-              <div class="fl"><label>AR (respiratório)</label><input type="text" id="f-ef-ar"></div>
-              <div class="fl"><label>ABD (abdome)</label><input type="text" id="f-ef-abd"></div>
-              <div class="fl"><label>EXT (extremidades)</label><input type="text" id="f-ef-ext"></div>
-              <div class="fl"><label>Pele</label><input type="text" id="f-ef-pele"></div>
-              <div class="fl"><label>Genitália</label><input type="text" id="f-ef-genital"></div>
+            <div class="secao-c">
+              <!-- Linha 1: Ectoscopia -->
+              <div class="fl">
+                <label>Ectoscopia</label>
+                <textarea id="f-ef-ecto" rows="1" class="ef-ta"></textarea>
+              </div>
+              <!-- Linha 2: Neurológico / Glasgow / Pupilas -->
+              <div class="ef-row ef-row-3">
+                <div class="fl">
+                  <label>Neurológico</label>
+                  <textarea id="f-ef-neuro" rows="1" class="ef-ta"></textarea>
+                </div>
+                <div class="fl ef-col-narrow">
+                  <label>Glasgow <span class="saps-flag">SAPS3</span></label>
+                  <input type="number" id="f-glasgow" min="3" max="15" oninput="_recalcSAPS()" style="text-align:center;">
+                </div>
+                <div class="fl">
+                  <label>Pupilas</label>
+                  <textarea id="f-ef-pupilas" rows="1" class="ef-ta"></textarea>
+                </div>
+              </div>
+              <!-- Linha 3: ACV / AR / ABD -->
+              <div class="ef-row ef-row-3">
+                <div class="fl">
+                  <label>ACV (cardiovascular)</label>
+                  <textarea id="f-ef-acv" rows="1" class="ef-ta"></textarea>
+                </div>
+                <div class="fl">
+                  <label>AR (respiratório)</label>
+                  <textarea id="f-ef-ar" rows="1" class="ef-ta"></textarea>
+                </div>
+                <div class="fl">
+                  <label>ABD (abdome)</label>
+                  <textarea id="f-ef-abd" rows="1" class="ef-ta"></textarea>
+                </div>
+              </div>
+              <!-- Linha 4: EXT / Pele / Genitália -->
+              <div class="ef-row ef-row-3">
+                <div class="fl">
+                  <label>EXT (extremidades)</label>
+                  <textarea id="f-ef-ext" rows="1" class="ef-ta"></textarea>
+                </div>
+                <div class="fl">
+                  <label>Pele</label>
+                  <textarea id="f-ef-pele" rows="1" class="ef-ta"></textarea>
+                </div>
+                <div class="fl">
+                  <label>Genitália</label>
+                  <textarea id="f-ef-genital" rows="1" class="ef-ta"></textarea>
+                </div>
+              </div>
             </div>
           </div>
 
