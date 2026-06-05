@@ -647,6 +647,14 @@
                   </div>
                   <div class="guia-acao">Preencher →</div>
                 </div>
+                <div class="guia-card" onclick="abrirModalTrilogy()">
+                  <div class="guia-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a9 9 0 1 0 0-18 9 9 0 0 0 0 18z"/><path d="M8 12h8"/><path d="M12 8v8"/><path d="M4.93 4.93l14.14 14.14" style="display:none"/><circle cx="12" cy="12" r="3" fill="none"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></div>
+                  <div class="guia-info">
+                    <div class="guia-titulo">Plano Terapêutico — Solicitação de Ventilador (Trilogy)</div>
+                    <div class="guia-sub">Relatório médico para solicitação de ventilador mecânico domiciliar via oxigenoterapiarn@gmail.com</div>
+                  </div>
+                  <div class="guia-acao">Preencher →</div>
+                </div>
               </div>
               <!-- Lista de fichas salvas do paciente -->
               <div style="margin-top:16px;">
@@ -1874,6 +1882,103 @@
       <button class="btn" onclick="fecharModalParecer()">Fechar</button>
       <button class="btn btn-sec" onclick="salvarParecer()">⌘ Salvar</button>
       <button class="btn btn-pri" onclick="imprimirParecer()">🖨 Imprimir</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     MODAL — PLANO TERAPÊUTICO / SOLICITAÇÃO DE VENTILADOR (TRILOGY)
+     ════════════════════════════════════════════════════════════════ -->
+<div class="modal" id="modal-trilogy">
+  <div class="modal-c" style="max-width:780px;max-height:94vh;overflow-y:auto;">
+    <div class="modal-h">
+      <h3>🫁 Plano Terapêutico — Solicitação de Ventilador (Trilogy)</h3>
+      <button class="btn-close" onclick="fecharModalTrilogy()">×</button>
+    </div>
+    <div class="modal-b" style="padding:16px 20px;display:flex;flex-direction:column;gap:12px;">
+
+      <!-- Dados do paciente (pré-preenchidos) -->
+      <div style="background:var(--bg2);border:1px solid var(--borda);border-radius:8px;padding:10px 12px;display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;">
+        <div class="fl" style="margin:0;grid-column:1/-1;"><label style="font-size:.7rem;">Paciente</label><input type="text" id="tri-pac" style="font-weight:700;font-size:.92rem;"></div>
+        <div class="fl" style="margin:0;"><label style="font-size:.7rem;">CNS</label><input type="text" id="tri-cns" placeholder="000 0000 0000 0000"></div>
+        <div class="fl" style="margin:0;"><label style="font-size:.7rem;">Idade</label><input type="text" id="tri-idade" placeholder="88 anos de idade"></div>
+        <div class="fl" style="margin:0;"><label style="font-size:.7rem;">Adm. UTI (internado desde)</label><input type="date" id="tri-adm"></div>
+        <div class="fl" style="margin:0;"><label style="font-size:.7rem;">Data do documento</label><input type="date" id="tri-data"></div>
+      </div>
+
+      <!-- Diagnóstico principal / motivo de internação -->
+      <div class="fl" style="margin:0;">
+        <label style="font-weight:700;">Diagnóstico principal / motivo de internação <span class="req-star">*</span></label>
+        <textarea id="tri-diag-princ" rows="2" style="margin-top:4px;" placeholder="insuficiência respiratória aguda associada à descompensação cardíaca grave, com necessidade de ventilação mecânica prolongada e importante dificuldade no desmame ventilatório"></textarea>
+      </div>
+
+      <!-- Comorbidades -->
+      <div class="fl" style="margin:0;">
+        <label style="font-weight:700;">Comorbidades <span class="req-star">*</span></label>
+        <textarea id="tri-comor" rows="2" style="margin-top:4px;" placeholder="hipertensão arterial sistêmica, diabetes mellitus tipo 2, insuficiência cardíaca..."></textarea>
+      </div>
+
+      <!-- Evolução clínica -->
+      <div class="fl" style="margin:0;">
+        <label style="font-weight:700;">Evolução clínica durante internação
+          <span style="font-size:.7rem;font-weight:400;color:var(--muted);margin-left:6px;">Intercorrências, infecções, procedimentos relevantes</span>
+        </label>
+        <textarea id="tri-evol" rows="5" style="margin-top:4px;font-size:.83rem;line-height:1.5;" placeholder="Durante a internação, apresentou intercorrências infecciosas relevantes..."></textarea>
+      </div>
+
+      <!-- Estado atual -->
+      <div class="fl" style="margin:0;">
+        <label style="font-weight:700;">Estado atual / condição clínica atual</label>
+        <textarea id="tri-atual" rows="3" style="margin-top:4px;font-size:.83rem;" placeholder="Atualmente encontra-se com estabilidade hemodinâmica, porém mantém dependência de ventilação mecânica invasiva por traqueostomia..."></textarea>
+      </div>
+
+      <!-- Parâmetros ventilatórios atuais -->
+      <div style="background:var(--bg2);border:1px solid var(--borda);border-radius:8px;padding:10px 12px;">
+        <label style="font-weight:700;font-size:.82rem;display:block;margin-bottom:8px;">⚙ Parâmetros ventilatórios atuais</label>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;">
+          <div class="fl" style="margin:0;"><label style="font-size:.7rem;">Modo</label><input type="text" id="tri-modo" placeholder="PSV"></div>
+          <div class="fl" style="margin:0;"><label style="font-size:.7rem;">PS (cmH₂O)</label><input type="number" id="tri-ps" placeholder="12"></div>
+          <div class="fl" style="margin:0;"><label style="font-size:.7rem;">PEEP (cmH₂O)</label><input type="number" id="tri-peep" placeholder="6"></div>
+          <div class="fl" style="margin:0;"><label style="font-size:.7rem;">FiO₂ (%)</label><input type="number" id="tri-fio2" placeholder="30"></div>
+          <div class="fl" style="margin:0;"><label style="font-size:.7rem;">FR backup</label><input type="text" id="tri-fr" placeholder="12 ipm"></div>
+        </div>
+        <div class="fl" style="margin-top:8px;margin-bottom:0;"><label style="font-size:.7rem;">Via de acesso / interface</label>
+          <select id="tri-via">
+            <option value="traqueostomia">Traqueostomia</option>
+            <option value="tracheo_nasal">Máscara nasal</option>
+            <option value="facial">Máscara facial</option>
+            <option value="nasal_pillow">Nasal pillow</option>
+          </select>
+        </div>
+        <div class="fl" style="margin-top:8px;margin-bottom:0;"><label style="font-size:.7rem;">Necessidades adicionais / observações técnicas</label>
+          <textarea id="tri-obs-tec" rows="2" placeholder="Modo espontâneo com ciclagem a tempo, backup de frequência respiratória de segurança, oxigenioterapia conforme demanda..."></textarea>
+        </div>
+      </div>
+
+      <!-- CIDs -->
+      <div class="fl" style="margin:0;">
+        <label style="font-weight:700;">CIDs (hipóteses diagnósticas)
+          <span style="font-size:.7rem;font-weight:400;color:var(--muted);margin-left:6px;">Pré-preenchido. Edite conforme o caso.</span>
+        </label>
+        <textarea id="tri-cids" rows="4" style="margin-top:4px;font-family:var(--font-mono);font-size:.8rem;"></textarea>
+      </div>
+
+      <!-- Médico -->
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <div class="fl" style="margin:0;flex:2;"><label style="font-size:.7rem;">Médico responsável</label><input type="text" id="tri-med" readonly style="background:var(--bg2);"></div>
+        <div class="fl" style="margin:0;flex:1;min-width:100px;"><label style="font-size:.7rem;">CRM</label><input type="text" id="tri-crm" readonly style="background:var(--bg2);"></div>
+      </div>
+
+      <!-- Info sobre envio -->
+      <div class="tip i" style="font-size:.78rem;">
+        <strong>Como solicitar:</strong> Enviar este relatório por e-mail para <strong>oxigenoterapiarn@gmail.com</strong>. A empresa (White Martins / Oxi) enviará ficha para preenchimento dos dados do familiar responsável. Enquanto internado, entrega é feita no hospital.
+      </div>
+
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;padding:12px 20px;border-top:1px solid var(--borda);flex-wrap:wrap;">
+      <button class="btn" onclick="fecharModalTrilogy()">Fechar</button>
+      <button class="btn btn-sec" onclick="salvarTrilogy()">⌘ Salvar</button>
+      <button class="btn btn-pri" onclick="imprimirTrilogy()">🖨 Imprimir</button>
     </div>
   </div>
 </div>
