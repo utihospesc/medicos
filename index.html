@@ -321,7 +321,7 @@
               <div class="fl"><label>SpO₂ (%)</label><input type="number" id="f-spo2" min="50" max="100"></div>
               <div class="fl"><label>Diurese</label><input type="text" id="f-diurese"></div>
               <div class="fl"><label>Balanço Hídrico 24h</label><input type="text" id="f-bh"></div>
-              <div class="fl"><label>Evacuações</label><input type="number" id="f-evac" min="0" max="20"></div>
+              <div class="fl"><label>Evacuações</label><input type="text" id="f-evac" placeholder="ex: 2x, diarreia, ausente"></div>
               <div class="fl"><label>HGT (mg/dL)</label><input type="text" id="f-hgt"></div>
             </div>
           </div>
@@ -396,8 +396,12 @@
                   <select id="f-dieta"><option value="">—</option><option>ORAL</option><option>ENTERAL (SNE/SNG)</option><option>PARENTERAL</option><option>JEJUM</option><option>ZERO</option></select>
                 </div>
                 <div class="fl"><label>Droga vasoativa (DVA) <span class="saps-flag">SAPS3</span></label>
-                  <select id="f-dva" onchange="_recalcSAPS()"><option value="NAO">NÃO</option><option value="SIM">SIM</option></select>
+                  <select id="f-dva" onchange="_recalcSAPS();_toggleDVAcampo()"><option value="NAO">NÃO</option><option value="SIM">SIM</option></select>
                 </div>
+              </div>
+              <div class="fl" id="f-dva-campo-wrap" style="display:none;">
+                <label>Qual(is) DVA(s) em uso</label>
+                <input type="text" id="f-dva-qual" placeholder="Ex: Noradrenalina 0,1mcg/kg/min, Vasopressina...">
               </div>
               <div class="dc">
                 <div class="fl"><label>Sedação</label><textarea id="f-sedacao" rows="2" placeholder="sem / esquema"></textarea></div>
