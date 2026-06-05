@@ -135,6 +135,7 @@
     <div class="header-right">
       <span class="badge" id="badge-turno-leitos"></span>
       <button class="btn btn-pri btn-sm" onclick="abrirRotinaExames()" title="Solicitar exames de rotina para todos os pacientes">🧪 Rotina de exames</button>
+      <button class="btn btn-sec btn-sm" onclick="imprimirTodasPrescricoes()" title="Imprimir prescrições de todos os leitos ocupados">🖨 Prescrições</button>
       <button class="btn btn-sm" onclick="irIndicadores()">⌥ Indicadores</button>
       <button class="btn btn-sm" onclick="voltarTurno()">↩ Trocar plantão</button>
       <button class="btn btn-sm" onclick="fazerLogout()" title="Sair do sistema">⎋ Sair</button>
@@ -182,7 +183,6 @@
     <div class="header-right">
       <button class="btn" id="btn-editar-admissao" style="font-size:.72rem;padding:4px 10px;" onclick="abrirModalAdmissao()">✎ Editar Admissão</button>
       <span class="badge" id="badge-form"></span>
-      <button class="btn btn-sm" onclick="fazerLogout()" title="Sair do sistema">⎋ Sair</button>
     </div>
   </div>
 
@@ -207,9 +207,6 @@
       <div class="pnav-sep"></div>
       <button class="pnav-btn pnav-sec" onclick="voltarLeitos()">
         <span class="pnav-icon">↩</span><span class="pnav-lbl">Leitos</span>
-      </button>
-      <button class="pnav-btn pnav-sec" onclick="fazerLogout()" title="Sair do sistema">
-        <span class="pnav-icon">⎋</span><span class="pnav-lbl">Sair</span>
       </button>
     </nav>
 
@@ -652,6 +649,14 @@
                   <div class="guia-info">
                     <div class="guia-titulo">Plano Terapêutico — Solicitação de Ventilador (Trilogy)</div>
                     <div class="guia-sub">Relatório médico para solicitação de ventilador mecânico domiciliar via oxigenoterapiarn@gmail.com</div>
+                  </div>
+                  <div class="guia-acao">Preencher →</div>
+                </div>
+                <div class="guia-card" onclick="abrirModalMorteEncefalica()">
+                  <div class="guia-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H15M10 3v7L5 20H19L14 10V3"/><circle cx="12" cy="14" r="2"/><path d="M12 16v2"/></svg></div>
+                  <div class="guia-info">
+                    <div class="guia-titulo">Termo de Declaração de Morte Encefálica</div>
+                    <div class="guia-sub">Res. CFM nº 2.173/2017 · Central de Transplantes RN · Frente e verso</div>
                   </div>
                   <div class="guia-acao">Preencher →</div>
                 </div>
@@ -1979,6 +1984,210 @@
       <button class="btn" onclick="fecharModalTrilogy()">Fechar</button>
       <button class="btn btn-sec" onclick="salvarTrilogy()">⌘ Salvar</button>
       <button class="btn btn-pri" onclick="imprimirTrilogy()">🖨 Imprimir</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     MODAL — TERMO DE DECLARAÇÃO DE MORTE ENCEFÁLICA
+     CFM Res. 2.173/2017 · Central de Transplantes RN
+     ════════════════════════════════════════════════════════════════ -->
+<div class="modal" id="modal-me">
+  <div class="modal-c" style="max-width:860px;max-height:96vh;overflow-y:auto;">
+    <div class="modal-h">
+      <h3>🧠 Termo de Declaração de Morte Encefálica — CFM 2.173/2017</h3>
+      <button class="btn-close" onclick="fecharModalME()">×</button>
+    </div>
+    <div class="modal-b" style="padding:16px 20px;display:flex;flex-direction:column;gap:14px;">
+
+      <!-- HOSPITAL / REGISTRO -->
+      <div style="background:var(--bg2);border:1px solid var(--borda);border-radius:8px;padding:10px 14px;">
+        <div style="font-size:.7rem;font-weight:800;color:var(--vinho);letter-spacing:.06em;margin-bottom:8px;">HOSPITAL / REGISTRO HOSPITALAR DO PACIENTE</div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr 80px;gap:6px 12px;">
+          <div class="fl" style="margin:0;"><label style="font-size:.68rem;">Hospital</label><input type="text" id="me-hosp" value="HOSPITAL DOS PESCADORES"></div>
+          <div class="fl" style="margin:0;"><label style="font-size:.68rem;">CNES</label><input type="text" id="me-cnes" value="3708926"></div>
+          <div class="fl" style="margin:0;"><label style="font-size:.68rem;">Município</label><input type="text" id="me-mun" value="NATAL"></div>
+          <div class="fl" style="margin:0;"><label style="font-size:.68rem;">UF</label><input type="text" id="me-uf" value="RN"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:3fr 1fr 1fr;gap:6px 12px;margin-top:6px;">
+          <div class="fl" style="margin:0;"><label style="font-size:.68rem;">Nome do Paciente</label><input type="text" id="me-pac"></div>
+          <div class="fl" style="margin:0;"><label style="font-size:.68rem;">Nascimento</label><input type="date" id="me-dn"></div>
+          <div class="fl" style="margin:0;"><label style="font-size:.68rem;">Sexo</label><select id="me-sexo"><option value="">—</option><option value="MAS">MAS</option><option value="FEM">FEM</option></select></div>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:6px 12px;margin-top:6px;">
+          <div class="fl" style="margin:0;"><label style="font-size:.68rem;">Nome da Mãe</label><input type="text" id="me-mae"></div>
+          <div class="fl" style="margin:0;"><label style="font-size:.68rem;">Tipo Identidade</label><input type="text" id="me-id-tipo" placeholder="RG/CPF"></div>
+          <div class="fl" style="margin:0;"><label style="font-size:.68rem;">Nº</label><input type="text" id="me-id-num"></div>
+        </div>
+      </div>
+
+      <!-- CAUSA DO COMA -->
+      <div style="background:var(--bg2);border:1px solid var(--borda);border-radius:8px;padding:10px 14px;">
+        <div style="font-size:.7rem;font-weight:800;color:var(--vinho);letter-spacing:.06em;margin-bottom:8px;">CAUSA DO COMA</div>
+        <div style="display:grid;grid-template-columns:3fr 1fr;gap:6px 12px;">
+          <div class="fl" style="margin:0;"><label style="font-size:.68rem;">Diagnóstico principal</label><input type="text" id="me-diag1"></div>
+          <div class="fl" style="margin:0;"><label style="font-size:.68rem;">CID</label><input type="text" id="me-cid1" style="font-family:var(--font-mono);font-weight:700;"></div>
+          <div class="fl" style="margin:0;"><label style="font-size:.68rem;">Diagnóstico secundário</label><input type="text" id="me-diag2"></div>
+          <div class="fl" style="margin:0;"><label style="font-size:.68rem;">CID</label><input type="text" id="me-cid2" style="font-family:var(--font-mono);font-weight:700;"></div>
+        </div>
+        <div class="fl" style="margin:6px 0 0;"><label style="font-size:.68rem;">Confirmação diagnóstica (marque os realizados)</label>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:4px;font-size:.8rem;align-items:center;">
+            <label><input type="checkbox" id="me-conf-tc"> TC</label>
+            <label><input type="checkbox" id="me-conf-rm"> RM</label>
+            <label><input type="checkbox" id="me-conf-angio"> Angiografia</label>
+            <label><input type="checkbox" id="me-conf-dtc"> DTC</label>
+            <label><input type="checkbox" id="me-conf-liquor"> Líquor</label>
+            <label><input type="checkbox" id="me-conf-eeg"> EEG</label>
+            <span>Outro: <input type="text" id="me-conf-outro" style="width:110px;font-size:.78rem;"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- PRÉ-REQUISITOS -->
+      <div style="background:var(--bg2);border:1px solid var(--borda);border-radius:8px;padding:10px 14px;">
+        <div style="font-size:.7rem;font-weight:800;color:var(--vinho);letter-spacing:.06em;margin-bottom:8px;">PRÉ-REQUISITOS</div>
+        <div style="display:flex;flex-direction:column;gap:5px;font-size:.78rem;">
+          <div style="display:flex;align-items:flex-start;gap:10px;"><span style="flex:1;">Presença de lesão encefálica de causa conhecida, irreversível e capaz de causar a morte encefálica?</span><select id="me-pre1" style="width:80px;flex-shrink:0;"><option value="">—</option><option value="SIM">SIM</option><option value="NAO">NÃO</option></select></div>
+          <div style="display:flex;align-items:flex-start;gap:10px;"><span style="flex:1;">Ausência de causas tratáveis que possam confundir o diagnóstico de morte encefálica?</span><select id="me-pre2" style="width:80px;flex-shrink:0;"><option value="">—</option><option value="SIM">SIM</option><option value="NAO">NÃO</option></select></div>
+          <div style="display:flex;align-items:flex-start;gap:10px;"><span style="flex:1;">Tratamento e observação hospitalar ≥ 6 horas ou ≥ 24 horas em encefalopatia hipóxico-isquêmica?</span><select id="me-pre3" style="width:80px;flex-shrink:0;"><option value="">—</option><option value="SIM">SIM</option><option value="NAO">NÃO</option></select></div>
+          <div style="display:flex;align-items:flex-start;gap:10px;"><span style="flex:1;">Temperatura corporal &gt; 35°C + SaO₂ &gt; 94% + PAS ≥ 100mmHg ou PA média ≥ 65mmHg (ou faixa etária &lt;16 anos)?</span><select id="me-pre4" style="width:80px;flex-shrink:0;"><option value="">—</option><option value="SIM">SIM</option><option value="NAO">NÃO</option></select></div>
+          <div style="display:flex;align-items:flex-start;gap:10px;"><span style="flex:1;">Ausência de hipotermia?</span><select id="me-pre5" style="width:80px;flex-shrink:0;"><option value="">—</option><option value="SIM">SIM</option><option value="NAO">NÃO</option></select></div>
+          <div style="display:flex;align-items:flex-start;gap:10px;"><span style="flex:1;">Ausência de drogas depressoras do SNC ou de bloqueadores neuromusculares?</span><select id="me-pre6" style="width:80px;flex-shrink:0;"><option value="">—</option><option value="SIM">SIM</option><option value="NAO">NÃO</option></select></div>
+        </div>
+      </div>
+
+      <!-- 1º EXAME CLÍNICO -->
+      <div style="border:1.5px solid var(--vinho);border-radius:8px;padding:10px 14px;">
+        <div style="font-size:.8rem;font-weight:800;color:var(--vinho);margin-bottom:8px;">1º EXAME CLÍNICO</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px;">
+          <div class="fl" style="margin:0;"><label style="font-size:.68rem;">PA (mmHg)</label><input type="text" id="me-e1-pa" style="width:90px;"></div>
+          <div class="fl" style="margin:0;"><label style="font-size:.68rem;">Temp (°C)</label><input type="number" step="0.1" id="me-e1-temp" style="width:80px;"></div>
+          <div class="fl" style="margin:0;"><label style="font-size:.68rem;">Data</label><input type="date" id="me-e1-data"></div>
+          <div class="fl" style="margin:0;"><label style="font-size:.68rem;">Hora</label><input type="time" id="me-e1-hora"></div>
+          <div class="fl" style="margin:0;"><label style="font-size:.68rem;">Coma não perceptivo</label><select id="me-e1-coma" style="width:80px;"><option value="">—</option><option value="SIM">SIM</option><option value="NAO">NÃO</option></select></div>
+        </div>
+        <div style="font-size:.7rem;font-weight:700;color:#555;margin-bottom:4px;">EXAME NEUROLÓGICO (reflexos):</div>
+        <table style="width:100%;border-collapse:collapse;font-size:.75rem;margin-bottom:6px;">
+          <thead><tr style="background:#f5ecee;"><th style="padding:3px 6px;border:1px solid var(--borda);text-align:left;width:50%;">Reflexo</th><th style="padding:3px 6px;border:1px solid var(--borda);text-align:center;">Direito</th><th style="padding:3px 6px;border:1px solid var(--borda);text-align:center;">Esquerdo</th></tr></thead>
+          <tbody>
+            <tr><td style="padding:4px 6px;border:1px solid var(--borda);">Pupila fixa e arreativa</td>
+              <td style="padding:4px 6px;border:1px solid var(--borda);text-align:center;"><select id="me-e1-pup-d" style="width:72px;font-size:.72rem;"><option value="">—</option><option value="SIM">SIM</option><option value="NAO">NÃO</option></select></td>
+              <td style="padding:4px 6px;border:1px solid var(--borda);text-align:center;"><select id="me-e1-pup-e" style="width:72px;font-size:.72rem;"><option value="">—</option><option value="SIM">SIM</option><option value="NAO">NÃO</option></select></td></tr>
+            <tr><td style="padding:4px 6px;border:1px solid var(--borda);">Ausência de reflexo córneo-palpebral</td>
+              <td style="padding:4px 6px;border:1px solid var(--borda);text-align:center;"><select id="me-e1-cor-d" style="width:72px;font-size:.72rem;"><option value="">—</option><option value="SIM">SIM</option><option value="NAO">NÃO</option><option value="NT">NT</option></select></td>
+              <td style="padding:4px 6px;border:1px solid var(--borda);text-align:center;"><select id="me-e1-cor-e" style="width:72px;font-size:.72rem;"><option value="">—</option><option value="SIM">SIM</option><option value="NAO">NÃO</option><option value="NT">NT</option></select></td></tr>
+            <tr><td style="padding:4px 6px;border:1px solid var(--borda);">Ausência de reflexo óculo-cefálico</td>
+              <td style="padding:4px 6px;border:1px solid var(--borda);text-align:center;"><select id="me-e1-oc-d" style="width:72px;font-size:.72rem;"><option value="">—</option><option value="SIM">SIM</option><option value="NAO">NÃO</option><option value="NT">NT</option></select></td>
+              <td style="padding:4px 6px;border:1px solid var(--borda);text-align:center;"><select id="me-e1-oc-e" style="width:72px;font-size:.72rem;"><option value="">—</option><option value="SIM">SIM</option><option value="NAO">NÃO</option><option value="NT">NT</option></select></td></tr>
+            <tr><td style="padding:4px 6px;border:1px solid var(--borda);">Ausência de reflexo vestíbulo-calórico</td>
+              <td style="padding:4px 6px;border:1px solid var(--borda);text-align:center;"><select id="me-e1-vest-d" style="width:72px;font-size:.72rem;"><option value="">—</option><option value="SIM">SIM</option><option value="NAO">NÃO</option><option value="NT">NT</option></select></td>
+              <td style="padding:4px 6px;border:1px solid var(--borda);text-align:center;"><select id="me-e1-vest-e" style="width:72px;font-size:.72rem;"><option value="">—</option><option value="SIM">SIM</option><option value="NAO">NÃO</option><option value="NT">NT</option></select></td></tr>
+            <tr><td style="padding:4px 6px;border:1px solid var(--borda);">Ausência de reflexo da tosse</td>
+              <td style="padding:4px 6px;border:1px solid var(--borda);text-align:center;" colspan="2"><select id="me-e1-tosse" style="width:72px;font-size:.72rem;"><option value="">—</option><option value="SIM">SIM</option><option value="NAO">NÃO</option></select></td></tr>
+          </tbody>
+        </table>
+        <div class="fl" style="margin:0 0 6px;"><label style="font-size:.68rem;">Justificativa NT (não testado)</label><input type="text" id="me-e1-just"></div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          <div class="fl" style="margin:0;flex:2;"><label style="font-size:.68rem;">Médico 1</label><input type="text" id="me-e1-med"></div>
+          <div class="fl" style="margin:0;flex:1;"><label style="font-size:.68rem;">CRM</label><input type="text" id="me-e1-crm"></div>
+        </div>
+      </div>
+
+      <!-- TESTE DE APNEIA -->
+      <div style="border:1.5px solid #1a56db;border-radius:8px;padding:10px 14px;">
+        <div style="font-size:.8rem;font-weight:800;color:#1a56db;margin-bottom:8px;">TESTE DE APNEIA (examinador 1 ou 2)</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px;">
+          <div class="fl" style="margin:0;"><label style="font-size:.68rem;">PA (mmHg)</label><input type="text" id="me-ap-pa" style="width:90px;"></div>
+          <div class="fl" style="margin:0;"><label style="font-size:.68rem;">Temp (°C)</label><input type="number" step="0.1" id="me-ap-temp" style="width:80px;"></div>
+          <div class="fl" style="margin:0;"><label style="font-size:.68rem;">Data</label><input type="date" id="me-ap-data"></div>
+          <div class="fl" style="margin:0;"><label style="font-size:.68rem;">Hora</label><input type="time" id="me-ap-hora"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:8px;">
+          <div class="fl" style="margin:0;"><label style="font-size:.68rem;">PaCO₂ inicial</label><input type="text" id="me-ap-pco2i" style="font-family:var(--font-mono);"></div>
+          <div class="fl" style="margin:0;"><label style="font-size:.68rem;">PaCO₂ final</label><input type="text" id="me-ap-pco2f" style="font-family:var(--font-mono);"></div>
+          <div class="fl" style="margin:0;"><label style="font-size:.68rem;">PaO₂ inicial</label><input type="text" id="me-ap-po2i" style="font-family:var(--font-mono);"></div>
+          <div class="fl" style="margin:0;"><label style="font-size:.68rem;">PaO₂ final</label><input type="text" id="me-ap-po2f" style="font-family:var(--font-mono);"></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:.78rem;margin-bottom:8px;">
+          <span>Ausência de movimentos respiratórios com PaCO₂ &gt; 55 mmHg?</span>
+          <select id="me-ap-resp" style="width:80px;"><option value="">—</option><option value="SIM">SIM</option><option value="NAO">NÃO</option></select>
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          <div class="fl" style="margin:0;flex:2;"><label style="font-size:.68rem;">Médico (apneia)</label><input type="text" id="me-ap-med"></div>
+          <div class="fl" style="margin:0;flex:1;"><label style="font-size:.68rem;">CRM</label><input type="text" id="me-ap-crm"></div>
+        </div>
+      </div>
+
+      <!-- 2º EXAME CLÍNICO -->
+      <div style="border:1.5px solid var(--vinho);border-radius:8px;padding:10px 14px;">
+        <div style="font-size:.8rem;font-weight:800;color:var(--vinho);margin-bottom:8px;">2º EXAME CLÍNICO</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px;">
+          <div class="fl" style="margin:0;"><label style="font-size:.68rem;">PA (mmHg)</label><input type="text" id="me-e2-pa" style="width:90px;"></div>
+          <div class="fl" style="margin:0;"><label style="font-size:.68rem;">Temp (°C)</label><input type="number" step="0.1" id="me-e2-temp" style="width:80px;"></div>
+          <div class="fl" style="margin:0;"><label style="font-size:.68rem;">Data</label><input type="date" id="me-e2-data"></div>
+          <div class="fl" style="margin:0;"><label style="font-size:.68rem;">Hora</label><input type="time" id="me-e2-hora"></div>
+          <div class="fl" style="margin:0;"><label style="font-size:.68rem;">Coma não perceptivo</label><select id="me-e2-coma" style="width:80px;"><option value="">—</option><option value="SIM">SIM</option><option value="NAO">NÃO</option></select></div>
+        </div>
+        <div style="font-size:.7rem;font-weight:700;color:#555;margin-bottom:4px;">EXAME NEUROLÓGICO (reflexos):</div>
+        <table style="width:100%;border-collapse:collapse;font-size:.75rem;margin-bottom:6px;">
+          <thead><tr style="background:#f5ecee;"><th style="padding:3px 6px;border:1px solid var(--borda);text-align:left;width:50%;">Reflexo</th><th style="padding:3px 6px;border:1px solid var(--borda);text-align:center;">Direito</th><th style="padding:3px 6px;border:1px solid var(--borda);text-align:center;">Esquerdo</th></tr></thead>
+          <tbody>
+            <tr><td style="padding:4px 6px;border:1px solid var(--borda);">Pupila fixa e arreativa</td>
+              <td style="padding:4px 6px;border:1px solid var(--borda);text-align:center;"><select id="me-e2-pup-d" style="width:72px;font-size:.72rem;"><option value="">—</option><option value="SIM">SIM</option><option value="NAO">NÃO</option></select></td>
+              <td style="padding:4px 6px;border:1px solid var(--borda);text-align:center;"><select id="me-e2-pup-e" style="width:72px;font-size:.72rem;"><option value="">—</option><option value="SIM">SIM</option><option value="NAO">NÃO</option></select></td></tr>
+            <tr><td style="padding:4px 6px;border:1px solid var(--borda);">Ausência de reflexo córneo-palpebral</td>
+              <td style="padding:4px 6px;border:1px solid var(--borda);text-align:center;"><select id="me-e2-cor-d" style="width:72px;font-size:.72rem;"><option value="">—</option><option value="SIM">SIM</option><option value="NAO">NÃO</option><option value="NT">NT</option></select></td>
+              <td style="padding:4px 6px;border:1px solid var(--borda);text-align:center;"><select id="me-e2-cor-e" style="width:72px;font-size:.72rem;"><option value="">—</option><option value="SIM">SIM</option><option value="NAO">NÃO</option><option value="NT">NT</option></select></td></tr>
+            <tr><td style="padding:4px 6px;border:1px solid var(--borda);">Ausência de reflexo óculo-cefálico</td>
+              <td style="padding:4px 6px;border:1px solid var(--borda);text-align:center;"><select id="me-e2-oc-d" style="width:72px;font-size:.72rem;"><option value="">—</option><option value="SIM">SIM</option><option value="NAO">NÃO</option><option value="NT">NT</option></select></td>
+              <td style="padding:4px 6px;border:1px solid var(--borda);text-align:center;"><select id="me-e2-oc-e" style="width:72px;font-size:.72rem;"><option value="">—</option><option value="SIM">SIM</option><option value="NAO">NÃO</option><option value="NT">NT</option></select></td></tr>
+            <tr><td style="padding:4px 6px;border:1px solid var(--borda);">Ausência de reflexo vestíbulo-calórico</td>
+              <td style="padding:4px 6px;border:1px solid var(--borda);text-align:center;"><select id="me-e2-vest-d" style="width:72px;font-size:.72rem;"><option value="">—</option><option value="SIM">SIM</option><option value="NAO">NÃO</option><option value="NT">NT</option></select></td>
+              <td style="padding:4px 6px;border:1px solid var(--borda);text-align:center;"><select id="me-e2-vest-e" style="width:72px;font-size:.72rem;"><option value="">—</option><option value="SIM">SIM</option><option value="NAO">NÃO</option><option value="NT">NT</option></select></td></tr>
+            <tr><td style="padding:4px 6px;border:1px solid var(--borda);">Ausência de reflexo da tosse</td>
+              <td style="padding:4px 6px;border:1px solid var(--borda);text-align:center;" colspan="2"><select id="me-e2-tosse" style="width:72px;font-size:.72rem;"><option value="">—</option><option value="SIM">SIM</option><option value="NAO">NÃO</option></select></td></tr>
+          </tbody>
+        </table>
+        <div class="fl" style="margin:0 0 6px;"><label style="font-size:.68rem;">Justificativa NT (não testado)</label><input type="text" id="me-e2-just"></div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          <div class="fl" style="margin:0;flex:2;"><label style="font-size:.68rem;">Médico 2</label><input type="text" id="me-e2-med"></div>
+          <div class="fl" style="margin:0;flex:1;"><label style="font-size:.68rem;">CRM</label><input type="text" id="me-e2-crm"></div>
+        </div>
+      </div>
+
+      <!-- EXAME COMPLEMENTAR -->
+      <div style="border:1.5px solid #059669;border-radius:8px;padding:10px 14px;">
+        <div style="font-size:.8rem;font-weight:800;color:#059669;margin-bottom:8px;">EXAME COMPLEMENTAR</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px;">
+          <div class="fl" style="margin:0;"><label style="font-size:.68rem;">PA (mmHg)</label><input type="text" id="me-ec-pa" style="width:90px;"></div>
+          <div class="fl" style="margin:0;"><label style="font-size:.68rem;">Temp (°C)</label><input type="number" step="0.1" id="me-ec-temp" style="width:80px;"></div>
+          <div class="fl" style="margin:0;"><label style="font-size:.68rem;">Data</label><input type="date" id="me-ec-data"></div>
+          <div class="fl" style="margin:0;"><label style="font-size:.68rem;">Hora</label><input type="time" id="me-ec-hora"></div>
+        </div>
+        <div class="fl" style="margin:0 0 8px;"><label style="font-size:.68rem;">Tipo</label>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:4px;font-size:.8rem;align-items:center;">
+            <label><input type="checkbox" id="me-ec-dtc"> DTC</label>
+            <label><input type="checkbox" id="me-ec-eeg"> EEG</label>
+            <label><input type="checkbox" id="me-ec-angio"> Angiografia</label>
+            <label><input type="checkbox" id="me-ec-cintilo"> Cintilografia</label>
+            <span>Outro: <input type="text" id="me-ec-outro" style="width:110px;font-size:.78rem;"></span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:.78rem;margin-bottom:8px;">
+          <span>Ausência de perfusão sanguínea ou de atividade metabólica ou elétrica encefálica?</span>
+          <select id="me-ec-res" style="width:80px;"><option value="">—</option><option value="SIM">SIM</option><option value="NAO">NÃO</option></select>
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          <div class="fl" style="margin:0;flex:2;"><label style="font-size:.68rem;">Médico (exame complementar)</label><input type="text" id="me-ec-med"></div>
+          <div class="fl" style="margin:0;flex:1;"><label style="font-size:.68rem;">CRM</label><input type="text" id="me-ec-crm"></div>
+        </div>
+      </div>
+
+    </div><!-- /modal-b -->
+    <div style="display:flex;justify-content:flex-end;gap:8px;padding:12px 20px;border-top:1px solid var(--borda);flex-wrap:wrap;">
+      <button class="btn" onclick="fecharModalME()">Fechar</button>
+      <button class="btn btn-sec" onclick="salvarME()">⌘ Salvar</button>
+      <button class="btn btn-pri" onclick="imprimirME()">🖨 Imprimir (Frente + Verso)</button>
     </div>
   </div>
 </div>
