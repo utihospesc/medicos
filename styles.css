@@ -265,13 +265,26 @@ a:hover{text-decoration:underline}
 .modal-box{background:#fff;border-radius:12px;max-width:620px;width:100%;
   box-shadow:0 28px 80px rgba(0,0,0,.5);margin:auto;animation:modalIn .22s;
   border:1px solid var(--borda)}
+/* Alias: modal-c = modal-box (usado em parecer, trilogy, etc.) */
+.modal-c{background:#fff;border-radius:12px;width:100%;
+  box-shadow:0 28px 80px rgba(0,0,0,.5);margin:auto;animation:modalIn .22s;
+  border:1px solid var(--borda)}
 @keyframes modalIn{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:none}}
 .modal-head{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.2rem;
   border-bottom:1px solid var(--borda);background:var(--bg2);border-radius:12px 12px 0 0}
+/* Alias: modal-h = modal-head */
+.modal-h{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.2rem;
+  border-bottom:1px solid var(--borda);background:var(--bg2);border-radius:12px 12px 0 0;flex-shrink:0}
+.modal-h h3{font-size:.95rem;color:var(--tinta);font-weight:600;letter-spacing:-.005em}
 .modal-head h3{font-size:.95rem;color:var(--tinta);font-weight:600;letter-spacing:-.005em}
 .modal-x{background:none;border:none;font-size:1.55rem;color:var(--muted);cursor:pointer;line-height:1;padding:0 4px}
 .modal-x:hover{color:var(--tinta)}
+/* Alias: btn-close = modal-x */
+.btn-close{background:none;border:none;font-size:1.55rem;color:var(--muted);cursor:pointer;line-height:1;padding:0 4px}
+.btn-close:hover{color:var(--tinta)}
 .modal-body{padding:1.1rem 1.2rem;max-height:65vh;overflow-y:auto}
+/* Alias: modal-b = modal-body */
+.modal-b{padding:1.1rem 1.2rem;overflow-y:auto}
 .modal-foot{padding:.8rem 1.2rem;border-top:1px solid var(--borda);display:flex;gap:.5rem;
   justify-content:flex-end;flex-wrap:wrap;background:var(--bg2);border-radius:0 0 12px 12px}
 
@@ -380,14 +393,22 @@ a:hover{text-decoration:underline}
     padding:0 !important; height:auto !important; }
   #modal-preview .modal-head, #modal-preview .modal-foot, #modal-preview .modal-x{ display:none !important; }
   #preview-conteudo{ position:static !important; width:100% !important;
-    padding:1.2cm 1.4cm !important; color:#000 !important; font-size:11pt; line-height:1.5;
+    padding:.6cm 1cm !important; color:#000 !important; font-size:8.5pt !important; line-height:1.35 !important;
     height:auto !important; overflow:visible !important; }
-  #preview-conteudo table{ page-break-inside:avoid; }
-  #preview-conteudo .pv-secao{ page-break-after:avoid; }
-  #preview-conteudo .pv-assinatura{ page-break-inside:avoid; }
+  #preview-conteudo h1{ font-size:10pt !important; margin-bottom:.1rem !important; }
+  #preview-conteudo .pv-sub{ font-size:7pt !important; margin-bottom:.4rem !important; }
+  #preview-conteudo table{ page-break-inside:avoid; font-size:7.5pt !important;
+    margin:.25rem 0 !important; }
+  #preview-conteudo th, #preview-conteudo td{ padding:2px 4px !important; }
+  #preview-conteudo .pv-secao{ page-break-after:avoid; font-size:7.5pt !important;
+    margin:.3rem 0 .1rem !important; padding-bottom:1px !important; }
+  #preview-conteudo .pv-assinatura{ page-break-inside:avoid; font-size:7pt !important;
+    margin-top:.6rem !important; }
+  #preview-conteudo .pv-assinatura .linha{ margin:.6rem auto .1rem !important; }
+  #preview-conteudo div{ font-size:8pt !important; line-height:1.35 !important; }
   html{ height:auto !important; background:#fff !important; }
   body{ height:auto !important; min-height:unset !important; background:#fff !important; overflow:visible !important; }
-  @page{ margin:1cm; size:A4 portrait; }
+  @page{ margin:.8cm 1cm; size:A4 portrait; }
 }
 
 
