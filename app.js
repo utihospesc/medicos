@@ -1308,7 +1308,7 @@ const LAB_CAMPOS = [
   {k:'plaq',l:'Plaq(mil)'},{k:'pcr',l:'PCR'},  {k:'ur',  l:'Ureia'},  {k:'cr',  l:'Creat'},
   {k:'na',  l:'Na'},      {k:'k',  l:'K'},     {k:'ca',  l:'Ca'},     {k:'mg',  l:'Mg'},
   {k:'tgo', l:'TGO'},     {k:'tgp',l:'TGP'},   {k:'ldh', l:'LDH'},    {k:'bt',  l:'BT'},
-  {k:'bd',  l:'BD'},      {k:'inr',l:'INR'},   {k:'ttpa',l:'TTPa'},   {k:'gli', l:'Glic'},
+  {k:'bd',  l:'BD'},      {k:'tap', l:'TAP'},  {k:'inr',l:'INR'},   {k:'ttpa',l:'TTPa'},   {k:'gli', l:'Glic'},
   {k:'trop',l:'Tropon'},  {k:'alb',l:'Album'},
 ];
 
@@ -1503,6 +1503,7 @@ function _renderLabLinhas(){
   wrap.innerHTML = _labLinhas.map((lin,idx)=>{
     const campos = LAB_CAMPOS.map(c=>`
       <div class="fl"><label>${c.l}</label><input type="number" step="any" value="${(lin.valores&&lin.valores[c.k]!=null)?lin.valores[c.k]:''}" oninput="_setLabVal(${idx},'${c.k}',this.value)"></div>`).join('');
+    const outrosVal = (lin.outros||'').replace(/"/g,'&quot;');
     return `<div class="lab-linha">
       <div class="lab-linha-head">
         <input type="date" value="${lin.data||''}" onchange="_setLabData(${idx},this.value)">
@@ -1510,6 +1511,14 @@ function _renderLabLinhas(){
         <button class="lab-del" onclick="_delLabLinha(${idx})" title="Remover">🗑</button>
       </div>
       <div class="lab-grid">${campos}</div>
+      <div style="margin-top:.4rem;">
+        <div class="fl" style="margin:0;"><label style="font-size:.58rem;color:var(--muted);font-weight:700;letter-spacing:.04em;">OUTROS EXAMES (texto livre)</label>
+          <input type="text" value="${outrosVal}"
+            placeholder="Ex: Amilase 210, Lipase 380, Cortisol 18, TSH 0.9..."
+            style="font-size:.78rem;font-family:var(--font-mono);"
+            oninput="_setLabOutros(${idx},this.value)">
+        </div>
+      </div>
     </div>`;
   }).join('');
 }
@@ -1524,6 +1533,9 @@ function _setLabVal(i,k,v){
   }
 }
 function _delLabLinha(i){ _labLinhas.splice(i,1); _renderLabLinhas(); }
+function _setLabOutros(i,v){
+  if(_labLinhas[i]) _labLinhas[i].outros = v;
+}
 
 /* ── Aba Solicitações: renderiza histórico de solicitações + exames read-only ── */
 async function _renderAbasolicitacoes(){
@@ -1544,9 +1556,12 @@ function _renderLabReadOnly(){
       .filter(([,v])=>v!=null&&v!=='')
       .map(([k,v])=>`<span class="lab-ro-item"><b>${campLbl[k]||k}</b> ${v}</span>`)
       .join('');
-    return vals ? `<div class="lab-ro-linha">
+    const outrosTag = lin.outros && lin.outros.trim()
+      ? `<span class="lab-ro-item" style="color:#555;"><b>Outros</b> ${lin.outros}</span>` : '';
+    const tudo = vals + outrosTag;
+    return tudo ? `<div class="lab-ro-linha">
       <div class="lab-ro-data">${_fmtDataCurta(lin.data)||'?'}</div>
-      <div class="lab-ro-vals">${vals}</div>
+      <div class="lab-ro-vals">${tudo}</div>
     </div>` : '';
   }).filter(Boolean).join('') || '<div style="font-size:.8rem;color:var(--muted);">Nenhum valor registrado.</div>';
 }
@@ -2071,9 +2086,15 @@ function _labParaTabela(linhas){
   const ord=[...linhas].filter(l=>l.data).sort((a,b)=>a.data.localeCompare(b.data));
   if(!ord.length) return '';
   const usados=LAB_CAMPOS.filter(c=>ord.some(l=>l.valores&&l.valores[c.k]!=null&&l.valores[c.k]!==''));
-  if(!usados.length) return '';
-  let h='<table><tr><th>Data</th>'+usados.map(c=>`<th>${c.l}</th>`).join('')+'</tr>';
-  ord.forEach(l=>{ h+=`<tr><td>${_fmtDataCurta(l.data)}</td>`+usados.map(c=>`<td>${(l.valores&&l.valores[c.k]!=null)?l.valores[c.k]:'—'}</td>`).join('')+'</tr>'; });
+  const temOutros = ord.some(l=>l.outros&&l.outros.trim());
+  if(!usados.length && !temOutros) return '';
+  let h='<table><tr><th>Data</th>'+usados.map(c=>`<th>${c.l}</th>`).join('')+(temOutros?'<th>Outros</th>':'')+'</tr>';
+  ord.forEach(l=>{
+    h+=`<tr><td>${_fmtDataCurta(l.data)}</td>`
+      +usados.map(c=>`<td>${(l.valores&&l.valores[c.k]!=null)?l.valores[c.k]:'—'}</td>`).join('')
+      +(temOutros?`<td style="font-size:7.5pt;">${l.outros||'—'}</td>`:'')
+      +'</tr>';
+  });
   return h+'</table>';
 }
 function imprimirEvolucao(){
