@@ -367,21 +367,27 @@ a:hover{text-decoration:underline}
 
 /* ── IMPRESSÃO (intocado, comportamento idêntico ao original) ── */
 @media print{
-  body *{visibility:hidden !important}
-  #modal-preview,#modal-preview *{visibility:visible !important}
-  #modal-preview{position:absolute !important;inset:0 !important;display:block !important;
-    background:#fff !important;padding:0 !important;margin:0 !important;overflow:visible !important;height:auto !important}
-  #modal-preview .modal-box{max-width:none !important;width:100% !important;box-shadow:none !important;
-    border-radius:0 !important;margin:0 !important;animation:none !important;border:none !important}
-  #modal-preview .modal-body{max-height:none !important;overflow:visible !important;padding:0 !important}
-  #preview-conteudo{position:static !important;width:100% !important;padding:1.2cm 1.4cm !important;
-    color:#000 !important;font-size:11pt;line-height:1.5}
-  #preview-conteudo table{page-break-inside:avoid}
-  #preview-conteudo .pv-secao{page-break-after:avoid}
-  #preview-conteudo .pv-assinatura{page-break-inside:avoid}
-  .modal-head,.modal-foot,.modal-x{display:none !important}
-  @page{ margin:1cm; }
-  html,body{background:#fff !important}
+  /* Oculta tudo exceto o preview */
+  body > *:not(#modal-preview){ display:none !important; }
+  #modal-preview{ display:block !important; position:static !important;
+    background:#fff !important; padding:0 !important; margin:0 !important;
+    overflow:visible !important; width:100% !important; height:auto !important;
+    box-shadow:none !important; border:none !important; }
+  #modal-preview .modal-box{ max-width:none !important; width:100% !important;
+    box-shadow:none !important; border-radius:0 !important; margin:0 !important;
+    animation:none !important; border:none !important; height:auto !important; }
+  #modal-preview .modal-body{ max-height:none !important; overflow:visible !important;
+    padding:0 !important; height:auto !important; }
+  #modal-preview .modal-head, #modal-preview .modal-foot, #modal-preview .modal-x{ display:none !important; }
+  #preview-conteudo{ position:static !important; width:100% !important;
+    padding:1.2cm 1.4cm !important; color:#000 !important; font-size:11pt; line-height:1.5;
+    height:auto !important; overflow:visible !important; }
+  #preview-conteudo table{ page-break-inside:avoid; }
+  #preview-conteudo .pv-secao{ page-break-after:avoid; }
+  #preview-conteudo .pv-assinatura{ page-break-inside:avoid; }
+  html{ height:auto !important; background:#fff !important; }
+  body{ height:auto !important; min-height:unset !important; background:#fff !important; overflow:visible !important; }
+  @page{ margin:1cm; size:A4 portrait; }
 }
 
 /* ── ACESSO/SCROLL: scrollbars discretas ────────────────────── */
