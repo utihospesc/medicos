@@ -137,6 +137,7 @@
       <button class="btn btn-pri btn-sm" onclick="abrirRotinaExames()" title="Solicitar exames de rotina para todos os pacientes">🧪 Rotina de exames</button>
       <button class="btn btn-sm" onclick="irIndicadores()">⌥ Indicadores</button>
       <button class="btn btn-sm" onclick="voltarTurno()">↩ Trocar plantão</button>
+      <button class="btn btn-sm" onclick="fazerLogout()" title="Sair do sistema">⎋ Sair</button>
     </div>
   </div>
   <div class="leitos-grid" id="leitos-grid"></div>
@@ -181,6 +182,7 @@
     <div class="header-right">
       <button class="btn" id="btn-editar-admissao" style="font-size:.72rem;padding:4px 10px;" onclick="abrirModalAdmissao()">✎ Editar Admissão</button>
       <span class="badge" id="badge-form"></span>
+      <button class="btn btn-sm" onclick="fazerLogout()" title="Sair do sistema">⎋ Sair</button>
     </div>
   </div>
 
@@ -205,6 +207,9 @@
       <div class="pnav-sep"></div>
       <button class="pnav-btn pnav-sec" onclick="voltarLeitos()">
         <span class="pnav-icon">↩</span><span class="pnav-lbl">Leitos</span>
+      </button>
+      <button class="pnav-btn pnav-sec" onclick="fazerLogout()" title="Sair do sistema">
+        <span class="pnav-icon">⎋</span><span class="pnav-lbl">Sair</span>
       </button>
     </nav>
 
