@@ -402,31 +402,23 @@ a:hover{text-decoration:underline}
   #modal-preview .modal-body{ max-height:none !important; overflow:visible !important;
     padding:0 !important; height:auto !important; }
   #modal-preview .modal-head, #modal-preview .modal-foot, #modal-preview .modal-x{ display:none !important; }
-  /* Conteúdo compactado: padding mínimo (margem @page já cobre os rebordos) */
   #preview-conteudo{ position:static !important; width:100% !important;
-    padding:.15cm .2cm !important; color:#000 !important; font-size:7.8pt !important; line-height:1.25 !important;
+    padding:.6cm 1cm !important; color:#000 !important; font-size:8.5pt !important; line-height:1.35 !important;
     height:auto !important; overflow:visible !important; }
-  /* Logo menor */
-  #preview-conteudo img{ max-height:40px !important; margin-bottom:.1rem !important; }
-  #preview-conteudo h1{ font-size:9pt !important; margin-bottom:.05rem !important; }
-  #preview-conteudo .pv-sub{ font-size:6.5pt !important; margin-bottom:.2rem !important; }
-  /* Tabela de identificação */
-  #preview-conteudo table{ page-break-inside:avoid; font-size:7pt !important;
-    margin:.12rem 0 !important; }
-  #preview-conteudo th, #preview-conteudo td{ padding:1.5px 4px !important; }
-  /* Seções com mínimo espaço vertical */
-  #preview-conteudo .pv-secao{ page-break-after:avoid; font-size:7pt !important;
-    margin:.18rem 0 .05rem !important; padding-bottom:0 !important; }
-  /* Assinatura compacta */
-  #preview-conteudo .pv-assinatura{ page-break-inside:avoid; font-size:6.5pt !important;
-    margin-top:.3rem !important; }
-  #preview-conteudo .pv-assinatura .linha{ margin:.3rem auto .05rem !important; }
-  /* Todos os divs de conteúdo */
-  #preview-conteudo div{ font-size:7.8pt !important; line-height:1.25 !important; }
-  /* Margem @page reduzida: mais área útil */
-  @page{ margin:.6cm .7cm; size:A4 portrait; }
+  #preview-conteudo h1{ font-size:10pt !important; margin-bottom:.1rem !important; }
+  #preview-conteudo .pv-sub{ font-size:7pt !important; margin-bottom:.4rem !important; }
+  #preview-conteudo table{ page-break-inside:avoid; font-size:7.5pt !important;
+    margin:.25rem 0 !important; }
+  #preview-conteudo th, #preview-conteudo td{ padding:2px 4px !important; }
+  #preview-conteudo .pv-secao{ page-break-after:avoid; font-size:7.5pt !important;
+    margin:.3rem 0 .1rem !important; padding-bottom:1px !important; }
+  #preview-conteudo .pv-assinatura{ page-break-inside:avoid; font-size:7pt !important;
+    margin-top:.6rem !important; }
+  #preview-conteudo .pv-assinatura .linha{ margin:.6rem auto .1rem !important; }
+  #preview-conteudo div{ font-size:8pt !important; line-height:1.35 !important; }
   html{ height:auto !important; background:#fff !important; }
   body{ height:auto !important; min-height:unset !important; background:#fff !important; overflow:visible !important; }
+  @page{ margin:.8cm 1cm; size:A4 portrait; }
 }
 
 
@@ -825,8 +817,8 @@ a:hover{text-decoration:underline}
   display:flex; gap:4px; align-items:center; margin-top:4px;
 }
 .rx-qtd-inline{
-  width:42px !important; text-align:center; flex-shrink:0;
-  padding:4px 5px !important; font-size:.8rem !important;
+  width:72px !important; text-align:center; flex-shrink:0;
+  padding:4px 6px !important; font-size:.84rem !important;
   border:1.5px solid #d1d5db; border-radius:5px; background:#fff;
   font-weight:600; color:var(--tinta);
 }
@@ -950,7 +942,7 @@ a:hover{text-decoration:underline}
   .rx-obs-area{
     font-size:.88rem; min-height:42px;
   }
-  .rx-qtd-inline{ width:42px !important; font-size:.82rem !important; }
+  .rx-qtd-inline{ width:72px !important; font-size:.84rem !important; }
   .rx-apres-sel{ font-size:.82rem !important; }
   .td-farm{ min-width:220px; }
   .td-obs{ min-width:200px; }
@@ -1307,7 +1299,7 @@ tr.rx-drag-over td{ border-top:2px solid var(--vinho) !important; }
   backdrop-filter:blur(3px);
 }
 .mrx-panel{
-  background:#fff; border-radius:14px; width:min(920px, 96vw);
+  background:#fff; border-radius:14px; width:min(1280px, 96vw);
   box-shadow:0 24px 60px rgba(0,0,0,.22), 0 0 0 1px rgba(122,16,32,.08);
   display:flex; flex-direction:column; overflow:hidden;
   animation:mrxIn .18s ease;
@@ -1379,8 +1371,8 @@ tr.rx-drag-over td{ border-top:2px solid var(--vinho) !important; }
 
 /* Corpo 2 colunas */
 .mrx-body{
-  display:grid; grid-template-columns:1fr 3px 280px;
-  gap:0; overflow-y:auto; max-height:calc(100vh - 260px);
+  display:grid; grid-template-columns:1fr 3px 360px;
+  gap:0; overflow-y:auto; max-height:calc(100vh - 200px);
 }
 .mrx-col{ padding:16px 20px; display:flex; flex-direction:column; gap:12px; }
 .mrx-col-hor{ padding:16px 18px; }
@@ -1408,7 +1400,7 @@ tr.rx-drag-over td{ border-top:2px solid var(--vinho) !important; }
   box-shadow:0 0 0 2px rgba(122,16,32,.1);
 }
 .mrx-input::placeholder{ color:#b0b8c4; text-transform:none; font-weight:400; }
-.mrx-input-sm{ width:52px; text-align:center; font-weight:700; }
+.mrx-input-sm{ width:80px; text-align:center; font-weight:700; }
 .mrx-input-dose{
   font-size:.95rem; font-weight:700; border-width:2px;
   letter-spacing:.03em;
