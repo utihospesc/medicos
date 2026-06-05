@@ -403,22 +403,22 @@ a:hover{text-decoration:underline}
     padding:0 !important; height:auto !important; }
   #modal-preview .modal-head, #modal-preview .modal-foot, #modal-preview .modal-x{ display:none !important; }
   #preview-conteudo{ position:static !important; width:100% !important;
-    padding:.4cm .8cm !important; color:#000 !important; font-size:7.5pt !important; line-height:1.25 !important;
+    padding:.6cm 1cm !important; color:#000 !important; font-size:8.5pt !important; line-height:1.35 !important;
     height:auto !important; overflow:visible !important; }
-  #preview-conteudo h1{ font-size:9pt !important; margin-bottom:.05rem !important; }
-  #preview-conteudo .pv-sub{ font-size:6.5pt !important; margin-bottom:.3rem !important; }
-  #preview-conteudo table{ page-break-inside:avoid; font-size:7pt !important;
-    margin:.15rem 0 !important; }
-  #preview-conteudo th, #preview-conteudo td{ padding:1px 3px !important; }
-  #preview-conteudo .pv-secao{ page-break-after:avoid; font-size:7pt !important;
-    margin:.2rem 0 .05rem !important; padding-bottom:1px !important; }
-  #preview-conteudo .pv-assinatura{ page-break-inside:avoid; font-size:6.5pt !important;
-    margin-top:.4rem !important; }
-  #preview-conteudo .pv-assinatura .linha{ margin:.4rem auto .1rem !important; }
-  #preview-conteudo div{ font-size:7.5pt !important; line-height:1.25 !important; }
+  #preview-conteudo h1{ font-size:10pt !important; margin-bottom:.1rem !important; }
+  #preview-conteudo .pv-sub{ font-size:7pt !important; margin-bottom:.4rem !important; }
+  #preview-conteudo table{ page-break-inside:avoid; font-size:7.5pt !important;
+    margin:.25rem 0 !important; }
+  #preview-conteudo th, #preview-conteudo td{ padding:2px 4px !important; }
+  #preview-conteudo .pv-secao{ page-break-after:avoid; font-size:7.5pt !important;
+    margin:.3rem 0 .1rem !important; padding-bottom:1px !important; }
+  #preview-conteudo .pv-assinatura{ page-break-inside:avoid; font-size:7pt !important;
+    margin-top:.6rem !important; }
+  #preview-conteudo .pv-assinatura .linha{ margin:.6rem auto .1rem !important; }
+  #preview-conteudo div{ font-size:8pt !important; line-height:1.35 !important; }
   html{ height:auto !important; background:#fff !important; }
   body{ height:auto !important; min-height:unset !important; background:#fff !important; overflow:visible !important; }
-  @page{ margin:.6cm .8cm; size:A4 portrait; }
+  @page{ margin:.8cm 1cm; size:A4 portrait; }
 }
 
 
@@ -1139,6 +1139,52 @@ details[open] .sol-hist-rotina-sum::before{ content:'▼'; }
 }
 .rx-dil-input:focus{ outline:none !important; }
 .rx-dil-input::placeholder{ color:#93c5fd !important; font-style:italic; font-weight:400; }
+
+/* ── VAZÃO INLINE (hidratações) ──────────────────────────────────── */
+.rx-vazao-inline{
+  display:flex; align-items:center; gap:5px; margin-top:4px;
+  background:#e8f4fd; border:1.5px solid #90caf9;
+  border-radius:6px; padding:3px 6px;
+}
+.rx-vazao-label{
+  font-size:.68rem; font-weight:700; color:#0d47a1;
+  white-space:nowrap; flex-shrink:0; letter-spacing:.02em;
+}
+.rx-vazao-input{
+  width:52px; padding:2px 4px !important; font-size:.82rem !important;
+  border:none !important; border-radius:4px;
+  background:transparent !important; color:#0d47a1 !important;
+  font-weight:700; text-align:right;
+}
+.rx-vazao-input:focus{ outline:none !important; }
+.rx-vazao-unit{
+  font-size:.68rem; font-weight:700; color:#0d47a1; white-space:nowrap;
+}
+
+/* ── VOLUME QUICK-SELECT (hidratações) ───────────────────────────── */
+.rx-vol-quick{
+  display:flex; gap:4px; flex-wrap:wrap; margin-top:4px;
+}
+.rx-vol-btn{
+  padding:2px 7px; font-size:.68rem; font-weight:700;
+  border:1.5px solid #90caf9; border-radius:5px;
+  background:#e8f4fd; color:#0d47a1; cursor:pointer;
+  transition:background .12s, color .12s;
+}
+.rx-vol-btn:hover, .rx-vol-btn-on{
+  background:#0d47a1 !important; color:#fff !important; border-color:#0d47a1 !important;
+}
+
+/* ── MODAL: botões volume rápido ─────────────────────────────────── */
+.mrx-vol-btn{
+  padding:5px 10px; font-size:.8rem; font-weight:700;
+  border:1.5px solid #90caf9; border-radius:6px;
+  background:#e8f4fd; color:#0d47a1; cursor:pointer;
+  transition:background .12s, color .12s;
+}
+.mrx-vol-btn:hover{
+  background:#0d47a1; color:#fff; border-color:#0d47a1;
+}
 
 
 /* ── EVOLUÇÃO DIARISTA ─────────────────────────────────────────── */
