@@ -1428,7 +1428,26 @@ function coletarDados(){
 }
 
 async function salvarEvolucao(){
-  if(!gf('f-pac').trim()){ toast('Sem paciente no leito.',true); return; }
+  // ── Validação dos campos obrigatórios ───────────────────────────────
+  const _req = [
+    { id:'f-pac',    label:'Paciente' },
+    { id:'f-dn',     label:'Data de nascimento' },
+    { id:'f-sexo',   label:'Sexo' },
+    { id:'f-diag',   label:'Hipótese diagnóstica' },
+    { id:'f-cid',    label:'CID-10' },
+    { id:'f-comor',  label:'Comorbidades' },
+    { id:'f-alergia',label:'Alergias' },
+    { id:'f-medcont',label:'Medicamentos de uso contínuo' },
+  ];
+  _req.forEach(r=>{ const el=$(r.id); if(el&&el.closest('.fl')) el.closest('.fl').classList.remove('field-invalid'); });
+  const vazios = _req.filter(r=>!gf(r.id).trim());
+  if(vazios.length){
+    vazios.forEach(r=>{ const el=$(r.id); if(el&&el.closest('.fl')) el.closest('.fl').classList.add('field-invalid'); });
+    toast('⚠ Preencha: ' + vazios.map(r=>r.label).join(', '), true);
+    const primeiro = $(vazios[0].id); if(primeiro) primeiro.scrollIntoView({behavior:'smooth',block:'center'});
+    return;
+  }
+  // ────────────────────────────────────────────────────────────────────
   showLoading('Salvando evolução...');
   try{
     const d=coletarDados();
@@ -3910,13 +3929,79 @@ async function importarPrescricaoOntem(){
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
+   MODAL — MEDICAMENTOS DE USO CONTÍNUO
+   Armazena lista de itens em _medcontItens[]. Serializa para f-medcont como
+   texto separado por ' | ' (compatível com importarUsoContinuo que divide por
+   vírgula/ponto-e-vírgula — usamos ' | ' para não conflitar com vírgulas
+   dentro dos nomes de medicamentos).
+   ════════════════════════════════════════════════════════════════════════════ */
+let _medcontItens = [];   // array de strings, cada uma = 1 medicamento
+
+function abrirModalMedcont(){
+  // Carrega itens atuais do campo oculto
+  const txt = (gf('f-medcont')||'').trim();
+  _medcontItens = txt ? txt.split(' | ').map(s=>s.trim()).filter(Boolean) : [];
+  _medcontRenderLista();
+  $('medcont-input').value = '';
+  $('modal-medcont').classList.add('show');
+  setTimeout(()=>$('medcont-input').focus(), 120);
+}
+
+function fecharModalMedcont(){
+  $('modal-medcont').classList.remove('show');
+}
+
+function _medcontRenderLista(){
+  const lista = $('medcont-lista');
+  if(!lista) return;
+  if(!_medcontItens.length){
+    lista.innerHTML = '<div style="color:var(--muted);font-size:.8rem;padding:6px 2px;">Nenhum medicamento adicionado.</div>';
+    return;
+  }
+  lista.innerHTML = _medcontItens.map((item,idx)=>`
+    <div class="medcont-item">
+      <span>${item}</span>
+      <button class="mc-rm" onclick="_medcontRemover(${idx})" title="Remover">✕</button>
+    </div>`).join('');
+}
+
+function _medcontAdicionar(){
+  const inp = $('medcont-input');
+  const val = (inp.value||'').trim();
+  if(!val){ inp.focus(); return; }
+  // Evitar duplicata exata
+  if(_medcontItens.some(i=>i.toLowerCase()===val.toLowerCase())){
+    toast('Item já adicionado.', true); inp.select(); return;
+  }
+  _medcontItens.push(val);
+  inp.value = '';
+  inp.focus();
+  _medcontRenderLista();
+}
+
+function _medcontRemover(idx){
+  _medcontItens.splice(idx,1);
+  _medcontRenderLista();
+}
+
+function salvarModalMedcont(){
+  const serializado = _medcontItens.join(' | ');
+  sf('f-medcont', serializado);
+  // remove marcação de inválido se já preenchido
+  const el = $('f-medcont');
+  if(el&&el.closest('.fl')) el.closest('.fl').classList.remove('field-invalid');
+  fecharModalMedcont();
+  toast('✓ Medicamentos de uso contínuo atualizados.');
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
    IMPORTAR MEDICAMENTOS DE USO CONTÍNUO
    ════════════════════════════════════════════════════════════════════════════ */
 function importarUsoContinuo(){
   const txt=(gf('f-medcont')||'').trim();
   if(!txt){ toast('Não há medicamentos de uso contínuo registrados na admissão.',true); return; }
-  // Divide por vírgula ou ponto-e-vírgula
-  const itens=txt.split(/[,;]+/).map(s=>s.trim()).filter(Boolean);
+  // Divide por ' | ' (novo formato do modal) ou vírgula/ponto-e-vírgula (legado)
+  const itens=txt.split(/\s*\|\s*|[,;]+/).map(s=>s.trim()).filter(Boolean);
   if(!itens.length){ toast('Sem itens identificáveis.',true); return; }
   // Para cada item, tenta achar no RX_BANCO; se não, cria genérico
   let adicionados=0;
