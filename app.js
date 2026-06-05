@@ -245,6 +245,7 @@ const _PREFIXOS_LEITO = [
   'uti_med_sol_exam_',     // solicitações de exame
   'uti_med_sol_cult_',     // solicitações de cultura
   'uti_med_parecer_',       // pareceres
+  'uti_med_trilogy_',       // plano terapêutico trilogy
   'uti_med_diarista_',     // evoluções diarista
   'uti_med_termo_',        // termos/consentimentos
   'uti_med_adm_log_',      // log de admissão
@@ -4761,18 +4762,25 @@ async function _renderGuiasFichas(){
   const w=$('guias-fichas-lista'); if(!w) return;
   w.innerHTML='<span style="font-size:.8rem;color:var(--muted);">Carregando...</span>';
   try{
-    const atbs   = await dbListByPrefix(`uti_med_atb_ficha_${leitoAtual}_`);
-    const hemos  = await dbListByPrefix(`uti_med_hemo_ficha_${leitoAtual}_`);
-    const termos = await dbListByPrefix(`uti_med_termo_${leitoAtual}_`);
+    const atbs     = await dbListByPrefix(`uti_med_atb_ficha_${leitoAtual}_`);
+    const hemos    = await dbListByPrefix(`uti_med_hemo_ficha_${leitoAtual}_`);
+    const termos   = await dbListByPrefix(`uti_med_termo_${leitoAtual}_`);
+    const trilogys = await dbListByPrefix(`uti_med_trilogy_${leitoAtual}_`);
     const arr=[
       ...Object.entries(atbs).map(([k,v])=>({key:k,...v, _tipo:'atb'})),
       ...Object.entries(hemos).map(([k,v])=>({key:k,...v, _tipo:'hemo'})),
-      ...Object.entries(termos).map(([k,v])=>({key:k,...v, _tipo:'termo'}))
+      ...Object.entries(termos).map(([k,v])=>({key:k,...v, _tipo:'termo'})),
+      ...Object.entries(trilogys).map(([k,v])=>({key:k,...v, _tipo:'trilogy'}))
     ].filter(x=>x.pac||x.nome||x.resp).sort((a,b)=>(b.salvadoEm||'').localeCompare(a.salvadoEm||''));
     if(!arr.length){ w.innerHTML='<span style="font-size:.8rem;color:var(--muted);">Nenhuma ficha salva.</span>'; return; }
     w.innerHTML=arr.map(f=>{
       let icon, titulo, edit, impr;
-      if(f._tipo==='hemo'){
+      if(f._tipo==='trilogy'){
+        icon='🫁';
+        titulo=`Plano Terapêutico (Trilogy): ${(f.pac||'').split(' ').slice(0,2).join(' ')||'—'}`;
+        edit=`_abrirTrilogyExistente('${f.key}')`;
+        impr=`_imprimirTrilogyChave('${f.key}')`;
+      } else if(f._tipo==='hemo'){
         icon='🩸';
         titulo=`Hemoterápicos: ${(f.pedidos||[]).filter(p=>p.selecionado).map(p=>p.label.split(' ').slice(0,2).join(' ')).join(', ')||'—'}`;
         edit=`_abrirHemoExistente('${f.key}')`;
@@ -6954,6 +6962,286 @@ function _imprimirParecerObj(p){
   </body></html>`;
 
   const w = window.open('', '_blank', 'width=850,height=1000');
+  if(w){ w.document.write(html); w.document.close(); }
+  else toast('Popup bloqueado — permita popups para imprimir.', true);
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   PLANO TERAPÊUTICO — SOLICITAÇÃO DE VENTILADOR (TRILOGY)
+   ════════════════════════════════════════════════════════════════════════════ */
+
+const _TRILOGY_CIDS_PADRAO =
+`J96 – Insuficiência respiratória
+I50 – Insuficiência cardíaca congestiva
+J44 – Doença pulmonar obstrutiva crônica
+N18 – Doença renal crônica
+R57.0 – Choque cardiogênico`;
+
+function abrirModalTrilogy(){
+  if(!leitoAtual){ toast('Abra o prontuário de um paciente.',true); return; }
+
+  const pac    = gf('f-pac') || '';
+  const cns    = gf('f-cns') || '';
+  const dn     = gf('f-dn')  || '';
+  const adm    = gf('f-adm') || '';
+  const comor  = gf('f-comor') || '';
+  const diag   = gf('f-diag') || '';
+  const cid    = gf('f-cid')  || '';
+  const evol   = gf('f-evol') || '';
+  const hda    = gf('f-hda')  || '';
+  const admDesc= gf('f-adm-desc') || '';
+  const vent   = gf('f-vent') || '';
+  const ventParam = gf('f-vent-param') || '';
+  const fio2   = gf('f-fio2') || '';
+  const leito  = gf('f-leito') || pad(leitoAtual);
+
+  const idadeNum = _idadeDeDN(dn);
+  const idadeStr = idadeNum != null ? `${idadeNum} anos de idade` : '';
+
+  sf('tri-pac',   pac.toUpperCase());
+  sf('tri-cns',   cns);
+  sf('tri-idade', idadeStr);
+  sf('tri-adm',   adm);
+  sf('tri-data',  gf('f-data') || hoje());
+
+  // Diagnóstico principal — usa diag do formulário
+  sf('tri-diag-princ', diag ? diag.toLowerCase() : '');
+
+  // Comorbidades
+  sf('tri-comor', comor ? comor.toLowerCase() : '');
+
+  // Evolução clínica — combina HDA + admDesc + evolução atual
+  let evolTxt = '';
+  if(admDesc && admDesc.trim()) evolTxt += admDesc.trim();
+  if(evol && evol.trim()){
+    if(evolTxt) evolTxt += '\n\n';
+    evolTxt += evol.trim();
+  } else if(hda && hda.trim() && !evolTxt){
+    evolTxt = hda.trim();
+  }
+  sf('tri-evol', evolTxt);
+
+  // Estado atual — extraído da ventilação atual
+  let atualTxt = 'Atualmente encontra-se ';
+  if(vent === 'VMI') atualTxt += 'dependente de ventilação mecânica invasiva';
+  else if(vent === 'VNI') atualTxt += 'em ventilação não invasiva (VNI)';
+  else if(vent === 'AA') atualTxt += 'em ar ambiente';
+  else atualTxt += 'em suporte ventilatório';
+  if(ventParam) atualTxt += `, com os seguintes parâmetros: ${ventParam}`;
+  atualTxt += ', apresentando dificuldade no desmame ventilatório e necessidade de continuidade do suporte para possibilitar alta da UTI e seguimento da reabilitação.';
+  sf('tri-atual', atualTxt);
+
+  // Parâmetros ventilatórios — tenta extrair do ventParam e fio2
+  sf('tri-modo', vent === 'VMI' ? 'PSV' : vent === 'VNI' ? 'CPAP/PSV' : '');
+  sf('tri-fio2', fio2 ? Math.round(parseFloat(fio2)*100).toString() : '');
+  sf('tri-peep', '');
+  sf('tri-ps', '');
+  sf('tri-fr', '');
+  // Via
+  const viaEl = $('tri-via');
+  if(viaEl) viaEl.value = 'traqueostomia';
+
+  // Obs técnicas
+  sf('tri-obs-tec',
+    'Modo espontâneo com ciclagem a tempo\n' +
+    'Backup de frequência respiratória de segurança\n' +
+    'Necessidade de adaptação para traqueostomia\n' +
+    'Suporte de oxigenioterapia conforme necessidade clínica');
+
+  // CIDs — usa o CID do paciente mais os padrão
+  let cidsBase = _TRILOGY_CIDS_PADRAO;
+  if(cid && !cidsBase.includes(cid.toUpperCase())){
+    cidsBase = `${cid.toUpperCase()} – ${diag||'Ver prontuário'}\n` + cidsBase;
+  }
+  sf('tri-cids', cidsBase);
+
+  // Médico
+  if(perfilUsuario){
+    sf('tri-med', (perfilUsuario.nome||'').toUpperCase());
+    sf('tri-crm', perfilUsuario.crm||'');
+  }
+
+  $('modal-trilogy').classList.add('show');
+}
+
+function fecharModalTrilogy(){ $('modal-trilogy').classList.remove('show'); }
+
+function _coletarTrilogy(){
+  const via = ($('tri-via')||{}).value || 'traqueostomia';
+  const viaMap = { traqueostomia:'traqueostomia', tracheo_nasal:'máscara nasal',
+                   facial:'máscara facial', nasal_pillow:'nasal pillow' };
+  const modo = gf('tri-modo') || '';
+  const ps   = gf('tri-ps')   || '';
+  const peep = gf('tri-peep') || '';
+  const fio2 = gf('tri-fio2') || '';
+  const fr   = gf('tri-fr')   || '';
+  // Monta string de parâmetros
+  const params = [
+    modo  ? `Modo: ${modo}` : '',
+    ps    ? `PS: ${ps} cmH₂O` : '',
+    peep  ? `PEEP: ${peep} cmH₂O` : '',
+    fio2  ? `FiO₂: ${fio2}%` : '',
+    fr    ? `FR backup: ${fr}` : '',
+  ].filter(Boolean).join(' · ');
+
+  const adm = gf('tri-adm');
+
+  return {
+    pac:      gf('tri-pac'),
+    cns:      gf('tri-cns'),
+    idade:    gf('tri-idade'),
+    adm,
+    admFmt:   adm ? _fmtDataCurta(adm) : '',
+    data:     gf('tri-data') || hoje(),
+    diagPrinc:gf('tri-diag-princ'),
+    comor:    gf('tri-comor'),
+    evol:     gf('tri-evol'),
+    atual:    gf('tri-atual'),
+    params,
+    via:      viaMap[via] || via,
+    obsTec:   gf('tri-obs-tec'),
+    cids:     gf('tri-cids'),
+    medNome:  gf('tri-med'),
+    medCrm:   gf('tri-crm'),
+    autor:    usuarioEmail,
+    autorNome: perfilUsuario ? perfilUsuario.nome : '',
+    salvadoEm: new Date().toISOString(),
+  };
+}
+
+async function salvarTrilogy(){
+  const t = _coletarTrilogy();
+  if(!t.pac.trim()){ toast('Informe o paciente.',true); return; }
+  if(!t.diagPrinc.trim()){ toast('Informe o diagnóstico principal.',true); return; }
+  if(!leitoAtual){ toast('Abra o prontuário.',true); return; }
+  showLoading('Salvando...');
+  try{
+    const key = `uti_med_trilogy_${leitoAtual}_${t.data}_${Date.now()}`;
+    await dbSet(key, t);
+    hideLoading(); toast('✓ Plano terapêutico salvo.');
+    _renderGuiasFichas();
+  }catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
+}
+
+function imprimirTrilogy(){ _imprimirTrilogyObj(_coletarTrilogy()); }
+
+async function _imprimirTrilogyChave(key){
+  showLoading('Carregando...');
+  try{ const t=await dbGet(key); hideLoading(); if(t) _imprimirTrilogyObj(t); }
+  catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
+}
+
+async function _abrirTrilogyExistente(key){
+  showLoading('Carregando...');
+  try{
+    const t = await dbGet(key); hideLoading();
+    if(!t){ toast('Registro não encontrado.',true); return; }
+    sf('tri-pac', t.pac||''); sf('tri-cns', t.cns||'');
+    sf('tri-idade', t.idade||''); sf('tri-adm', t.adm||''); sf('tri-data', t.data||hoje());
+    sf('tri-diag-princ', t.diagPrinc||''); sf('tri-comor', t.comor||'');
+    sf('tri-evol', t.evol||''); sf('tri-atual', t.atual||'');
+    // Parâmetros — tenta desmontar a string params de volta
+    sf('tri-cids', t.cids||_TRILOGY_CIDS_PADRAO);
+    sf('tri-obs-tec', t.obsTec||'');
+    sf('tri-med', t.medNome||''); sf('tri-crm', t.medCrm||'');
+    $('modal-trilogy').classList.add('show');
+  }catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
+}
+
+function _imprimirTrilogyObj(t){
+  if(!t.pac||!t.pac.trim()){ toast('Informe o paciente antes de imprimir.',true); return; }
+  const _esc  = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const _nl2br= s => _esc(s).replace(/\n/g,'<br>');
+  const _nl2p = s => (s||'').split('\n').filter(x=>x.trim()).map(l=>`<p>${_esc(l)}</p>`).join('');
+  const _nl2li= s => (s||'').split('\n').filter(x=>x.trim())
+    .map(l=>{ const t=l.replace(/^[•\-\*]\s*/,''); return `<li>${_esc(t)}</li>`; }).join('');
+
+  const dataDoc = t.data ? _fmtDataCurta(t.data) : '___/___/______';
+  const admFmt  = t.admFmt || (t.adm ? _fmtDataCurta(t.adm) : '___/___/______');
+
+  const cidsLinhas = (t.cids||'').split('\n').filter(x=>x.trim())
+    .map(l=>`<p style="margin:1px 0;">${_esc(l.trim())}</p>`).join('');
+
+  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+  <title>Plano Terapêutico — ${t.pac||''}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Times New Roman',Times,serif;font-size:11pt;color:#000;background:#fff;line-height:1.55;}
+    @page{size:A4 portrait;margin:2cm 2.2cm;}
+    .cab{display:flex;gap:12px;align-items:flex-start;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:14px;}
+    .cab-logo{width:70px;flex-shrink:0;}
+    .cab-logo img{width:100%;height:auto;}
+    .cab-txt{text-align:center;flex:1;}
+    .cab-txt .inst{font-size:9pt;font-weight:700;letter-spacing:.03em;}
+    .cab-txt .end{font-size:8pt;margin-top:2px;}
+    h1{text-align:center;font-size:13pt;font-weight:800;letter-spacing:.05em;margin:10px 0 4px;}
+    h2{text-align:center;font-size:11.5pt;font-weight:700;text-decoration:underline;margin-bottom:14px;letter-spacing:.04em;}
+    p{margin:0 0 8px;text-align:justify;}
+    ul{margin:6px 0 10px 20px;}
+    ul li{margin-bottom:3px;}
+    .cids{margin:10px 0;}
+    .rodape{margin-top:24px;text-align:center;}
+    .assin-linha{border-top:1.5px solid #000;width:260px;margin:36px auto 2px;padding-top:3px;font-size:10pt;}
+    @media print{body{margin:0;}}
+  </style></head><body>
+
+  <!-- Cabeçalho institucional -->
+  <div class="cab">
+    <div class="cab-txt">
+      <div class="inst">PREFEITURA MUNICIPAL DE NATAL &nbsp;·&nbsp; SECRETARIA MUNICIPAL DE SAÚDE</div>
+      <div class="inst" style="font-size:11pt;margin:2px 0;">HOSPITAL DOS PESCADORES</div>
+      <div class="end">CNPJ: 24.518.573/0001-70 &nbsp;·&nbsp; CNES: 3708926 &nbsp;·&nbsp; R. São João de Deus, 80, Rocas, Natal/RN – CEP: 59.010-775</div>
+    </div>
+  </div>
+
+  <h1>PLANO TERAPÊUTICO</h1>
+  <h2>SOLICITAÇÃO DE VENTILADOR MECÂNICO</h2>
+
+  <p>
+    Atesto para os devidos fins que o(a) Sr(a). <strong>${_esc(t.pac||'')}</strong>${t.cns?`, CNS nº ${_esc(t.cns)}`:''}, ${_esc(t.idade||'')},
+    encontra-se internado(a) em leito de terapia intensiva desde <strong>${admFmt}</strong>, neste nosocômio,
+    devido à <strong>${_esc(t.diagPrinc||'')}</strong>.
+  </p>
+
+  ${t.comor ? `<p>Paciente portador(a) de múltiplas comorbidades, incluindo <strong>${_esc(t.comor)}</strong>.</p>` : ''}
+
+  ${t.evol  ? `<p>${_nl2br(t.evol)}</p>` : ''}
+
+  ${t.atual  ? `<p>${_nl2br(t.atual)}</p>` : ''}
+
+  <p>Necessidades do equipamento:</p>
+  <ul>
+    ${_nl2li(t.obsTec||'')}
+    ${t.params ? `<li>Parâmetros atuais: ${_esc(t.params)}</li>` : ''}
+    ${t.via    ? `<li>Necessidade de adaptação para ${_esc(t.via)}</li>` : ''}
+    <li>Suporte de oxigenioterapia conforme necessidade clínica</li>
+  </ul>
+
+  <p>Hipótese diagnóstica classificada na CID-10:</p>
+  <div class="cids">${cidsLinhas}</div>
+
+  <p>Natal, ${dataDoc}.</p>
+
+  <div class="rodape">
+    <div class="assin-linha">
+      <strong>${_esc((t.medNome||'').toUpperCase())}</strong>
+      ${t.medCrm ? `<br>CRM: ${_esc(t.medCrm)}` : ''}
+      <br><span style="font-size:9pt;">Médico Responsável</span>
+    </div>
+  </div>
+
+  <div style="margin-top:30px;border:1px solid #999;border-radius:4px;padding:10px 14px;font-size:9pt;background:#f9f9f9;">
+    <strong>ORIENTAÇÕES PARA SOLICITAÇÃO DO VENTILADOR:</strong><br>
+    Enviar este relatório (prescrição médica) por e-mail para <strong>oxigenoterapiarn@gmail.com</strong>.<br>
+    Haverá troca de e-mails para completar o cadastro. Necessário documentação do familiar responsável.<br>
+    A empresa (Oxi/White Martins) enviará ficha para preenchimento com dados do paciente e familiar responsável.<br>
+    Enquanto internado, a entrega é feita no hospital. Em caso de alta, o equipamento acompanha o paciente.
+  </div>
+
+  <script>window.onload=()=>{window.print();window.onafterprint=()=>window.close();}<\/script>
+  </body></html>`;
+
+  const w = window.open('', '_blank', 'width=850,height=1050');
   if(w){ w.document.write(html); w.document.close(); }
   else toast('Popup bloqueado — permita popups para imprimir.', true);
 }
