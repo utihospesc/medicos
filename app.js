@@ -5412,12 +5412,216 @@ function _imprimirFichaHemoObj(f){
       if(w){ w.document.write(html); w.document.close(); }
       else toast('Popup bloqueado — permita popups para imprimir.',true);
     });
+    // Etiquetas (cartão SUS já carregado)
+    _emitirEtiquetasHemo(f);
     return;
   }
 
   const w=window.open('','_blank','width=850,height=950');
   if(w){ w.document.write(html); w.document.close(); }
   else toast('Popup bloqueado — permita popups para imprimir.',true);
+
+  // Etiquetas para hemocomponentes (sem campo MATERIAL)
+  _emitirEtiquetasHemo(f);
+}
+
+async function _emitirEtiquetasHemo(f){
+  if(!window.PDFLib){ toast('PDF-lib não carregado — etiquetas não geradas.',true); return; }
+  const dadosPac = {
+    pac:   f.nome||gf('f-pac')||'',
+    dn:    f.dn||gf('f-dn')||'',
+    leito: f.leito||gf('f-leito')||'',
+  };
+  const pac = dadosPac.pac;
+  const cns = f.cns||gf('f-cns')||'';
+  const cartaoB64 = _cartaoSUSPDF || await _buscarCartaoSUSGenerico(pac, cns);
+  await _gerarEtiquetasComCartao(cartaoB64, dadosPac, 'hemo', []);
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   ETIQUETAS DE IDENTIFICAÇÃO — sobrepostas no espaço em branco do Cartão SUS
+   ─ Cultura: inclui campo MATERIAL com os materiais selecionados
+   ─ Hemocomponentes: sem campo MATERIAL
+   ─ Fonte Times Roman 6pt, alinhadas à margem esquerda do cartão SUS
+   ════════════════════════════════════════════════════════════════════════════ */
+
+// Busca cartão SUS usando apenas nome/CNS (sem depender dos campos fhemo-*)
+async function _buscarCartaoSUSGenerico(pac, cns){
+  if(!APPS_SCRIPT_URL || !CARTAO_SUS_FOLDER_ID) return null;
+  const nome = (pac||'').trim();
+  const cnsLimpo = (cns||'').replace(/\D/g,'');
+  if(!nome && !cnsLimpo) return null;
+  try{
+    const r = await _apsFetch({
+      action: 'cartao_sus',
+      pacienteNome: _normalizarNome(nome),
+      cns: cnsLimpo,
+      folderId: CARTAO_SUS_FOLDER_ID
+    });
+    if(r.status === 'ok' && r.pdfBase64) return r.pdfBase64;
+  } catch(e){ console.warn('[Cartão SUS etiqueta]', e); }
+  return null;
+}
+
+// Formata DN de yyyy-mm-dd para dd/mm/yyyy
+function _fmtDNEtiq(dn){
+  if(!dn) return '';
+  const p = dn.split('-');
+  if(p.length === 3) return `${p[2]}/${p[1]}/${p[0]}`;
+  return dn;
+}
+
+/* Gera PDF das etiquetas sobrepostas no espaço em branco do cartão SUS.
+   Se cartaoBase64 for null, gera página avulsa com as etiquetas.
+   tipo = 'cultura' | 'hemo'
+   materiais = array de strings (só para cultura) */
+async function _gerarEtiquetasComCartao(cartaoBase64, dadosPac, tipo, materiais){
+  showLoading('Gerando etiquetas...');
+  try{
+    const PDFDocument = window.PDFLib.PDFDocument;
+    const StandardFonts = window.PDFLib.StandardFonts;
+    const rgb = window.PDFLib.rgb;
+
+    const leito  = (dadosPac.leito||'').toString().padStart(2,'0');
+    const nome   = (dadosPac.pac||dadosPac.nome||'').toUpperCase();
+    const dn     = _fmtDNEtiq(dadosPac.dn||'');
+    const matStr = (materiais||[]).join(' / ').toUpperCase();
+
+    // Linhas de cada etiqueta (arrays de strings)
+    // Cada etiqueta tem borda simples tracejada no topo para separação visual
+    function _linhasEtiqueta(){
+      const linhas = [
+        `HOSPITAL DOS PESCADORES - UTI (L-${leito})`,
+        `NOME: ${nome}`,
+        `DN: ${dn}`,
+        `DATA COLETA: ___/___/______`,
+      ];
+      if(tipo === 'cultura' && matStr){
+        linhas.push(`MATERIAL: ${matStr}`);
+      }
+      linhas.push(`COLETADO POR: ________________________`);
+      return linhas;
+    }
+
+    // ── Monta o PDF final ──────────────────────────────────────────────────
+    let pdfDoc;
+    let cartaoPage = null;   // página do cartão onde vamos sobrescrever
+    let cartaoPageH = 0;     // altura da página do cartão (pts PDF)
+    let cartaoPageW = 0;
+
+    if(cartaoBase64 && window.PDFLib){
+      const bin = atob(cartaoBase64);
+      const bytes = new Uint8Array(bin.length);
+      for(let i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
+      pdfDoc = await PDFDocument.load(bytes);
+      // Trabalhamos na ÚLTIMA página do cartão (ou única)
+      const idx = pdfDoc.getPageCount() - 1;
+      cartaoPage = pdfDoc.getPage(idx);
+      const sz = cartaoPage.getSize();
+      cartaoPageW = sz.width;
+      cartaoPageH = sz.height;
+    } else {
+      // Sem cartão — cria página A4 avulsa
+      pdfDoc = await PDFDocument.create();
+      cartaoPage = pdfDoc.addPage([595.28, 841.89]); // A4
+      cartaoPageW = 595.28;
+      cartaoPageH = 841.89;
+    }
+
+    // Embed Times Roman (Times New Roman equivalente no PDF-lib)
+    const font = await pdfDoc.embedFont(StandardFonts.TimesRoman);
+    const fontBold = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
+
+    // Tamanho 6pt conforme solicitado
+    const FS = 6;
+    // Altura de linha = 1.4 * FS
+    const LH = FS * 1.4;
+    // Largura de cada etiqueta (mm→pts: 88mm × 2.835 ≈ 249 pts)
+    // Mas vamos usar um terço da largura da página para caber 2 lado a lado
+    const etiqW = (cartaoPageW - 40) / 2;  // 2 colunas com margem
+    const etiqH = _linhasEtiqueta().length * LH + 8; // altura com padding
+
+    // Posicionamento: parte inferior da página do cartão
+    // Cartões SUS normalmente têm conteúdo na metade superior (~A5 = 420pts)
+    // Deixamos margem de 4pts do fundo
+    const MARGEM_INF = 4;
+    const MARGEM_ESQ = 20;
+    const linhas = _linhasEtiqueta();
+
+    // Número de etiquetas: 4 (suficiente para frascos de coleta)
+    const N_ETIQ = 4;
+    const COLS = 2;
+    const ROWS = Math.ceil(N_ETIQ / COLS);
+
+    // Calcular área disponível: do fundo até 55% da altura da página
+    const areaTop = cartaoPageH * 0.52;  // começa a ~52% da página
+    const areaBot = MARGEM_INF;
+    const areaH   = areaTop - areaBot;
+
+    // Altura real de bloco por etiqueta dentro da área
+    const blocoH = areaH / ROWS;
+
+    for(let i = 0; i < N_ETIQ; i++){
+      const col = i % COLS;
+      const row = Math.floor(i / COLS);
+
+      const xBase = MARGEM_ESQ + col * (etiqW + 10);
+      // PDF-lib: y=0 é o FUNDO; areaTop é o topo da área de etiquetas
+      // Linha superior do bloco desta etiqueta
+      const yBloco = areaTop - row * blocoH;
+
+      // Borda tracejada (linha horizontal separadora no topo de cada etiqueta)
+      if(i < 2){
+        // linha tracejada no topo da área
+        cartaoPage.drawLine({
+          start: { x: MARGEM_ESQ - 2, y: areaTop },
+          end:   { x: cartaoPageW - MARGEM_ESQ + 2, y: areaTop },
+          thickness: 0.3,
+          color: rgb(0.4, 0.4, 0.4),
+          dashArray: [3, 2],
+        });
+      }
+      if(row > 0 && col === 0){
+        // separador horizontal entre linhas
+        cartaoPage.drawLine({
+          start: { x: MARGEM_ESQ - 2, y: yBloco },
+          end:   { x: cartaoPageW - MARGEM_ESQ + 2, y: yBloco },
+          thickness: 0.3,
+          color: rgb(0.5, 0.5, 0.5),
+          dashArray: [3, 2],
+        });
+      }
+
+      // Textos da etiqueta
+      linhas.forEach((txt, li) => {
+        const y = yBloco - LH * (li + 1);
+        if(y < areaBot) return; // não sai da área
+        const isBold = li === 0; // primeira linha em negrito
+        cartaoPage.drawText(txt, {
+          x: xBase,
+          y,
+          size: FS,
+          font: isBold ? fontBold : font,
+          color: rgb(0, 0, 0),
+          maxWidth: etiqW - 4,
+        });
+      });
+    }
+
+    // Salva e abre
+    const bytes = await pdfDoc.save();
+    const blob = new Blob([bytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    hideLoading();
+    const w = window.open(url, '_blank');
+    if(w){ setTimeout(()=>{ try{ w.focus(); w.print(); }catch(_){} }, 1200); }
+    else toast('Popup bloqueado — permita popups para imprimir.', true);
+    setTimeout(() => URL.revokeObjectURL(url), 180000);
+  } catch(e){
+    hideLoading();
+    console.error('[Etiquetas]', e);
+    toast('Erro ao gerar etiquetas: ' + (e.message||e), true);
+  }
 }
 
 /* Mescla a ficha HEMONORTE (HTML) com o PDF do Cartão SUS em um único PDF. */
@@ -6589,7 +6793,24 @@ function _imprimirCulturaObj(c){
   <script>window.onload=()=>{window.print();window.onafterprint=()=>window.close();}<\/script>
   </body></html>`;
 
-  const w=window.open('','_blank','width=820,height:1000');
+  const w=window.open('','_blank','width=820,height=1000');
   if(w){ w.document.write(html); w.document.close(); }
   else toast('Popup bloqueado — permita popups para imprimir.',true);
+
+  // Gera etiquetas com cartão SUS (busca independente para culturas)
+  _emitirEtiquetasCultura(c);
+}
+
+async function _emitirEtiquetasCultura(c){
+  const pac  = c.pac||gf('f-pac')||'';
+  const cns  = gf('f-cns')||'';
+  const dn   = gf('f-dn')||'';
+  const leito= c.leito||gf('f-leito')||'';
+  const materiais = _cultResumir(c);
+  const dadosPac = { pac, dn, leito };
+  if(!window.PDFLib){ toast('PDF-lib não carregado — etiquetas não geradas.',true); return; }
+  showLoading('Buscando cartão SUS para etiquetas...');
+  const cartaoB64 = await _buscarCartaoSUSGenerico(pac, cns);
+  hideLoading();
+  await _gerarEtiquetasComCartao(cartaoB64, dadosPac, 'cultura', materiais);
 }
