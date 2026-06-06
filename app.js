@@ -2573,8 +2573,8 @@ const RX_BANCO = [
   {nome:'DIETA ZERO ATÉ 2ª ORDEM', qtd:'', apres:'—', dose:'', diluicao:'', via:'—', freq:'—', hor:[], cat:'Dieta', obs:''},
   {nome:'JEJUM', qtd:'', apres:'—', dose:'', diluicao:'', via:'—', freq:'—', hor:[], cat:'Dieta', obs:''},
   {nome:'RESTRIÇÃO HÍDRICA 800ML/DIA', qtd:'', apres:'—', dose:'', diluicao:'', via:'—', freq:'24H', hor:[], cat:'Dieta', obs:''},
-  {nome:'AAS 100MG', qtd:'1', apres:'COMP', dose:'100MG', diluicao:'', via:'VO', freq:'1X/DIA', hor:['08'], cat:'Medicação Geral', obs:'antiagregante · no almoço'},
-  {nome:'AAS 100MG', qtd:'1', apres:'COMP', dose:'100MG', diluicao:'', via:'SNE', freq:'1X/DIA', hor:['08'], cat:'Medicação Geral', obs:'antiagregante'},
+  {nome:'AAS 100MG', qtd:'1', apres:'COMP', dose:'100MG', diluicao:'', via:'VO', freq:'1X/DIA', hor:['08'], cat:'ATB', obs:'no almoço'},
+  {nome:'AAS 100MG', qtd:'1', apres:'COMP', dose:'100MG', diluicao:'', via:'SNE', freq:'1X/DIA', hor:['08'], cat:'ATB', obs:''},
   {nome:'AMPICILINA + SULBACTAM 3G', qtd:'3', apres:'FA', dose:'3G', diluicao:'+ 250ML SF 0,9%', via:'EV', freq:'8/8H', hor:['08','16','24'], cat:'ATB', obs:''},
   {nome:'AMPICILINA 1G', qtd:'1', apres:'FA', dose:'1G', diluicao:'+ 100ML SF 0,9%', via:'EV', freq:'6/6H', hor:['06','12','18','24'], cat:'ATB', obs:''},
   {nome:'AMPICILINA 2G + SULBACTAM 1G', qtd:'1', apres:'FA', dose:'2G+1G', diluicao:'+ 100ML SF 0,9%', via:'EV', freq:'6/6H', hor:['06','12','18','24'], cat:'ATB', obs:''},
@@ -2604,9 +2604,9 @@ const RX_BANCO = [
   {nome:'COLISTINA 500.000UI', qtd:'', apres:'FA', dose:'500.000UI', diluicao:'+ 200ML SG 5%', via:'EV', freq:'12/12H', hor:['08','20'], cat:'ATB', obs:'ataque 5mg/kg'},
   {nome:'ERTAPENEM 1G', qtd:'1', apres:'FA', dose:'1G', diluicao:'+ 100ML SF 0,9%', via:'EV', freq:'24/24H', hor:['08'], cat:'ATB', obs:''},
   {nome:'FLUCONAZOL 200MG/100ML', qtd:'1', apres:'BOLSA', dose:'200MG/100ML', diluicao:'', via:'EV', freq:'24/24H', hor:['08'], cat:'ATB', obs:''},
-  {nome:'GENTAMICINA 80MG (40MG/ML 2ML)', qtd:'2', apres:'ML', dose:'40MG/ML', diluicao:'+ 100ML SF 0,9%', via:'EV', freq:'24/24H', hor:['08'], cat:'ATB', obs:'ajustar TFG — dosar nível'},
-  {nome:'GENTAMICINA 40MG (40MG/ML 1ML)', qtd:'1', apres:'ML', dose:'40MG/ML', diluicao:'+ 100ML SF 0,9%', via:'EV', freq:'24/24H', hor:['08'], cat:'ATB', obs:'ajustar TFG — dosar nível'},
-  {nome:'IVERMECTINA 6MG', qtd:'', apres:'COMP', dose:'6MG', diluicao:'', via:'VO', freq:'ACM', hor:['ACM'], cat:'ATB', obs:'antiparasitário · dose 200mcg/kg'},
+  {nome:'GENTAMICINA 40MG/ML 2ML', qtd:'2', apres:'ML', dose:'40MG/ML', diluicao:'+ 100ML SF 0,9%', via:'EV', freq:'24/24H', hor:['08'], cat:'ATB', obs:'ajustar TFG — dosar nível'},
+  {nome:'GENTAMICINA 40MG/ML 1ML', qtd:'1', apres:'ML', dose:'40MG/ML', diluicao:'+ 100ML SF 0,9%', via:'EV', freq:'24/24H', hor:['08'], cat:'ATB', obs:''},
+  {nome:'IVERMECTINA 6MG', qtd:'', apres:'COMP', dose:'6MG', diluicao:'', via:'VO', freq:'ACM', hor:['ACM'], cat:'ATB', obs:'dose pelo peso'},
   {nome:'LEVOFLOXACINO 500MG/100ML', qtd:'1', apres:'BOLSA', dose:'500MG/100ML', diluicao:'', via:'EV', freq:'24/24H', hor:['08'], cat:'ATB', obs:'infundir em 60min'},
   {nome:'LINEZOLIDA 600MG/300ML', qtd:'1', apres:'BOLSA', dose:'600MG/300ML', diluicao:'', via:'EV', freq:'12/12H', hor:['08','20'], cat:'ATB', obs:''},
   {nome:'MEROPENEM 500MG', qtd:'1', apres:'FA', dose:'500MG', diluicao:'+ 100ML SF 0,9%', via:'EV', freq:'8/8H', hor:['08','16','24'], cat:'ATB', obs:''},
@@ -2632,14 +2632,15 @@ const RX_BANCO = [
   {nome:'AMICACINA 500MG', qtd:'1', apres:'FA', dose:'500MG', diluicao:'+ 100ML SF 0,9%', via:'EV', freq:'24/24H', hor:['08'], cat:'ATB', obs:'dosar nível'},
   {nome:'ALBENDAZOL 4MG/ML 10ML', qtd:'10', apres:'ML', dose:'4MG/ML', diluicao:'', via:'VO', freq:'12/12H', hor:['08','20'], cat:'ATB', obs:'junto à refeição'},
   {nome:'PERMETRINA 5% LOÇÃO 60ML', qtd:'', apres:'FR', dose:'5%', diluicao:'', via:'TD', freq:'ACM', hor:['ACM'], cat:'ATB', obs:'lavar após 8-14h'},
-  {nome:'SF 0,9% EV EM BIC 120ML', qtd:'120', apres:'ML', dose:'0,9%', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Hidratação', obs:'', vazao:'5'},
-  {nome:'SF 0,9% EV 250ML', qtd:'250', apres:'ML', dose:'0,9%', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Hidratação', obs:'', vazao:''},
-  {nome:'SF 0,9% EV 500ML', qtd:'500', apres:'ML', dose:'0,9%', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Hidratação', obs:'', vazao:''},
-  {nome:'SF 0,9% EV EM BIC 1000ML', qtd:'1000', apres:'ML', dose:'0,9%', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Hidratação', obs:'', vazao:'42'},
+  {nome:'SF 0,9% EV EM BIC', qtd:'120', apres:'ML', dose:'0,9%', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Hidratação', obs:'', vazao:'5'},
+  {nome:'SF 0,9% EV EM BIC', qtd:'250', apres:'ML', dose:'0,9%', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Hidratação', obs:'', vazao:''},
+  {nome:'SF 0,9% EV EM BIC', qtd:'500', apres:'ML', dose:'0,9%', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Hidratação', obs:'', vazao:''},
+  {nome:'SF 0,9% EV EM BIC', qtd:'1000', apres:'ML', dose:'0,9%', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Hidratação', obs:'', vazao:'42'},
   {nome:'SG 5% 420ML + BICARBONATO DE SÓDIO 8,4% 80ML', qtd:'500', apres:'ML', dose:'5%', diluicao:'+ 80ML BIC 8,4%', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Hidratação', obs:'', vazao:'84'},
-  {nome:'RINGER LACTATO ETAPA RÁPIDA 500ML', qtd:'500', apres:'ML', dose:'—', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Hidratação', obs:'', vazao:''},
-  {nome:'RINGER LACTATO EV EM BIC 1000ML', qtd:'1000', apres:'ML', dose:'—', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Hidratação', obs:'', vazao:'42'},
-  {nome:'RINGER LACTATO EV EM BIC 120ML', qtd:'120', apres:'ML', dose:'—', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Hidratação', obs:'', vazao:'5'},
+  {nome:'RINGER LACTATO ETAPA RÁPIDA', qtd:'500', apres:'ML', dose:'—', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Hidratação', obs:'', vazao:''},
+  {nome:'RINGER LACTATO EV EM BIC', qtd:'1000', apres:'ML', dose:'—', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Hidratação', obs:'', vazao:'42'},
+  {nome:'RINGER LACTATO EV EM BIC', qtd:'120', apres:'ML', dose:'—', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Hidratação', obs:'', vazao:'5'},
+  {nome:'SORO FISIOLÓGICO 0,9% EV EM BIC', qtd:'', apres:'ML', dose:'0,9%', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Hidratação', obs:'', vazao:'4'},
   {nome:'JELCO HIDRATADO', qtd:'', apres:'—', dose:'', diluicao:'', via:'EV', freq:'—', hor:[], cat:'Hidratação', obs:'', vazao:''},
   {nome:'NORADRENALINA (NOREPINEFRINA) 4MG/4ML', qtd:'4', apres:'AMP', dose:'4MG/4ML', diluicao:'+ 234ML SF 0,9%', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Droga Vasoativa', obs:'BIC — titular PAM'},
   {nome:'NOREPINEFRINA 2MG/ML', qtd:'16', apres:'ML', dose:'2MG/ML', diluicao:'+ 234ML SG 5%', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Droga Vasoativa', obs:'BIC'},
@@ -2650,21 +2651,21 @@ const RX_BANCO = [
   {nome:'AMIODARONA 150MG/3ML', qtd:'1', apres:'AMP', dose:'150MG/3ML', diluicao:'+ 100ML SF 0,9%', via:'EV', freq:'ACM', hor:['ACM'], cat:'Droga Vasoativa', obs:'ACM'},
   {nome:'FENTANIL 50MCG/ML', qtd:'50', apres:'ML', dose:'50MCG/ML', diluicao:'+ 50ML SF 0,9%', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Sedação', obs:'BIC'},
   {nome:'MIDAZOLAM 5MG/ML', qtd:'30', apres:'ML', dose:'5MG/ML', diluicao:'+ 120ML SF 0,9%', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Sedação', obs:'BIC'},
-  {nome:'PROPOFOL 1% (10MG/ML)', qtd:'100', apres:'ML', dose:'10MG/ML', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Sedação', obs:'BIC — puro (frasco 100ml)'},
-  {nome:'PROPOFOL 1% (10MG/ML)', qtd:'50', apres:'ML', dose:'10MG/ML', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Sedação', obs:'BIC — puro (frasco 50ml)'},
+  {nome:'PROPOFOL 1% (10MG/ML)', qtd:'100', apres:'ML', dose:'10MG/ML', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Sedação', obs:'BIC — puro'},
+  {nome:'PROPOFOL 1% (10MG/ML)', qtd:'50', apres:'ML', dose:'10MG/ML', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Sedação', obs:'BIC'},
   {nome:'MORFINA 10MG/ML', qtd:'', apres:'AMP', dose:'2MG', diluicao:'', via:'EV', freq:'4/4H', hor:['04','08','12','16','20','24'], cat:'Sedação', obs:''},
   {nome:'TRAMADOL 50MG/ML', qtd:'', apres:'AMP', dose:'100MG', diluicao:'+ ABD', via:'EV', freq:'8/8H', hor:['08','16','24'], cat:'Sedação', obs:''},
-  {nome:'DIPIRONA 1G', qtd:'1', apres:'AMP', dose:'1G', diluicao:'+ ABD', via:'EV', freq:'6/6H SN', hor:['SN'], cat:'Medicação Geral', obs:'analgésico/antitérmico · se dor ou febre'},
-  {nome:'DIPIRONA 500MG/ML', qtd:'2', apres:'ML', dose:'500MG/ML', diluicao:'+ 8ML ABD', via:'EV', freq:'6/6H SN', hor:['SN'], cat:'Medicação Geral', obs:'analgésico/antitérmico · se necessário'},
-  {nome:'DIPIRONA 500MG', qtd:'1', apres:'COMP', dose:'500MG', diluicao:'', via:'VO', freq:'6/6H SN', hor:['SN'], cat:'Medicação Geral', obs:'analgésico/antitérmico · se dor'},
-  {nome:'DIPIRONA 500MG/ML', qtd:'40', apres:'GTS', dose:'500MG/ML', diluicao:'', via:'SNE', freq:'6/6H SN', hor:['SN'], cat:'Medicação Geral', obs:'analgésico/antitérmico'},
-  {nome:'PARACETAMOL 200MG/ML', qtd:'40', apres:'GTS', dose:'200MG/ML', diluicao:'', via:'SNE', freq:'6/6H SN', hor:['SN'], cat:'Medicação Geral', obs:'analgésico/antitérmico'},
-  {nome:'AEROLIN (SALBUTAMOL) 100MCG', qtd:'4', apres:'PUFF', dose:'100MCG', diluicao:'', via:'IN', freq:'4/4H', hor:['04','08','12','16','20','24'], cat:'Medicação Geral', obs:'broncodilatador'},
-  {nome:'AEROLIN (SALBUTAMOL) 100MCG/JATO', qtd:'6', apres:'JATO', dose:'100MCG', diluicao:'', via:'IN', freq:'6/6H', hor:['06','12','18','24'], cat:'Medicação Geral', obs:'broncodilatador'},
+  {nome:'DIPIRONA 1G', qtd:'1', apres:'AMP', dose:'1G', diluicao:'+ ABD', via:'EV', freq:'6/6H SN', hor:['SN'], cat:'Sedação', obs:'se dor ou febre'},
+  {nome:'DIPIRONA 500MG/ML', qtd:'2', apres:'ML', dose:'500MG/ML', diluicao:'+ 8ML ABD', via:'EV', freq:'6/6H SN', hor:['SN'], cat:'Sedação', obs:'se necessário'},
+  {nome:'DIPIRONA 500MG', qtd:'1', apres:'COMP', dose:'500MG', diluicao:'', via:'VO', freq:'6/6H SN', hor:['SN'], cat:'Sedação', obs:'se dor'},
+  {nome:'DIPIRONA 500MG/ML', qtd:'40', apres:'GTS', dose:'500MG/ML', diluicao:'', via:'SNE', freq:'6/6H SN', hor:['SN'], cat:'Sedação', obs:''},
+  {nome:'PARACETAMOL 200MG/ML', qtd:'40', apres:'GTS', dose:'200MG/ML', diluicao:'', via:'SNE', freq:'6/6H SN', hor:['SN'], cat:'Sedação', obs:''},
+  {nome:'AEROLIM 100MCG', qtd:'4', apres:'PUFF', dose:'100MCG', diluicao:'', via:'IN', freq:'4/4H', hor:['04','08','12','16','20','24'], cat:'Medicação Geral', obs:''},
+  {nome:'AEROLIN 100MCG/JATO', qtd:'6', apres:'JATO', dose:'100MCG', diluicao:'', via:'IN', freq:'6/6H', hor:['06','12','18','24'], cat:'Medicação Geral', obs:''},
   {nome:'AMIODARONA 200MG', qtd:'1', apres:'COMP', dose:'200MG', diluicao:'', via:'VO', freq:'12/12H', hor:['08','20'], cat:'Medicação Geral', obs:''},
   {nome:'ANLODIPINO 10MG', qtd:'1', apres:'COMP', dose:'10MG', diluicao:'', via:'VO', freq:'24/24H', hor:['08'], cat:'Medicação Geral', obs:''},
   {nome:'ANLODIPINO 10MG', qtd:'1', apres:'COMP', dose:'10MG', diluicao:'', via:'SNE', freq:'1X/DIA', hor:['08'], cat:'Medicação Geral', obs:''},
-  {nome:'ATROPINA COLÍRIO 1% (SUBLINGUAL P/ SIALORREIA)', qtd:'2', apres:'GTS', dose:'1%', diluicao:'', via:'SL', freq:'8/8H', hor:['08','16','24'], cat:'Medicação Geral', obs:'sialorreia — gotas em cavidade oral/SL'},
+  {nome:'ATROPINA COLÍRIO 1%', qtd:'2', apres:'GTS', dose:'1%', diluicao:'', via:'ORAL', freq:'8/8H', hor:['08','16','24'], cat:'Medicação Geral', obs:'em cavidade oral'},
   {nome:'ATROVENT (IPRATRÓPIO)', qtd:'40', apres:'GTS', dose:'0,25MG/ML', diluicao:'', via:'IN', freq:'6/6H', hor:['06','12','18','24'], cat:'Medicação Geral', obs:'nebulização'},
   {nome:'BROMOPRIDA 5MG/ML', qtd:'2', apres:'ML', dose:'5MG/ML', diluicao:'+ 18ML ABD', via:'EV', freq:'8/8H', hor:['08','16','24'], cat:'Medicação Geral', obs:'fixo'},
   {nome:'BROMOPRIDA 5MG/ML', qtd:'2', apres:'ML', dose:'5MG/ML', diluicao:'+ 18ML ABD', via:'EV', freq:'8/8H SN', hor:['SN'], cat:'Medicação Geral', obs:'se necessário'},
@@ -2729,6 +2730,7 @@ const RX_BANCO = [
   {nome:'SALBUTAMOL 100MCG', qtd:'6', apres:'PUFF', dose:'100MCG', diluicao:'', via:'IN', freq:'4/4H', hor:['04','08','12','16','20','24'], cat:'Medicação Geral', obs:''},
   {nome:'SINVASTATINA 40MG', qtd:'1', apres:'COMP', dose:'40MG', diluicao:'', via:'VO', freq:'24/24H', hor:['22'], cat:'Medicação Geral', obs:'à noite'},
   {nome:'SORO FISIOLÓGICO NBZ', qtd:'5', apres:'ML', dose:'0,9%', diluicao:'', via:'IN', freq:'4/4H', hor:['04','08','12','16','20','24'], cat:'Medicação Geral', obs:''},
+  {nome:'SPIRONOLACTONA 25MG', qtd:'1', apres:'COMP', dose:'25MG', diluicao:'', via:'VO', freq:'24/24H', hor:['08'], cat:'Medicação Geral', obs:''},
   {nome:'SULFATO DE MAGNÉSIO 10%', qtd:'20', apres:'ML', dose:'10%', diluicao:'+ 100ML SF 0,9%', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:''},
   {nome:'SUSTRATE (PROPATILNITRATO) 10MG', qtd:'2', apres:'COMP', dose:'10MG', diluicao:'', via:'VO', freq:'8/8H', hor:['08','16','24'], cat:'Medicação Geral', obs:''},
   {nome:'SYMBICORT 6+100MCG', qtd:'2', apres:'SPRAY', dose:'6+100MCG', diluicao:'', via:'IN', freq:'12/12H', hor:['08','20'], cat:'Medicação Geral', obs:''},
@@ -2919,40 +2921,6 @@ const RX_BANCO = [
   {nome:'VERAPAMIL', qtd:'1', apres:'COMP', dose:'80MG', diluicao:'', via:'VO', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Antiarrítmico · ⚠ MPP/ALTA VIGILÂNCIA'},
   {nome:'ÁCIDO AMINOCAPROICO', qtd:'1', apres:'FR', dose:'1G', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Antifibrinolítico'},
   {nome:'ÁCIDO TRANEXÂMICO', qtd:'1', apres:'AMP', dose:'250MG', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Antifibrinolítico'},
-  /* ── ACRÉSCIMOS — lacunas comuns em UTI geral ─────────────────────────── */
-  {nome:'TIAMINA (VIT B1) 100MG', qtd:'1', apres:'AMP', dose:'100MG', diluicao:'+ 100ML SF 0,9%', via:'EV', freq:'24/24H', hor:['08'], cat:'Medicação Geral', obs:'etilista/desnutrido — ANTES de glicose'},
-  {nome:'COMPLEXO B', qtd:'1', apres:'AMP', dose:'—', diluicao:'+ ABD', via:'EV', freq:'24/24H', hor:['08'], cat:'Medicação Geral', obs:'reposição vitamínica'},
-  {nome:'BUTILBROMETO DE ESCOPOLAMINA (BUSCOPAN) 20MG/ML', qtd:'1', apres:'AMP', dose:'20MG/ML', diluicao:'+ ABD', via:'EV', freq:'8/8H SN', hor:['SN'], cat:'Medicação Geral', obs:'antiespasmódico · se cólica'},
-  {nome:'ESCOPOLAMINA + DIPIRONA', qtd:'1', apres:'AMP', dose:'—', diluicao:'+ ABD', via:'EV', freq:'6/6H SN', hor:['SN'], cat:'Medicação Geral', obs:'analgésico/antiespasmódico'},
-  {nome:'GABAPENTINA 300MG', qtd:'1', apres:'CAP', dose:'300MG', diluicao:'', via:'VO', freq:'8/8H', hor:['08','16','24'], cat:'Medicação Geral', obs:'dor neuropática'},
-  {nome:'PREGABALINA 75MG', qtd:'1', apres:'CAP', dose:'75MG', diluicao:'', via:'VO', freq:'12/12H', hor:['08','20'], cat:'Medicação Geral', obs:'dor neuropática'},
-  {nome:'VITAMINA C (ÁCIDO ASCÓRBICO) 500MG', qtd:'1', apres:'AMP', dose:'500MG', diluicao:'+ ABD', via:'EV', freq:'24/24H', hor:['08'], cat:'Medicação Geral', obs:''},
-  {nome:'VITAMINA K (FITOMENADIONA) 10MG VO', qtd:'1', apres:'COMP', dose:'10MG', diluicao:'', via:'VO', freq:'24/24H', hor:['08'], cat:'Medicação Geral', obs:'reversão de varfarina'},
-  {nome:'SULFATO DE MAGNÉSIO 50% 10ML (TORSADES)', qtd:'1', apres:'AMP', dose:'50%', diluicao:'+ 100ML SF 0,9%', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'1-2g em 10min se torsades'},
-  {nome:'GLUCONATO DE CÁLCIO 10% (HIPERCALEMIA)', qtd:'1', apres:'AMP', dose:'10%', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'estabilização de membrana na hipercalemia'},
-  {nome:'INSULINA REGULAR + GLICOSE 50% (HIPERCALEMIA)', qtd:'', apres:'—', dose:'10UI IR + 50ML SG50%', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Protocolo', obs:'shift de potássio · monitorar HGT'},
-  {nome:'POLIESTIRENOSSULFONATO DE CÁLCIO (SORCAL)', qtd:'1', apres:'SACHE', dose:'30G', diluicao:'+ ÁGUA', via:'VO', freq:'8/8H', hor:['08','16','24'], cat:'Medicação Geral', obs:'hipercalemia · resina de troca'},
-  {nome:'DIMORF (MORFINA) 10MG COMP LP', qtd:'1', apres:'COMP', dose:'10MG', diluicao:'', via:'VO', freq:'12/12H', hor:['08','20'], cat:'Sedação', obs:'Analgésico Narcótico · ⚠ MPP/ALTA VIGILÂNCIA · liberação prolongada'},
-  {nome:'CLORPROMAZINA (AMPLICTIL) 25MG', qtd:'1', apres:'COMP', dose:'25MG', diluicao:'', via:'VO', freq:'8/8H', hor:['08','16','24'], cat:'Medicação Geral', obs:'neuroléptico'},
-  {nome:'RISPERIDONA 1MG', qtd:'1', apres:'COMP', dose:'1MG', diluicao:'', via:'SNE', freq:'12/12H', hor:['08','20'], cat:'Medicação Geral', obs:'antipsicótico'},
-  {nome:'TRAZODONA 50MG', qtd:'1', apres:'COMP', dose:'50MG', diluicao:'', via:'VO', freq:'ACM NOITE', hor:['22'], cat:'Medicação Geral', obs:'indutor do sono'},
-  {nome:'MELATONINA 3MG', qtd:'1', apres:'COMP', dose:'3MG', diluicao:'', via:'VO', freq:'ACM NOITE', hor:['22'], cat:'Medicação Geral', obs:'higiene do sono'},
-  {nome:'SENE / SENOSÍDEOS', qtd:'1', apres:'COMP', dose:'—', diluicao:'', via:'VO', freq:'ACM NOITE', hor:['22'], cat:'Medicação Geral', obs:'laxante'},
-  {nome:'ÓLEO MINERAL', qtd:'10', apres:'ML', dose:'—', diluicao:'', via:'VO', freq:'12/12H', hor:['08','20'], cat:'Medicação Geral', obs:'laxante'},
-  {nome:'FOSFATO (FLEET) ENEMA', qtd:'1', apres:'FR', dose:'—', diluicao:'', via:'RETAL', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'laxante retal'},
-  {nome:'GLICERINA SUPOSITÓRIO', qtd:'1', apres:'—', dose:'—', diluicao:'', via:'RETAL', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'laxante retal'},
-  {nome:'DEXAMETASONA 4MG', qtd:'1', apres:'COMP', dose:'4MG', diluicao:'', via:'VO', freq:'24/24H', hor:['08'], cat:'Medicação Geral', obs:'corticoide'},
-  {nome:'HIDROCORTISONA 100MG (CHOQUE SÉPTICO)', qtd:'1', apres:'FA', dose:'50MG', diluicao:'+ ABD', via:'EV', freq:'6/6H', hor:['06','12','18','24'], cat:'Medicação Geral', obs:'choque séptico refratário · 50mg 6/6h'},
-  {nome:'TENECTEPLASE / ALTEPLASE (TROMBÓLISE)', qtd:'1', apres:'FA', dose:'—', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'⚠ trombolítico — protocolo específico'},
-  {nome:'NALOXONA (ANTÍDOTO OPIOIDE)', qtd:'1', apres:'AMP', dose:'0,4MG', diluicao:'+ 9ML SF 0,9%', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'titular 0,04-0,4mg'},
-  {nome:'DIETA ZERO P/ PROCEDIMENTO (NPO)', qtd:'', apres:'—', dose:'', diluicao:'', via:'—', freq:'—', hor:[], cat:'Dieta', obs:'jejum pré-procedimento'},
-  {nome:'NUTRIÇÃO PARENTERAL (NPT)', qtd:'', apres:'BOLSA', dose:'', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Dieta', obs:'conforme nutrologia/farmácia'},
-  {nome:'CURATIVO DE LESÃO POR PRESSÃO', qtd:'', apres:'—', dose:'', diluicao:'', via:'—', freq:'SND', hor:['SND'], cat:'Cuidados', obs:''},
-  {nome:'PROTOCOLO DE PREVENÇÃO DE LPP — MUDANÇA DE DECÚBITO 2/2H', qtd:'', apres:'—', dose:'', diluicao:'', via:'—', freq:'2/2H', hor:['SND'], cat:'Cuidados', obs:''},
-  {nome:'CONTENÇÃO MECÂNICA NO LEITO (S/N, REAVALIAR)', qtd:'', apres:'—', dose:'', diluicao:'', via:'—', freq:'SND', hor:['SND'], cat:'Cuidados', obs:'reavaliar necessidade a cada turno'},
-  {nome:'HIGIENE ORAL COM CLOREXIDINA 0,12% (PREV. PAV)', qtd:'', apres:'—', dose:'0,12%', diluicao:'', via:'—', freq:'12/12H', hor:['08','20'], cat:'Cuidados', obs:'bundle PAV'},
-  {nome:'BALANÇO HÍDRICO RIGOROSO', qtd:'', apres:'—', dose:'', diluicao:'', via:'—', freq:'SND', hor:['SND'], cat:'Cuidados', obs:''},
-  {nome:'GLICEMIA CAPILAR + INSULINA REGULAR S/N (PROTOCOLO)', qtd:'', apres:'—', dose:'', diluicao:'', via:'—', freq:'6/6H', hor:['06','12','18','24'], cat:'Protocolo', obs:''},
 ];
 
 
@@ -2975,7 +2943,7 @@ function _ordenarHorarios(hor){
   normais.sort((a,b)=> ORDEM.indexOf(a) - ORDEM.indexOf(b));
   return [...normais, ...extras];
 }
-const RX_VIAS  = ['VO','EV','SC','IM','SL','IN','SNE','SNG','OF','ORAL','TD','INH','RETAL','BIC','INF','—'];
+const RX_VIAS  = ['VO','EV','SC','IM','SL','IN','SNE','SNG','OF','ORAL','TD','INH','BIC','INF','—'];
 const RX_FREQS = ['BIC ACM','24/24H','12/12H','8/8H','6/6H','4/4H','2/2H','1/1H','1X/DIA','SN','6/6H SN','8/8H SN','ACM','ACM NOITE','SND','—'];
 const RX_APRES = ['—','COMP','CAP','FA','AMP','ML','GTS','PUFF','JATO','SPRAY','SACHE','ADESIVO','UI','BOLSA','SER','FR','BISN','MEQ'];
 
@@ -3131,6 +3099,75 @@ const RX_NEFRO_TOXICOS = ['vancomicina','gentamicina','amicacina','meropenem','p
 // Profilaxias típicas em UTI — para validação de omissão
 const RX_PROFILAXIAS_VMI = ['enoxaparina','heparina','omeprazol','pantoprazol','esomeprazol','ranitidina'];
 
+/* ───────────────────────────────────────────────────────────────────────────
+   GRUPOS DE ALERGIA — quando o paciente declara alergia a um item do grupo,
+   todos os outros itens do mesmo grupo viram alertas (cross-reatividade).
+   Cada grupo: { id, termos:[substrings normalizadas que disparam o grupo] }
+   ─────────────────────────────────────────────────────────────────────── */
+const RX_ALERGIA_GRUPOS = [
+  { id:'Penicilinas (cross-reat. cefalosporinas ~5-10%)',
+    termos:['penicilina','ampicilina','amoxicilina','oxacilina','piperacilina','tazobactam'],
+    cruza:['cefalosporina','cefazolina','cefalotina','cefuroxima','cefoxitina','ceftriaxona','cefepima','ceftazidima','cefotaxima','cefalexina'] },
+  { id:'Cefalosporinas',
+    termos:['cefalosporina','cefazolina','cefalotina','cefuroxima','cefoxitina','ceftriaxona','cefepima','ceftazidima','cefotaxima','cefalexina'],
+    cruza:['penicilina','ampicilina','amoxicilina','oxacilina'] },
+  { id:'Sulfas',
+    termos:['sulfa','sulfametoxazol','sulfadiazina','bactrim','dapsona'],
+    cruza:['furosemida','hidroclorotiazida','tiazid','glibenclamida','sulfasalazina'] },
+  { id:'AINE / dipirona / paracetamol',
+    termos:['aas','aspirina','ibuprofeno','diclofenaco','cetoprofeno','naproxeno','nimesulida','tenoxicam','dipirona','paracetamol'],
+    cruza:['aas','dipirona','paracetamol','ibuprofeno','diclofenaco','cetoprofeno','tenoxicam'] },
+  { id:'Opioides',
+    termos:['morfina','codeina','tramadol','fentanil','metadona','oxicodona','dimorf','nalbufina'],
+    cruza:['morfina','codeina','tramadol','fentanil','nalbufina'] },
+  { id:'Quinolonas',
+    termos:['ciprofloxacino','levofloxacino','moxifloxacino','norfloxacino','quinolona'],
+    cruza:['ciprofloxacino','levofloxacino','moxifloxacino'] },
+  { id:'Macrolídeos',
+    termos:['azitromicina','claritromicina','eritromicina','macrolid'],
+    cruza:['azitromicina','claritromicina','eritromicina'] },
+  { id:'Aminoglicosídeos',
+    termos:['gentamicina','amicacina','tobramicina','neomicina','estreptomicina','aminoglic'],
+    cruza:['gentamicina','amicacina','tobramicina'] },
+  { id:'Iodo / contraste',
+    termos:['iodo','contraste','iodado'],
+    cruza:['amiodarona'] }, // amiodarona contém iodo
+  { id:'Heparinas (cross-reat. HBPM se TIH)',
+    termos:['heparina','enoxaparina','hbpm','tih','trombocitopenia heparina'],
+    cruza:['heparina','enoxaparina','dalteparin','nadroparin'] },
+];
+
+/* ───────────────────────────────────────────────────────────────────────────
+   FAIXAS DE DOSE PARA SANITY-CHECK (#7)
+   Pega o número principal da string "dose" e checa contra max razoável.
+   Se a unidade declarada na string conflitar com a expected, alerta.
+   ─────────────────────────────────────────────────────────────────────── */
+const RX_DOSE_FAIXAS = {
+  // BICs vasoativas/sedativas — em mcg/kg/min ou mcg/kg/h normalmente
+  'noradrenalina':  { maxBolus:0, maxBIC:2,   unidBIC:'mcg/kg/min', alerta:'Faixa típica 0,05–2 mcg/kg/min. Dose >2 é excepcional.' },
+  'adrenalina':     { maxBolus:1, maxBIC:1,   unidBIC:'mcg/kg/min', alerta:'BIC 0,01–1 mcg/kg/min; bolus 1mg na PCR.' },
+  'dobutamina':     { maxBolus:0, maxBIC:20,  unidBIC:'mcg/kg/min', alerta:'Faixa 2,5–20 mcg/kg/min.' },
+  'dopamina':       { maxBolus:0, maxBIC:20,  unidBIC:'mcg/kg/min', alerta:'Faixa 2–20 mcg/kg/min.' },
+  'nitroprussiato': { maxBolus:0, maxBIC:10,  unidBIC:'mcg/kg/min', alerta:'Faixa 0,5–10 mcg/kg/min.' },
+  'fentanil':       { maxBolus:300, maxBIC:5, unidBIC:'mcg/kg/h',   alerta:'BIC 0,5–3 mcg/kg/h (até 5 em casos selecionados).' },
+  'midazolam':      { maxBolus:10,  maxBIC:0.2, unidBIC:'mg/kg/h',  alerta:'BIC 0,02–0,1 mg/kg/h.' },
+  'propofol':       { maxBolus:0,   maxBIC:4,   unidBIC:'mg/kg/h',  alerta:'BIC 1–3 mg/kg/h; >4 → risco de PRIS.' },
+  // Antibióticos
+  'meropenem':      { maxDose:2000, unid:'mg',  alerta:'Máx 2g por dose (SNC).' },
+  'piperacilina':   { maxDose:4500, unid:'mg',  alerta:'Máx 4,5g por dose.' },
+  'vancomicina':    { maxDose:2500, unid:'mg',  alerta:'Doses únicas >2,5g são incomuns (checar mg/kg).' },
+  'ceftriaxona':    { maxDose:4000, unid:'mg',  alerta:'Máx 4g/dia (meningite); >4g por dose alerta.' },
+  'cefepima':       { maxDose:2000, unid:'mg',  alerta:'Máx 2g por dose.' },
+  'gentamicina':    { maxDose:700,  unid:'mg',  alerta:'Dose única diária ~5-7 mg/kg; >700mg geralmente é excessivo.' },
+  'amicacina':      { maxDose:1500, unid:'mg',  alerta:'15-20 mg/kg/dia; >1,5g em dose única é alto.' },
+  // Outros
+  'dipirona':       { maxDose:2000, unid:'mg',  alerta:'Dose máxima por toma: 2g (1 amp).' },
+  'paracetamol':    { maxDose:1000, unid:'mg',  alerta:'Máx 1g por dose, 4g/dia.' },
+  'enoxaparina':    { maxDose:120,  unid:'mg',  alerta:'Profilática 40mg/dia; terapêutica 1mg/kg 12/12h.' },
+  'furosemida':     { maxDose:500,  unid:'mg',  alerta:'Doses >500mg em bolus são excepcionais.' },
+  'hidrocortisona': { maxDose:500,  unid:'mg',  alerta:'Choque séptico: 50mg 6/6h; >500mg em dose única alerta.' },
+};
+
 
 
 // Ordena os itens da prescrição pela prioridade de categoria
@@ -3157,8 +3194,9 @@ function _calcularTFG(){
   const peso=parseFloat(gf('f-peso'))||null;
   const dn=gf('f-dn');
   const sexo=(gf('f-sexo')||'').toUpperCase();
-  const cr=_ultimaCreatinina();
-  if(!cr||!dn) return null;
+  const crInfo=_ultimaCreatininaComData();
+  if(!crInfo||!dn) return null;
+  const cr=crInfo.valor;
   const idade=_idadeDeDN(dn);
   if(!idade) return null;
 
@@ -3169,7 +3207,6 @@ function _calcularTFG(){
   }
 
   // CKD-EPI 2021 (sem raça)
-  // 142 × min(Scr/k,1)^α × max(Scr/k,1)^-1.200 × 0.9938^idade × (1.012 se F)
   const k = sexo==='FEMININO' ? 0.7 : 0.9;
   const a = sexo==='FEMININO' ? -0.241 : -0.302;
   const minR = Math.min(cr/k, 1);
@@ -3177,19 +3214,38 @@ function _calcularTFG(){
   const ckdepi = 142 * Math.pow(minR, a) * Math.pow(maxR, -1.200) *
     Math.pow(0.9938, idade) * (sexo==='FEMININO' ? 1.012 : 1);
 
-  return { cg: cg!=null?Math.round(cg):null, ckdepi:Math.round(ckdepi), cr, idade, peso, sexo };
+  // Idade da creatinina em dias (para alerta de exame antigo)
+  let diasCr=null;
+  if(crInfo.data){
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
+    const dCr  = new Date(crInfo.data+'T00:00:00');
+    diasCr = Math.floor((hoje - dCr) / 86400000);
+  }
+
+  // Equação preferida para ajuste de dose: CG quando há peso; senão CKD-EPI
+  const equacaoPreferida = (cg!=null) ? 'CG' : 'CKD-EPI';
+  const tfgPreferida     = (cg!=null) ? Math.round(cg) : Math.round(ckdepi);
+
+  return {
+    cg: cg!=null?Math.round(cg):null,
+    ckdepi:Math.round(ckdepi),
+    cr, dataCr:crInfo.data||null, diasCr,
+    idade, peso, sexo,
+    equacaoPreferida, tfgPreferida
+  };
 }
-function _ultimaCreatinina(){
-  // Tenta da última linha de exames; senão, do SAPS
+function _ultimaCreatininaComData(){
   if(_labLinhas&&_labLinhas.length){
     const ord=[..._labLinhas].filter(l=>l.data).sort((a,b)=>(a.data||'').localeCompare(b.data||''));
     for(let i=ord.length-1;i>=0;i--){
       const v=ord[i].valores&&ord[i].valores.cr;
-      if(v!=null&&v!=='') return parseFloat(v);
+      if(v!=null&&v!=='') return { valor:parseFloat(v), data:ord[i].data };
     }
   }
   return null;
 }
+// Mantém compat com chamadas antigas
+function _ultimaCreatinina(){ const r=_ultimaCreatininaComData(); return r?r.valor:null; }
 function _atualizarTFG(){
   // Se a aba de prescrição estiver aberta, re-renderiza o painel de apoio
   const aba=$('aba-prescricao');
@@ -3279,6 +3335,205 @@ function _detectarOmissoes(){
   return avisos;
 }
 
+/* ────────────────────────────────────────────────────────────────────────
+   #1 ─ ALERGIA × PRESCRIÇÃO (cruzamento)
+   ──────────────────────────────────────────────────────────────────────── */
+function _normFarm(s){
+  return (s||'').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+}
+function _detectarAlergiasCruzadas(){
+  const txt=(gf('f-alergia')||'').trim();
+  if(!txt || /^(nega|nao|não|nenhuma|-|—)$/i.test(txt)) return [];
+  const alergenos=txt.split(/[,;/]|\s+e\s+|\s*\+\s*/i)
+    .map(s=>_normFarm(s)).filter(s=>s && s.length>=3 && !/^(sem|nega|não|nenhuma)$/.test(s));
+  if(!alergenos.length) return [];
+  const itens=_rxItens.map(it=>({raw:it.farm||'', n:_normFarm(it.farm)})).filter(o=>o.n);
+  const achados=[]; const visto=new Set();
+  alergenos.forEach(alg=>{
+    itens.forEach(o=>{
+      if(o.n.includes(alg) || (alg.length>=4 && alg.includes(o.n.split(' ')[0]))){
+        const k=alg+'|'+o.n;
+        if(!visto.has(k)){ visto.add(k);
+          achados.push({alergeno:alg.toUpperCase(), farmaco:o.raw, motivo:'match direto', grupo:''}); }
+      }
+    });
+    RX_ALERGIA_GRUPOS.forEach(g=>{
+      const algNoGrupo = g.termos.some(t=>alg.includes(t)||t.includes(alg));
+      if(!algNoGrupo) return;
+      const universo = [...new Set([...g.termos, ...(g.cruza||[])])];
+      itens.forEach(o=>{
+        universo.forEach(termo=>{
+          if(o.n.includes(termo)){
+            if(o.n.includes(alg)) return;
+            const k=alg+'|'+o.n+'|'+g.id;
+            if(!visto.has(k)){ visto.add(k);
+              achados.push({alergeno:alg.toUpperCase(), farmaco:o.raw, motivo:'cross-reatividade', grupo:g.id}); }
+          }
+        });
+      });
+    });
+  });
+  return achados;
+}
+
+/* ────────────────────────────────────────────────────────────────────────
+   #2 ─ DUPLICATA DE ITEM (mesmo fármaco prescrito 2× na prescrição atual)
+   ──────────────────────────────────────────────────────────────────────── */
+function _detectarDuplicatasManual(){
+  const norm=s=>_normFarm(s).split(/\s+/)[0]||'';
+  const SKIP=new Set(['dieta','jejum','cuidado','cuidados','ssvv','curativo','sonda','sf','sg','ringer','soro','jelco','—','']);
+  const map={};
+  _rxItens.forEach((it,idx)=>{
+    const base=norm(it.farm);
+    if(!base || SKIP.has(base) || base.length<4) return;
+    map[base]=map[base]||[];
+    map[base].push({idx, nome:it.farm, dose:it.dose, freq:it.freq, via:it.via});
+  });
+  const dups=[];
+  Object.entries(map).forEach(([base,arr])=>{
+    if(arr.length<2) return;
+    dups.push({base, itens:arr});
+  });
+  return dups;
+}
+
+/* ────────────────────────────────────────────────────────────────────────
+   #7 ─ SANITY-CHECK DE DOSE (faixas absurdas / unidade errada)
+   ──────────────────────────────────────────────────────────────────────── */
+function _extrairDoseNumero(doseStr){
+  if(!doseStr) return null;
+  const m=String(doseStr).replace(',','.').match(/(\d+(?:\.\d+)?)\s*(mcg\/kg\/min|mcg\/kg\/h|mg\/kg\/h|mcg\/kg|mg\/kg|mcg\/min|ui\/min|mg|mcg|g|ml|ui|%)?/i);
+  if(!m) return null;
+  return { num:parseFloat(m[1]), unid:(m[2]||'').toLowerCase() };
+}
+function _detectarDosesAbsurdas(){
+  const achados=[];
+  _rxItens.forEach(it=>{
+    const farm=_identificarFarmaco(it.farm, RX_DOSE_FAIXAS);
+    if(!farm || !RX_DOSE_FAIXAS[farm]) return;
+    const r=RX_DOSE_FAIXAS[farm];
+    const d=_extrairDoseNumero(it.dose);
+    if(!d || !isFinite(d.num)) return;
+    const ehBIC = /BIC/i.test(it.freq||'');
+    let val=d.num, unid=d.unid;
+    if(unid==='g'){ val=val*1000; unid='mg'; }
+    if(ehBIC && r.maxBIC){
+      if(val > r.maxBIC*1.2)
+        achados.push({nome:it.farm, dose:it.dose, motivo:`Dose ${val}${unid||''} excede faixa esperada (${r.unidBIC}). ${r.alerta}`});
+    } else if(r.maxDose && unid==='mg'){
+      if(val > r.maxDose*1.2)
+        achados.push({nome:it.farm, dose:it.dose, motivo:`Dose ${val}mg acima do máximo esperado (${r.maxDose}mg). ${r.alerta}`});
+    } else if(r.maxDose && unid==='mcg'){
+      const mg=val/1000;
+      if(mg > r.maxDose*1.2)
+        achados.push({nome:it.farm, dose:it.dose, motivo:`Dose ${val}mcg (${mg.toFixed(1)}mg) acima do máximo. ${r.alerta}`});
+    } else if(!unid && r.maxDose){
+      if(val > r.maxDose*3)
+        achados.push({nome:it.farm, dose:it.dose, motivo:`Dose "${it.dose}" sem unidade clara. Esperado em mg, máx ~${r.maxDose}mg.`});
+    }
+  });
+  return achados;
+}
+
+/* ────────────────────────────────────────────────────────────────────────
+   #4 ─ mL/h automático para BICs (peso × dose × diluição padrão)
+   Mapeia fármacos do banco para BIC_DROGAS usando primeira palavra.
+   Para cada item BIC com dose definida, calcula mL/h se houver peso.
+   ──────────────────────────────────────────────────────────────────────── */
+function _bicMatchDroga(nomeItem){
+  const n=_normFarm(nomeItem);
+  if(!n) return null;
+  return BIC_DROGAS.find(d=>{
+    const dn=_normFarm(d.nome).split(/\s+/)[0]; // 'noradrenalina', 'dobutamina'...
+    return n.includes(dn);
+  })||null;
+}
+function _calcularMLhBIC(d, dose, peso){
+  if(!d || !isFinite(dose) || dose<=0) return null;
+  if(d.unidade==='mcg/kg/min'){
+    if(!peso) return null;
+    return (dose*peso*60*d.vol)/d.totalMcg;
+  }
+  if(d.unidade==='mcg/min')   return (dose*60*d.vol)/d.totalMcg;
+  if(d.unidade==='UI/min')    return (dose*60*d.vol)/d.totalUI;
+  if(d.unidade==='mcg/kg/h'){ if(!peso) return null; return (dose*peso*d.vol)/d.totalMcg; }
+  if(d.unidade==='mg/kg/h'){  if(!peso) return null; return (dose*peso*d.vol)/d.totalMg; }
+  return null;
+}
+function _calcularBICs(){
+  const peso=parseFloat(gf('f-peso'))||null;
+  const lista=[];
+  _rxItens.forEach(it=>{
+    if(!/BIC/i.test(it.freq||'')) return;
+    const droga=_bicMatchDroga(it.farm);
+    if(!droga) return;
+    const d=_extrairDoseNumero(it.dose);
+    if(!d) return;
+    const mlh=_calcularMLhBIC(droga, d.num, peso);
+    const semPeso = droga.porPeso && !peso;
+    lista.push({
+      nomeItem: it.farm,
+      droga: droga.nome,
+      diluicao: droga.diluicao,
+      dose: it.dose,
+      doseUnidade: droga.unidade,
+      faixa: droga.faixa,
+      mlh: (mlh!=null && isFinite(mlh)) ? mlh : null,
+      semPeso,
+      foraFaixa: _doseForaFaixa(d.num, droga.faixa),
+    });
+  });
+  return lista;
+}
+function _doseForaFaixa(val, faixaStr){
+  const m=String(faixaStr||'').match(/([\d.,]+)\s*[–-]\s*([\d.,]+)/);
+  if(!m) return false;
+  const lo=parseFloat(m[1].replace(',','.')), hi=parseFloat(m[2].replace(',','.'));
+  return val<lo || val>hi;
+}
+
+/* ────────────────────────────────────────────────────────────────────────
+   #9 ─ DIFF COM PRESCRIÇÃO DE ONTEM (novo, suspenso, alterado)
+   Identifica por primeira palavra do nome. Retorna {novos, suspensos, alterados}.
+   ──────────────────────────────────────────────────────────────────────── */
+let _rxDiffOntem = null; // cache: { data:'2025-06-04', novos:[], suspensos:[], alterados:[] }
+
+async function _calcularDiffOntem(){
+  if(!leitoAtual) { _rxDiffOntem=null; return null; }
+  try{
+    const dataAtual=gf('f-data')||hoje();
+    const all=await dbListByPrefix(`uti_med_rx_${leitoAtual}_`);
+    const arr=Object.values(all).filter(rx=>rx&&rx.data&&rx.data<dataAtual);
+    if(!arr.length){ _rxDiffOntem={data:null, novos:[], suspensos:[], alterados:[], semAnterior:true}; return _rxDiffOntem; }
+    arr.sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+    const ontem=arr[0];
+
+    const baseNome = it => _normFarm(it.farm).split(/\s+/)[0]||'';
+    const mapHoje = {}, mapOntem = {};
+    _rxItens.forEach(it=>{ const k=baseNome(it); if(k) mapHoje[k]=it; });
+    (ontem.itens||[]).forEach(it=>{ const k=baseNome(it); if(k) mapOntem[k]=it; });
+
+    const novos=[], suspensos=[], alterados=[];
+    Object.keys(mapHoje).forEach(k=>{
+      if(!mapOntem[k]) novos.push(mapHoje[k]);
+      else {
+        const a=mapOntem[k], b=mapHoje[k];
+        const diffs=[];
+        if((a.dose||'').toUpperCase()!==(b.dose||'').toUpperCase()) diffs.push(`dose ${a.dose||'?'} → ${b.dose||'?'}`);
+        if((a.freq||'').toUpperCase()!==(b.freq||'').toUpperCase()) diffs.push(`freq ${a.freq||'?'} → ${b.freq||'?'}`);
+        if((a.via ||'').toUpperCase()!==(b.via ||'').toUpperCase()) diffs.push(`via ${a.via||'?'} → ${b.via||'?'}`);
+        if(diffs.length) alterados.push({item:b, diffs});
+      }
+    });
+    Object.keys(mapOntem).forEach(k=>{
+      if(!mapHoje[k]) suspensos.push(mapOntem[k]);
+    });
+
+    _rxDiffOntem = { data:ontem.data, novos, suspensos, alterados, semAnterior:false };
+    return _rxDiffOntem;
+  } catch(e){ console.warn('diff ontem:', e); _rxDiffOntem=null; return null; }
+}
+
 // ── Badge "D-X" para itens da categoria ATB ──
 let _ddiaCache = {}; // mantido para compatibilidade com _renderApoioClinico
 // Badge "D-X" para ATBs — usa it._ddia calculado por _rxAtualizarDdias
@@ -3318,27 +3573,67 @@ async function _calcularDdiaATBs(){
 async function _renderApoioClinico(){
   const wrap=$('presc-apoio'); if(!wrap) return;
   const tfg=_calcularTFG();
+  const alergias=_detectarAlergiasCruzadas();   // #1
+  const duplicatas=_detectarDuplicatasManual(); // #2
   const interacoes=_detectarInteracoes();
   const redund=_detectarRedundancia();
   const omissoes=_detectarOmissoes();
-  // D-dias dos ATBs (cache simples por leito)
+  const dosesAbsurdas=_detectarDosesAbsurdas(); // #7
+  const bics=_calcularBICs();                    // #4
+  const diff=await _calcularDiffOntem();         // #9
   _ddiaCache = await _calcularDdiaATBs();
 
   let h='';
-  // Card de TFG (sempre que houver dados)
+
+  // ── #1 ALERGIAS — TOPO, em vermelho intenso ─────────────────────────────
+  if(alergias.length){
+    h+=`<div class="apoio-card apoio-alerta" style="border-left:4px solid #b71c1c;background:#ffeae8;">
+      <div class="apoio-titulo" style="color:#b71c1c;">🚨 ALERGIA × PRESCRIÇÃO (${alergias.length})</div>
+      ${alergias.map(a=>`<div class="apoio-item apoio-alta">
+        <b>${(a.farmaco||'').toUpperCase()}</b> conflita com alergia a <b>${a.alergeno}</b>${a.motivo==='cross-reatividade'?` <em>(cross-reatividade: ${a.grupo})</em>`:''}
+      </div>`).join('')}
+    </div>`;
+  }
+
+  // ── #2 DUPLICATAS MANUAIS ────────────────────────────────────────────────
+  if(duplicatas.length){
+    h+=`<div class="apoio-card apoio-warn">
+      <div class="apoio-titulo">⚠ ITEM DUPLICADO (${duplicatas.length})</div>
+      ${duplicatas.map(d=>`<div class="apoio-item">
+        <b>${d.base.toUpperCase()}</b> prescrito ${d.itens.length}× —
+        ${d.itens.map(x=>`<span>${(x.nome||'').toUpperCase()}${x.dose?' '+x.dose:''}${x.freq?' · '+x.freq:''}</span>`).join(' / ')}
+      </div>`).join('')}
+    </div>`;
+  }
+
+  // ── #5 + #6: TFG com equação preferida e idade da creatinina ────────────
   if(tfg){
     const corCG = tfg.cg && tfg.cg<30 ? 'var(--vermelho)' : tfg.cg && tfg.cg<60 ? 'var(--laranja)' : 'var(--verde)';
     const corCK = tfg.ckdepi<30 ? 'var(--vermelho)' : tfg.ckdepi<60 ? 'var(--laranja)' : 'var(--verde)';
+    const dataCrTxt = tfg.dataCr ? _fmtDataCurta(tfg.dataCr) : 'data?';
+    const crVelha   = (tfg.diasCr!=null && tfg.diasCr>2);
+    const crAvisoCor = tfg.diasCr==null ? 'var(--muted)'
+                       : tfg.diasCr>4 ? 'var(--vermelho)'
+                       : tfg.diasCr>2 ? 'var(--laranja)' : 'var(--verde)';
+    const crAvisoTxt = tfg.diasCr==null ? '' : (tfg.diasCr===0?'hoje':tfg.diasCr+'d');
     h+=`<div class="apoio-card apoio-tfg">
-      <div class="apoio-titulo">⚕ FUNÇÃO RENAL</div>
+      <div class="apoio-titulo">⚕ FUNÇÃO RENAL <span style="font-weight:500;font-size:.78rem;color:var(--muted);">— equação p/ ajuste: <b>${tfg.equacaoPreferida}</b></span></div>
       <div class="apoio-tfg-vals">
-        ${tfg.cg!=null?`<div><span class="tfg-num" style="color:${corCG}">${tfg.cg}</span><span class="tfg-unit">Cockcroft-Gault</span></div>`:'<div><span class="tfg-num" style="color:#aaa">?</span><span class="tfg-unit">Cockcroft (peso?)</span></div>'}
-        <div><span class="tfg-num" style="color:${corCK}">${tfg.ckdepi}</span><span class="tfg-unit">CKD-EPI 2021</span></div>
+        ${tfg.cg!=null
+          ? `<div><span class="tfg-num" style="color:${corCG}">${tfg.cg}</span><span class="tfg-unit">Cockcroft-Gault${tfg.equacaoPreferida==='CG'?' ✓':''}</span></div>`
+          : `<div><span class="tfg-num" style="color:#aaa">?</span><span class="tfg-unit">CG (sem peso)</span></div>`}
+        <div><span class="tfg-num" style="color:${corCK}">${tfg.ckdepi}</span><span class="tfg-unit">CKD-EPI 2021${tfg.equacaoPreferida==='CKD-EPI'?' ✓':''}</span></div>
       </div>
-      <div class="apoio-sub">Cr ${tfg.cr} · ${tfg.idade}a · ${tfg.sexo==='FEMININO'?'♀':'♂'}${tfg.peso?' · '+tfg.peso+'kg':' · sem peso'}</div>
+      <div class="apoio-sub">
+        Cr <b>${tfg.cr}</b> de <b>${dataCrTxt}</b>
+        <span style="color:${crAvisoCor};font-weight:600;">${crAvisoTxt?'· '+crAvisoTxt:''}</span>
+        ${crVelha?' <span style="color:var(--vermelho);">⚠ creatinina &gt;48h — reavaliar exame antes de ajustar dose</span>':''}
+        · ${tfg.idade}a · ${tfg.sexo==='FEMININO'?'♀':'♂'}${tfg.peso?' · '+tfg.peso+'kg':' · sem peso'}
+      </div>
     </div>`;
   }
-  // Card de interações
+
+  // ── Interações ───────────────────────────────────────────────────────────
   if(interacoes.length){
     h+=`<div class="apoio-card apoio-alerta">
       <div class="apoio-titulo">⚠ INTERAÇÕES (${interacoes.length})</div>
@@ -3346,7 +3641,8 @@ async function _renderApoioClinico(){
         <b>${i.a.toUpperCase()} + ${i.b.toUpperCase()}</b><br>${i.texto}</div>`).join('')}
     </div>`;
   }
-  // Card de redundância
+
+  // ── Redundância de classe ───────────────────────────────────────────────
   if(redund.length){
     h+=`<div class="apoio-card apoio-warn">
       <div class="apoio-titulo">⚠ REDUNDÂNCIA DE CLASSE</div>
@@ -3354,22 +3650,54 @@ async function _renderApoioClinico(){
         <b>${r.classe}:</b> ${r.itens.join(' + ').toUpperCase()}</div>`).join('')}
     </div>`;
   }
-  // Card de omissões
+
+  // ── Omissões ─────────────────────────────────────────────────────────────
   if(omissoes.length){
     h+=`<div class="apoio-card apoio-warn">
       <div class="apoio-titulo">💡 OMISSÕES POSSÍVEIS</div>
       ${omissoes.map(o=>`<div class="apoio-item">${o}</div>`).join('')}
     </div>`;
   }
-  // Doses por peso pendentes e ajustes renais
+
+  // ── #7 SANITY-CHECK DE DOSE ─────────────────────────────────────────────
+  if(dosesAbsurdas.length){
+    h+=`<div class="apoio-card apoio-alerta">
+      <div class="apoio-titulo">⚠ DOSE ALÉM DA FAIXA (${dosesAbsurdas.length})</div>
+      ${dosesAbsurdas.map(d=>`<div class="apoio-item apoio-alta">
+        <b>${(d.nome||'').toUpperCase()}:</b> ${d.dose||'?'} — ${d.motivo}</div>`).join('')}
+    </div>`;
+  }
+
+  // ── #4 BICs com mL/h calculado por peso ─────────────────────────────────
+  if(bics.length){
+    h+=`<div class="apoio-card apoio-info">
+      <div class="apoio-titulo">💧 BICs — mL/h calculado</div>
+      ${bics.map(b=>{
+        if(b.semPeso){
+          return `<div class="apoio-item"><b>${(b.nomeItem||'').toUpperCase()}:</b>
+            <span style="color:var(--vermelho);">⚠ dose por peso, sem peso registrado</span>
+            <div style="font-size:.76rem;color:var(--muted);">${b.droga} · diluição: ${b.diluicao} · faixa ${b.faixa} ${b.doseUnidade}</div></div>`;
+        }
+        if(b.mlh==null){
+          return `<div class="apoio-item"><b>${(b.nomeItem||'').toUpperCase()}:</b>
+            <span style="color:var(--muted);">informe a dose para calcular</span></div>`;
+        }
+        const aviso = b.foraFaixa ? ` <span style="color:var(--laranja);font-weight:700;">⚠ fora da faixa típica ${b.faixa}</span>` : '';
+        return `<div class="apoio-item"><b>${(b.nomeItem||'').toUpperCase()}:</b>
+          <b style="color:var(--vinho);">${b.mlh.toFixed(2)} mL/h</b>${aviso}
+          <div style="font-size:.76rem;color:var(--muted);">${b.droga} · dose ${b.dose} ${b.doseUnidade} · diluição: ${b.diluicao}</div></div>`;
+      }).join('')}
+    </div>`;
+  }
+
+  // ── Doses por peso pendentes e ajustes renais ───────────────────────────
   const sugestoes=[], ajustes=[];
   _rxItens.forEach(it=>{
     const s=_sugerirDosePorPeso(it);
     if(s) sugestoes.push({nome:it.farm, ...s});
     if(tfg){
-      const tfgUsar = tfg.cg!=null?tfg.cg:tfg.ckdepi;
-      const a=_ajusteRenal(it, tfgUsar);
-      if(a) ajustes.push({nome:it.farm, ...a, tfgUsar});
+      const a=_ajusteRenal(it, tfg.tfgPreferida);
+      if(a) ajustes.push({nome:it.farm, ...a, tfgUsar:tfg.tfgPreferida, equacao:tfg.equacaoPreferida});
     }
   });
   if(sugestoes.length){
@@ -3381,9 +3709,26 @@ async function _renderApoioClinico(){
   }
   if(ajustes.length){
     h+=`<div class="apoio-card apoio-info">
-      <div class="apoio-titulo">🔧 AJUSTE PARA FUNÇÃO RENAL (TFG ${ajustes[0].tfgUsar})</div>
+      <div class="apoio-titulo">🔧 AJUSTE PARA FUNÇÃO RENAL <span style="font-weight:500;font-size:.78rem;">(TFG ${ajustes[0].tfgUsar} via ${ajustes[0].equacao})</span></div>
       ${ajustes.map(a=>`<div class="apoio-item">
         <b>${a.nome}:</b> ${a.dose}${a.nota?' — <em>'+a.nota+'</em>':''}</div>`).join('')}
+    </div>`;
+  }
+
+  // ── #9 DIFF COM ONTEM ───────────────────────────────────────────────────
+  if(diff && !diff.semAnterior && (diff.novos.length||diff.suspensos.length||diff.alterados.length)){
+    const fmt = _fmtDataCurta(diff.data)||diff.data;
+    h+=`<div class="apoio-card apoio-info" style="border-left-color:#6a1b9a;">
+      <div class="apoio-titulo">🔄 MUDANÇAS DESDE ${fmt.toUpperCase()}</div>
+      ${diff.novos.length?`<div class="apoio-item">
+        <b style="color:#0a6b3a;">+ NOVO${diff.novos.length>1?'S':''} (${diff.novos.length}):</b>
+        ${diff.novos.map(it=>(it.farm||'').toUpperCase()).join(' · ')}</div>`:''}
+      ${diff.suspensos.length?`<div class="apoio-item">
+        <b style="color:#b71c1c;">− SUSPENSO${diff.suspensos.length>1?'S':''} (${diff.suspensos.length}):</b>
+        ${diff.suspensos.map(it=>(it.farm||'').toUpperCase()).join(' · ')}</div>`:''}
+      ${diff.alterados.length?`<div class="apoio-item">
+        <b style="color:#a35200;">~ ALTERADO${diff.alterados.length>1?'S':''} (${diff.alterados.length}):</b>
+        ${diff.alterados.map(a=>`<div style="margin-left:12px;font-size:.84rem;">${(a.item.farm||'').toUpperCase()}: ${a.diffs.join(' · ')}</div>`).join('')}</div>`:''}
     </div>`;
   }
 
@@ -4026,13 +4371,22 @@ function _rxValidarDose(id, el){
   el.style.background  = vazio ? '#fff5f5' : '';
 }
 
-// Itens que não precisam de dose (cuidados/dieta sem medicamento)
+// Itens que não precisam de dose
+// Estratégia: categoria e tipo são primários (robustos); o prefixo fica como fallback.
 function _rxDispensaDose(it){
-  const semDose=['DIETA','JEJUM','RESTRIÇÃO','PNI','MCC','OP','SSVV','CABECEIRA','MANTER',
-    'QUANTIFICAR','FISIOTERAPIA','SONDA','CURATIVO','DECÚBITO','HGT','JELCO','—'];
-  return semDose.some(s=>(it.farm||'').toUpperCase().startsWith(s)) ||
-    it.tipo==='cuidados' ||
-    it.via==='—' || (it.dose||'').trim()==='—';
+  if(!it) return false;
+  // 1) Por categoria/tipo (fonte canônica)
+  if(it.tipo==='cuidados' || it.tipo==='dieta' || it.tipo==='sn') return true;
+  if(it._cat==='Cuidados' || it._cat==='Dieta' || it._cat==='Protocolo') return true;
+  // 2) Via "—" ou dose explicitamente "—" indica ausência intencional
+  if(it.via==='—' || it.via==='SND') return true;
+  if((it.dose||'').trim()==='—') return true;
+  // 3) Fallback para itens criados antes da padronização (prefixo do nome)
+  const SEM_DOSE_PREFIX=['DIETA','JEJUM','RESTRIÇÃO','PNI','MCC','OP','SSVV','CABECEIRA','MANTER',
+    'QUANTIFICAR','FISIOTERAPIA','SONDA','CURATIVO','DECÚBITO','HGT','JELCO','BALANÇO','PROTOCOLO',
+    'CONTENÇÃO','HIGIENE','MUDANÇA DE DECÚBITO','PREVENÇÃO'];
+  const farmU=(it.farm||'').toUpperCase();
+  return SEM_DOSE_PREFIX.some(s=>farmU.startsWith(s));
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
