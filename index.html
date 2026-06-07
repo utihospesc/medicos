@@ -46,7 +46,7 @@
     messagingSenderId: "113839432711",
     appId: "1:113839432711:web:d439ffe7e89c4a3798f6a2"
   };
-  window.APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwNVXDPkFT6C2Ub59e4tnIrmMNnOFpAJ77bEho5Y0HvORx-x0ENhsBa5BN3yl3PzAtQ/exec";
+  window.APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyHhgR5tmL8nmvN2juaTOnUU1HWw1CCGM8jB1krDHAQf0cNwxIEk0JjxFpc-BMjAn-L/exec";
   window.CULTURAS_SHEET_ID = "1yQHmd84BSlbAs7jb4ztN6fsy6eyZHY4wb6IcqOp0j7U";
   window.CARTAO_SUS_FOLDER_ID = "1p2hR_MqQrgIT4m1HIkclr6a4IbHA2GsS";
 </script>
@@ -1294,7 +1294,7 @@
         <div class="secao-c">
           <div class="dc">
             <div class="fl" style="flex:3"><label>Nome</label><input type="text" id="cult-nome" readonly style="background:var(--bg2);font-weight:700;text-transform:uppercase;"></div>
-            <div class="fl"><label>Registro</label><input type="text" id="cult-reg"></div>
+            <div class="fl"><label>Registro</label><input type="text" id="cult-reg" style="text-transform:uppercase;"></div>
           </div>
           <div class="dc">
             <div class="fl"><label>Idade</label><input type="number" id="cult-idade" readonly style="background:var(--bg2);"></div>
@@ -1384,7 +1384,7 @@
               <label class="check-label"><input type="checkbox" id="cult-sec-abs"> Abscesso</label>
               <div style="display:flex;align-items:center;gap:6px;margin-top:3px;">
                 <label class="check-label"><input type="checkbox" id="cult-sec-out"> Outros:</label>
-                <input type="text" id="cult-sec-out-txt" placeholder="especificar" style="flex:1;font-size:.8rem;padding:3px 6px;border:1.5px solid var(--borda);border-radius:6px;">
+                <input type="text" id="cult-sec-out-txt" placeholder="especificar" style="flex:1;font-size:.8rem;padding:3px 6px;border:1.5px solid var(--borda);border-radius:6px;text-transform:uppercase;">
               </div>
             </div>
           </div>
@@ -1397,7 +1397,7 @@
               <label class="check-label"><input type="checkbox" id="cult-liq-ascit"> Líq. Ascítico</label>
               <div style="display:flex;align-items:center;gap:6px;margin-top:3px;">
                 <span style="font-size:.8rem;">Outros:</span>
-                <input type="text" id="cult-liq-out-txt" placeholder="especificar" style="flex:1;font-size:.8rem;padding:3px 6px;border:1.5px solid var(--borda);border-radius:6px;">
+                <input type="text" id="cult-liq-out-txt" placeholder="especificar" style="flex:1;font-size:.8rem;padding:3px 6px;border:1.5px solid var(--borda);border-radius:6px;text-transform:uppercase;">
               </div>
             </div>
           </div>
@@ -1411,14 +1411,14 @@
               <label class="check-label"><input type="checkbox" id="cult-vig-retal"> Swab retal</label>
               <div style="display:flex;align-items:center;gap:6px;margin-top:3px;">
                 <span style="font-size:.8rem;">Outros:</span>
-                <input type="text" id="cult-vig-out-txt" placeholder="especificar" style="flex:1;font-size:.8rem;padding:3px 6px;border:1.5px solid var(--borda);border-radius:6px;">
+                <input type="text" id="cult-vig-out-txt" placeholder="especificar" style="flex:1;font-size:.8rem;padding:3px 6px;border:1.5px solid var(--borda);border-radius:6px;text-transform:uppercase;">
               </div>
             </div>
           </div>
           <label class="check-label cult-item"><input type="checkbox" id="cult-bordet"> Cultura para Bordetella pertussis</label>
           <div style="display:flex;align-items:center;gap:8px;margin:4px 0;">
             <label class="check-label"><input type="checkbox" id="cult-virus"> Cultura de vírus respiratório:</label>
-            <input type="text" id="cult-virus-txt" placeholder="especificar" style="flex:1;font-size:.8rem;padding:3px 6px;border:1.5px solid var(--borda);border-radius:6px;">
+            <input type="text" id="cult-virus-txt" placeholder="especificar" style="flex:1;font-size:.8rem;padding:3px 6px;border:1.5px solid var(--borda);border-radius:6px;text-transform:uppercase;">
           </div>
           <label class="check-label cult-item"><input type="checkbox" id="cult-fresco"> Exame microscópico a fresco</label>
           <label class="check-label cult-item"><input type="checkbox" id="cult-gram"> Exame microscópico GRAM</label>
