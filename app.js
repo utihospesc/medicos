@@ -6696,6 +6696,24 @@ async function salvarSolicitacaoExames(){
   }catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
 }
 
+// Salva E imprime na mesma ação — coleta os dados antes de limpar o formulário
+async function salvarEImprimirSolicitacao(){
+  if(!leitoAtual){ toast('Abra o prontuário de um paciente.',true); return; }
+  const s=_coletarSolicitacao();
+  if(!s.exames.length){ toast('Adicione ao menos um exame.',true); return; }
+  showLoading('Salvando solicitação...');
+  try{
+    const key=`uti_med_sol_exam_${leitoAtual}_${s.data}_${Date.now()}`;
+    await dbSet(key, s);
+    _solSalvas.push({key,...s});
+    hideLoading();
+    _imprimirSolicitacaoObj(s);   // imprime com os dados já coletados
+    _solLinhas=[{exame:''}];      // só limpa depois de imprimir
+    _solRender();
+    sf('sol-indicacao','');
+  }catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
+}
+
 function imprimirSolicitacaoAtual(){
   const s=_coletarSolicitacao();
   if(!s.exames.length){ toast('Adicione ao menos um exame.',true); return; }
