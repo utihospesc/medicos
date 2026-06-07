@@ -3,11 +3,11 @@
    app.js  ·  Sistema de evolução médica
    ────────────────────────────────────────────────────────────────────────────
    Estrutura de dados (Firestore — compatível com o sistema de enfermagem):
-     uti_leitos                → mapa de leitos (objeto único)
-     uti_med_ev_<leito>_<turno>_<data>   → evolução médica de um turno
-     uti_med_adm_log_<...>     → log de admissões (para indicadores)
-     uti_med_alta_log_<...>    → log de altas
-     usuarios_med (coleção)    → perfis dos médicos
+     uti_leitos                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M3 8h10"/><path d="M9.5 4.5L13 8l-3.5 3.5"/></svg> mapa de leitos (objeto único)
+     uti_med_ev_<leito>_<turno>_<data>   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M3 8h10"/><path d="M9.5 4.5L13 8l-3.5 3.5"/></svg> evolução médica de um turno
+     uti_med_adm_log_<...>     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M3 8h10"/><path d="M9.5 4.5L13 8l-3.5 3.5"/></svg> log de admissões (para indicadores)
+     uti_med_alta_log_<...>    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M3 8h10"/><path d="M9.5 4.5L13 8l-3.5 3.5"/></svg> log de altas
+     usuarios_med (coleção)    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M3 8h10"/><path d="M9.5 4.5L13 8l-3.5 3.5"/></svg> perfis dos médicos
    Obs.: prefixo "uti_med_" isola os dados médicos dos de enfermagem mesmo que
    compartilhem o mesmo projeto Firebase.
    ════════════════════════════════════════════════════════════════════════════ */
@@ -123,7 +123,7 @@ async function salvarEvolucaoDiaristaModal(){
     await dbSet(_chaveDiarista(leitoAtual, data), payload);
     hideLoading();
     fecharModalDiaristaEv();
-    toast('✓ Evolução diarista salva');
+    toast('<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> Evolução diarista salva');
     await _carregarDiarista(leitoAtual, data);
   } catch(e){
     hideLoading();
@@ -316,25 +316,25 @@ async function _gestaoEscolher(tipo){
   if(tipo === 'alta_hosp'){
     destWrap.style.display = 'none';
     obitoW.style.display = 'none';
-    btn.textContent = '✓ Confirmar alta hospitalar';
+    btn.textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> Confirmar alta hospitalar';
     btn.style.background = '#0a6b3a';
   } else if(tipo === 'alta_uti'){
     destWrap.style.display = '';
     destLbl.textContent = 'Unidade/setor de destino';
     sf('g-saida-destino','ENFERMARIA');
     obitoW.style.display = 'none';
-    btn.textContent = '✓ Confirmar alta da UTI';
+    btn.textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> Confirmar alta da UTI';
     btn.style.background = '';
   } else if(tipo === 'obito'){
     destWrap.style.display = 'none';
     obitoW.style.display = '';
-    btn.textContent = '✓ Registrar óbito';
+    btn.textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> Registrar óbito';
     btn.style.background = '#7a1020';
   } else if(tipo === 'transf_ext'){
     destWrap.style.display = '';
     destLbl.textContent = 'Hospital de destino';
     obitoW.style.display = 'none';
-    btn.textContent = '✓ Confirmar transferência';
+    btn.textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> Confirmar transferência';
     btn.style.background = '';
   }
 }
@@ -409,7 +409,7 @@ async function confirmarSaidaLeito(){
     hideLoading();
     fecharGestaoLeito();
     await renderLeitos();
-    toast('✓ '+tipoLabel+' registrada para o Leito '+pad(leito));
+    toast('<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> '+tipoLabel+' registrada para o Leito '+pad(leito));
   } catch(e){
     hideLoading();
     console.error('confirmarSaidaLeito:', e);
@@ -431,7 +431,7 @@ async function confirmarTransferenciaInterna(){
     toast('Leito de destino já está ocupado.', true); return;
   }
 
-  if(!confirm(`Transferir paciente do Leito ${pad(origem)} → Leito ${pad(destino)}?\n\nTodas as evoluções, prescrições, exames e imagens serão movidos.`)) return;
+  if(!confirm(`Transferir paciente do Leito ${pad(origem)} <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M3 8h10"/><path d="M9.5 4.5L13 8l-3.5 3.5"/></svg> Leito ${pad(destino)}?\n\nTodas as evoluções, prescrições, exames e imagens serão movidos.`)) return;
 
   showLoading('Transferindo paciente...');
   try{
@@ -475,7 +475,7 @@ async function confirmarTransferenciaInterna(){
     hideLoading();
     fecharGestaoLeito();
     await renderLeitos();
-    toast(`✓ Paciente transferido: Leito ${pad(origem)} → Leito ${pad(destino)} (${movidas} registros movidos)`);
+    toast(`<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> Paciente transferido: Leito ${pad(origem)} <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M3 8h10"/><path d="M9.5 4.5L13 8l-3.5 3.5"/></svg> Leito ${pad(destino)} (${movidas} registros movidos)`);
   } catch(e){
     hideLoading();
     console.error('confirmarTransferenciaInterna:', e);
@@ -484,7 +484,7 @@ async function confirmarTransferenciaInterna(){
 }
 
 // ── IMAGENS DE EXAME ─────────────────────────────────────────────────────────
-// Chave: uti_med_imgs_<leito>_<data>  →  { imgs: [{b64, legenda, ts}] }
+// Chave: uti_med_imgs_<leito>_<data>  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M3 8h10"/><path d="M9.5 4.5L13 8l-3.5 3.5"/></svg>  { imgs: [{b64, legenda, ts}] }
 let _imgExameBuffer = [];
 function _chaveImgs(leito, data){ return `uti_med_imgs_${leito}_${data}`; }
 
@@ -862,7 +862,7 @@ function _recalcSAPS(){
   if(r.temDados){
     $('saps-mort').textContent = (r.mortCSA*100).toFixed(1)+'%';
     const temFisio=[_coletarDadosSAPS().glasgow,_coletarDadosSAPS().pas,_coletarDadosSAPS().fc].some(x=>x!=null);
-    $('saps-mort-glob').textContent = 'Equação global: '+(r.mortGlobal*100).toFixed(1)+'%'+(temFisio?'':' ⚠ score parcial — preencha os dados fisiológicos para maior precisão');
+    $('saps-mort-glob').textContent = 'Equação global: '+(r.mortGlobal*100).toFixed(1)+'%'+(temFisio?'':' <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> score parcial — preencha os dados fisiológicos para maior precisão');
   } else {
     $('saps-mort').textContent = '—';
     $('saps-mort-glob').textContent = 'Preencha a data de nascimento e ao menos um dado clínico.';
@@ -939,7 +939,7 @@ function _labDerivadosParaSAPS(){
   return {
     creatinina: n(ult.cr),
     bilirrubina: n(ult.bt),
-    leucocitos: ult.leu!=null&&ult.leu!=='' ? Number(ult.leu)/1000 : null, // espera valor absoluto → ×10³
+    leucocitos: ult.leu!=null&&ult.leu!=='' ? Number(ult.leu)/1000 : null, // espera valor absoluto <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M3 8h10"/><path d="M9.5 4.5L13 8l-3.5 3.5"/></svg> ×10³
     plaquetas: ult.plaq!=null&&ult.plaq!=='' ? Number(ult.plaq) : null      // já em ×10³ (ex: 210 = 210mil)
   };
 }
@@ -986,7 +986,7 @@ async function salvarNovaSenha(){
     await auth.currentUser.updatePassword(nova);
     if(db && usuarioEmail){ try{ await db.collection('usuarios_med').doc(usuarioEmail).update({senhaTrocada:true}); }catch(_){} }
     if(perfilUsuario) perfilUsuario.senhaTrocada=true;
-    toast('✓ Senha atualizada.');
+    toast('<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> Senha atualizada.');
     irTurno();
   }catch(e){ err.textContent='Erro: '+(e.message||e.code); }
 }
@@ -1002,7 +1002,7 @@ function abrirTrocaSenhaVoluntaria(){
    ════════════════════════════════════════════════════════════════════════════ */
 function irTurno(){ mostrarTela('t-turno'); $('t-turno').style.display='flex'; _atualizarBadgeUser(); _checarSync(); }
 function voltarTurno(){ irTurno(); }
-function escolherTurno(t){ turnoAtual=t; $('badge-turno-leitos').textContent=(t==='DIURNO'?'☀ DIURNO':'🌙 NOTURNO'); renderLeitos(); mostrarTela('t-leitos'); }
+function escolherTurno(t){ turnoAtual=t; $('badge-turno-leitos').textContent=(t==='DIURNO'?'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><circle cx="8" cy="8" r="3"/><line x1="8" y1="1.5" x2="8" y2="3"/><line x1="8" y1="13" x2="8" y2="14.5"/><line x1="1.5" y1="8" x2="3" y2="8"/><line x1="13" y1="8" x2="14.5" y2="8"/><line x1="3.5" y1="3.5" x2="4.5" y2="4.5"/><line x1="11.5" y1="11.5" x2="12.5" y2="12.5"/><line x1="12.5" y1="3.5" x2="11.5" y2="4.5"/><line x1="4.5" y1="11.5" x2="3.5" y2="12.5"/></svg> DIURNO':'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M12.5 9A5.5 5.5 0 017 3.5a5.5 5.5 0 100 9A5.5 5.5 0 0112.5 9z"/></svg> NOTURNO'); renderLeitos(); mostrarTela('t-leitos'); }
 function voltarLeitos(){ renderLeitos(); mostrarTela('t-leitos'); }
 
 function _checarSync(){
@@ -1033,7 +1033,7 @@ async function renderLeitos(){
       const sapsCanto = L.saps3 ? `<div class="leito-saps">SAPS ${L.saps3}</div>` : '';
       const idadeNum = _idadeDeDN(L.dn);
       const idadeStr = idadeNum!=null ? `${idadeNum}a` : '';
-      const sexoStr = L.sexo==='FEMININO' ? '♀' : L.sexo==='MASCULINO' ? '♂' : '';
+      const sexoStr = L.sexo==='FEMININO' ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="16" viewBox="0 0 14 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><circle cx="8" cy="6" r="3.5"/><line x1="8" y1="9.5" x2="8" y2="14"/><line x1="6" y1="12" x2="10" y2="12"/></svg>' : L.sexo==='MASCULINO' ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><circle cx="6.5" cy="9.5" r="3.5"/><line x1="9.5" y1="6.5" x2="14" y2="2"/><polyline points="10,2 14,2 14,6"/></svg>' : '';
       const demogTag = (idadeStr||sexoStr) ? `<span class="leito-tag" style="font-weight:700;letter-spacing:.02em;">${[idadeStr,sexoStr].filter(Boolean).join(' ')}</span>` : '';
       h+=`<div class="leito-card ocupado" onclick="abrirFormulario(${i})">
         ${sapsCanto}
@@ -1042,8 +1042,8 @@ async function renderLeitos(){
         <div class="leito-diag">${L.diag||'—'}</div>
         <div class="leito-tags">${demogTag}${sapsBadge}${L.adm?`<span class="leito-tag">UTI ${_fmtDataCurta(L.adm)}</span>`:''}</div>
         <div class="leito-card-actions" style="margin-top:8px;display:flex;gap:4px;width:100%;z-index:10;" onclick="event.stopPropagation();">
-          <button class="btn btn-sm" style="flex:1;font-size:0.65rem;padding:3px 6px;border-radius:4px;background:#f3f4f6;border:1px solid #9ca3af;color:#374151;" onclick="abrirGestaoLeito(${i})" title="Alta, óbito ou transferência">⚙ Alta/Transf.</button>
-          ${_isDiarista()?`<button class="btn btn-sm" style="flex:1;font-size:0.65rem;padding:3px 6px;border-radius:4px;background:#dcfce7;border:1px solid #86efac;color:#166534;font-weight:700;" onclick="abrirModalDiaristaEv(${i})" title="Preencher evolução diarista">👨‍⚕️ Diarista</button>`:''}
+          <button class="btn btn-sm" style="flex:1;font-size:0.65rem;padding:3px 6px;border-radius:4px;background:#f3f4f6;border:1px solid #9ca3af;color:#374151;" onclick="abrirGestaoLeito(${i})" title="Alta, óbito ou transferência"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><circle cx="8" cy="8" r="2.5"/><path d="M8 2.5V1M8 15v-1.5M2.5 8H1M15 8h-1.5M4.2 4.2L3.1 3.1M12.9 12.9l-1.1-1.1M4.2 11.8L3.1 12.9M12.9 3.1l-1.1 1.1"/></svg> Alta/Transf.</button>
+          ${_isDiarista()?`<button class="btn btn-sm" style="flex:1;font-size:0.65rem;padding:3px 6px;border-radius:4px;background:#dcfce7;border:1px solid #86efac;color:#166534;font-weight:700;" onclick="abrirModalDiaristaEv(${i})" title="Preencher evolução diarista"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><circle cx="8" cy="5" r="2.5"/><path d="M4.5 13C4.5 10.5 6 9 8 9s3.5 1.5 3.5 4"/><path d="M10 11.5a2 2 0 004 0V10"/><circle cx="14" cy="9.5" r="1"/></svg> Diarista</button>`:''}
         </div>
       </div>`;
     } else {
@@ -1126,7 +1126,7 @@ function _htmlItensSAPS(it){
   const sel=(id,val,opts)=>`<select id="${id}">${opts.map(o=>`<option value="${o[0]}" ${val===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select>`;
   const chk=(id,b,lbl,autoKey)=>{
     const auto = autoKey && A[autoKey];
-    return `<label style="display:flex;align-items:center;gap:6px;font-size:.78rem;text-transform:none;letter-spacing:0;font-weight:500;${auto?'background:#fdf2dd;border-radius:6px;padding:2px 5px;':''}"><input type="checkbox" id="${id}" ${b?'checked':''} style="width:auto;"> ${lbl}${auto?' <span style="font-size:.6rem;color:var(--laranja);font-weight:700;">✨auto</span>':''}</label>`;
+    return `<label style="display:flex;align-items:center;gap:6px;font-size:.78rem;text-transform:none;letter-spacing:0;font-weight:500;${auto?'background:#fdf2dd;border-radius:6px;padding:2px 5px;':''}"><input type="checkbox" id="${id}" ${b?'checked':''} style="width:auto;"> ${lbl}${auto?' <span style="font-size:.6rem;color:var(--laranja);font-weight:700;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 2v3M8 11v3M2 8h3M11 8h3"/><path d="M4.2 4.2l2 2M9.8 9.8l2 2M4.2 11.8l2-2M9.8 6.2l2-2"/><circle cx="8" cy="8" r="1.5"/></svg>auto</span>':''}</label>`;
   };
   const num=(id,val,ph)=>`<input type="number" id="${id}" step="any" value="${val!=null?val:''}" placeholder="${ph||''}">`;
 
@@ -1328,7 +1328,7 @@ async function abrirFormulario(leito){
     const ld=await _getLeitos(); const L=ld[leito]||{};
     const dataT=dataDoTurno(turnoAtual);
     $('form-titulo').textContent=`Evolução Médica – Leito ${pad(leito)}`;
-    $('form-sub').textContent=`${turnoAtual==='DIURNO'?'☀ Diurno':'🌙 Noturno'} · ${_fmtDataCurta(dataT)} · ${perfilUsuario?perfilUsuario.nome:''}`;
+    $('form-sub').textContent=`${turnoAtual==='DIURNO'?'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><circle cx="8" cy="8" r="3"/><line x1="8" y1="1.5" x2="8" y2="3"/><line x1="8" y1="13" x2="8" y2="14.5"/><line x1="1.5" y1="8" x2="3" y2="8"/><line x1="13" y1="8" x2="14.5" y2="8"/><line x1="3.5" y1="3.5" x2="4.5" y2="4.5"/><line x1="11.5" y1="11.5" x2="12.5" y2="12.5"/><line x1="12.5" y1="3.5" x2="11.5" y2="4.5"/><line x1="4.5" y1="11.5" x2="3.5" y2="12.5"/></svg> Diurno':'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M12.5 9A5.5 5.5 0 017 3.5a5.5 5.5 0 100 9A5.5 5.5 0 0112.5 9z"/></svg> Noturno'} · ${_fmtDataCurta(dataT)} · ${perfilUsuario?perfilUsuario.nome:''}`;
     $('badge-form').textContent=turnoAtual;
 
     // limpa tudo
@@ -1456,7 +1456,7 @@ async function salvarEvolucao(){
   const vazios = _req.filter(r=>!gf(r.id).trim());
   if(vazios.length){
     vazios.forEach(r=>{ const el=$(r.id); if(el&&el.closest('.fl')) el.closest('.fl').classList.add('field-invalid'); });
-    toast('⚠ Preencha: ' + vazios.map(r=>r.label).join(', '), true);
+    toast('<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> Preencha: ' + vazios.map(r=>r.label).join(', '), true);
     const primeiro = $(vazios[0].id); if(primeiro) primeiro.scrollIntoView({behavior:'smooth',block:'center'});
     return;
   }
@@ -1483,7 +1483,7 @@ async function salvarEvolucao(){
 
     await _salvarImgsExame(leitoAtual, d.data);
     hideLoading();
-    toast('✓ Evolução salva.');
+    toast('<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> Evolução salva.');
     $('herd-tag').style.display='none';
     _atualizarPnavPac();
   }catch(e){ hideLoading(); console.error('salvarEvolucao:',e); toast('Erro ao salvar: '+(e.message||e),true); }
@@ -1518,7 +1518,7 @@ function _renderLabLinhas(){
       <div class="lab-linha-head">
         <input type="date" value="${lin.data||''}" onchange="_setLabData(${idx},this.value)">
         <span style="font-size:.7rem;color:var(--muted);">valores deste dia</span>
-        <button class="lab-del" onclick="_delLabLinha(${idx})" title="Remover">🗑</button>
+        <button class="lab-del" onclick="_delLabLinha(${idx})" title="Remover"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><polyline points="3,5 5,5 13,5"/><path d="M6 5V3.5A.5.5 0 016.5 3h3a.5.5 0 01.5.5V5"/><path d="M5 5l.7 8.5a.8.8 0 00.8.5h3a.8.8 0 00.8-.5L11 5"/><line x1="7" y1="8" x2="7" y2="12"/><line x1="9" y1="8" x2="9" y2="12"/></svg></button>
       </div>
       <div class="lab-grid">${campos}</div>
       <div style="margin-top:.4rem;">
@@ -1610,14 +1610,14 @@ async function _renderHistoricoSolicitacoes(){
           if(s._tipo==='parecer'){
             return `<div class="sol-hist-card" style="border-left:3px solid #1a56db;">
               <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-                <span style="font-size:.7rem;font-weight:800;color:#1a56db;letter-spacing:.04em;">📋 PARECER</span>
+                <span style="font-size:.7rem;font-weight:800;color:#1a56db;letter-spacing:.04em;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><rect x="3.5" y="3" width="9" height="11" rx="1.2"/><path d="M6 3V2h4v1"/><line x1="6" y1="7" x2="10" y2="7"/><line x1="6" y1="9.5" x2="10" y2="9.5"/><line x1="6" y1="12" x2="9" y2="12"/></svg> PARECER</span>
                 <span style="font-size:.75rem;font-weight:700;">${s.espec||'?'}</span>
               </div>
-              ${s.motivo?`<div class="sol-hist-ind" style="font-size:.78rem;color:#1a56db;">💬 ${s.motivo.slice(0,120)}${s.motivo.length>120?'…':''}</div>`:''}
+              ${s.motivo?`<div class="sol-hist-ind" style="font-size:.78rem;color:#1a56db;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2 3h12a1 1 0 011 1v6a1 1 0 01-1 1H9l-3 3V11H2a1 1 0 01-1-1V4a1 1 0 011-1z"/></svg> ${s.motivo.slice(0,120)}${s.motivo.length>120?'…':''}</div>`:''}
               <div class="sol-hist-meta">
                 ${s.medNome||s.autor||'?'}
                 <span style="margin-left:auto;">
-                  <button class="btn btn-sm" style="font-size:.72rem;padding:3px 8px;" onclick="_imprimirParecerChave('${s.key}')">🖨</button>
+                  <button class="btn btn-sm" style="font-size:.72rem;padding:3px 8px;" onclick="_imprimirParecerChave('${s.key}')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><rect x="3" y="6" width="10" height="7" rx="1"/><path d="M5 6V3h6v3"/><rect x="5" y="9.5" width="6" height="2.5" rx=".4"/><line x1="5" y1="7.8" x2="11" y2="7.8"/></svg></button>
                 </span>
               </div>
             </div>`;
@@ -1627,14 +1627,14 @@ async function _renderHistoricoSolicitacoes(){
             const exames=_cultResumir(s);
             return `<div class="sol-hist-card sol-hist-card-cult">
               <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-                <span style="font-size:.7rem;font-weight:800;color:#8a2be2;letter-spacing:.04em;">🦠 CULTURA</span>
+                <span style="font-size:.7rem;font-weight:800;color:#8a2be2;letter-spacing:.04em;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><circle cx="8" cy="8" r="4"/><circle cx="8" cy="8" r="1.5"/><line x1="8" y1="2" x2="8" y2="4"/><line x1="12.2" y1="3.8" x2="10.8" y2="5.2"/><line x1="14" y1="8" x2="12" y2="8"/><line x1="3.8" y1="3.8" x2="5.2" y2="5.2"/><line x1="2" y1="8" x2="4" y2="8"/><line x1="3.8" y1="12.2" x2="5.2" y2="10.8"/><line x1="12.2" y1="12.2" x2="10.8" y2="10.8"/></svg> CULTURA</span>
               </div>
               <div class="sol-hist-exames">${exames.map(e=>`<span class="sol-hist-chip sol-hist-chip-cult">${e}</span>`).join('')}</div>
-              ${s.indicacao?`<div class="sol-hist-ind">📌 ${s.indicacao}</div>`:''}
+              ${s.indicacao?`<div class="sol-hist-ind"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M10 2L14 6l-3 3-2-1-4 4-1-1 4-4-1-2z"/><line x1="3" y1="13" x2="7" y2="9"/></svg> ${s.indicacao}</div>`:''}
               <div class="sol-hist-meta">
                 ${s.medNome||s.autor||'?'}
                 <span style="margin-left:auto;">
-                  <button class="btn btn-sm" style="font-size:.72rem;padding:3px 8px;" onclick="_imprimirCultChave('${s.key}')">🖨</button>
+                  <button class="btn btn-sm" style="font-size:.72rem;padding:3px 8px;" onclick="_imprimirCultChave('${s.key}')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><rect x="3" y="6" width="10" height="7" rx="1"/><path d="M5 6V3h6v3"/><rect x="5" y="9.5" width="6" height="2.5" rx=".4"/><line x1="5" y1="7.8" x2="11" y2="7.8"/></svg></button>
                 </span>
               </div>
             </div>`;
@@ -1645,10 +1645,10 @@ async function _renderHistoricoSolicitacoes(){
             return `<div class="sol-hist-card sol-hist-card-rotina">
               <details>
                 <summary class="sol-hist-rotina-sum">
-                  <span class="sol-hist-rotina-badge">⭐ Rotina</span>
+                  <span class="sol-hist-rotina-badge"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><polygon points="8,2 9.8,6.2 14.5,6.5 11,9.6 12.1,14.2 8,11.6 3.9,14.2 5,9.6 1.5,6.5 6.2,6.2"/></svg> Rotina</span>
                   <span style="font-size:.74rem;color:var(--muted);">${s.exames.length} exames${s.indicacao?' · '+s.indicacao:''}</span>
                   <span style="margin-left:auto;display:flex;gap:4px;" onclick="event.stopPropagation()">
-                    <button class="btn btn-sm" style="font-size:.72rem;padding:3px 8px;" onclick="_imprimirSolChave('${s.key}')">🖨</button>
+                    <button class="btn btn-sm" style="font-size:.72rem;padding:3px 8px;" onclick="_imprimirSolChave('${s.key}')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><rect x="3" y="6" width="10" height="7" rx="1"/><path d="M5 6V3h6v3"/><rect x="5" y="9.5" width="6" height="2.5" rx=".4"/><line x1="5" y1="7.8" x2="11" y2="7.8"/></svg></button>
                   </span>
                 </summary>
                 <div class="sol-hist-exames" style="margin-top:6px;">
@@ -1661,11 +1661,11 @@ async function _renderHistoricoSolicitacoes(){
           // Card de exames especiais — exibe normalmente
           return `<div class="sol-hist-card">
             <div class="sol-hist-exames">${s.exames.map(e=>`<span class="sol-hist-chip">${e}</span>`).join('')}</div>
-            ${s.indicacao?`<div class="sol-hist-ind">📌 ${s.indicacao}</div>`:''}
+            ${s.indicacao?`<div class="sol-hist-ind"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M10 2L14 6l-3 3-2-1-4 4-1-1 4-4-1-2z"/><line x1="3" y1="13" x2="7" y2="9"/></svg> ${s.indicacao}</div>`:''}
             <div class="sol-hist-meta">
               ${s.medNome||s.autor||'?'}
               <span style="margin-left:auto;">
-                <button class="btn btn-sm" style="font-size:.72rem;padding:3px 8px;" onclick="_imprimirSolChave('${s.key}')">🖨</button>
+                <button class="btn btn-sm" style="font-size:.72rem;padding:3px 8px;" onclick="_imprimirSolChave('${s.key}')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><rect x="3" y="6" width="10" height="7" rx="1"/><path d="M5 6V3h6v3"/><rect x="5" y="9.5" width="6" height="2.5" rx=".4"/><line x1="5" y1="7.8" x2="11" y2="7.8"/></svg></button>
               </span>
             </div>
           </div>`;
@@ -1735,8 +1735,8 @@ function _plotLab(k){
 
 /* ════════════════════════════════════════════════════════════════════════════
    CULTURAS — busca completa idêntica ao sistema de enfermagem
-   ─ action:'culturas'         → por paciente (com antibiograma dos PDFs)
-   ─ action:'culturas_agregado'→ panorama CCIH institucional
+   ─ action:'culturas'         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M3 8h10"/><path d="M9.5 4.5L13 8l-3.5 3.5"/></svg> por paciente (com antibiograma dos PDFs)
+   ─ action:'culturas_agregado'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M3 8h10"/><path d="M9.5 4.5L13 8l-3.5 3.5"/></svg> panorama CCIH institucional
    ─ Classificação MDR/XDR/PDR (Magiorakos simplificado)
    ════════════════════════════════════════════════════════════════════════════ */
 
@@ -1757,7 +1757,7 @@ function _renderCulturasChips(){
     const cls=_cultChipCor(c.micro||'');
     const mdr=c.antibiograma?` · ${_cultClassificar(c.antibiograma)}`:'';
     const txt=`${c.micro||c.resultado||'?'}${c.sitio?' · '+c.sitio:''}${c.sens?' · '+c.sens.slice(0,40):''}${mdr}${c.data?' · '+_fmtDataCurta(c.data):''}`;
-    return `<span class="cult-chip ${pos?'pos':''}" style="${cls}">🦠 ${txt}<span class="x" onclick="_removerCultura(${i})" title="Remover">×</span></span>`;
+    return `<span class="cult-chip ${pos?'pos':''}" style="${cls}"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><circle cx="8" cy="8" r="4"/><circle cx="8" cy="8" r="1.5"/><line x1="8" y1="2" x2="8" y2="4"/><line x1="12.2" y1="3.8" x2="10.8" y2="5.2"/><line x1="14" y1="8" x2="12" y2="8"/><line x1="3.8" y1="3.8" x2="5.2" y2="5.2"/><line x1="2" y1="8" x2="4" y2="8"/><line x1="3.8" y1="12.2" x2="5.2" y2="10.8"/><line x1="12.2" y1="12.2" x2="10.8" y2="10.8"/></svg> ${txt}<span class="x" onclick="_removerCultura(${i})" title="Remover">×</span></span>`;
   }).join('');
   _sincronizarMicroorg();
 }
@@ -1795,14 +1795,14 @@ async function _buscarCulturasAuto(paciente,leito){
   const el=$('culturas-auto');
   if(!el||!paciente||!APPS_SCRIPT_URL||!CULTURAS_SHEET_ID) return;
   el.style.display='block';
-  el.innerHTML='<span style="font-size:.72rem;color:var(--muted);">🔬 Buscando culturas...</span>';
+  el.innerHTML='<span style="font-size:.72rem;color:var(--muted);"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><rect x="7" y="2" width="2.5" height="6" rx=".8" transform="rotate(30 8 5)"/><line x1="8" y1="10" x2="8" y2="13"/><line x1="5" y1="13" x2="11" y2="13"/><circle cx="8" cy="7" r="1.5"/></svg> Buscando culturas...</span>';
   try{
     const data=await _apsFetch({action:'culturas',paciente:_normalizarNome(paciente),leito,sheetId:CULTURAS_SHEET_ID});
     const positivos=(data.resultados||[]).filter(r=>r.microorg&&!/negativ|contaminad|pendente/i.test(r.resultado||''));
     if(!positivos.length){ el.innerHTML=''; el.style.display='none'; return; }
     positivos.forEach(r=>_adicionarCultura(r.cultura||'',r.microorg||'',r.sensibilidade||'',
       r.dataResultado||r.dataRecebimento||'','planilha',r.antibiograma||null));
-    el.innerHTML=`<span style="font-size:.72rem;color:var(--verde);font-weight:600;">✓ ${positivos.length} cultura(s) positiva(s) importada(s) da planilha</span>`;
+    el.innerHTML=`<span style="font-size:.72rem;color:var(--verde);font-weight:600;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> ${positivos.length} cultura(s) positiva(s) importada(s) da planilha</span>`;
     setTimeout(()=>{ el.style.display='none'; },4000);
   }catch(e){ el.innerHTML=''; el.style.display='none'; console.warn('[Culturas auto]',e); }
 }
@@ -1813,7 +1813,7 @@ async function buscarCulturas(){
   const pac=gf('f-pac').trim();
   if(!pac){ toast('Preencha o nome do paciente primeiro.',true); return; }
   if(!APPS_SCRIPT_URL||!CULTURAS_SHEET_ID){
-    $('culturas-conteudo').innerHTML='<div class="tip w">Configure <code>APPS_SCRIPT_URL</code> e <code>CULTURAS_SHEET_ID</code> no index.html. Use "✏️ Adicionar manual" enquanto isso.</div>';
+    $('culturas-conteudo').innerHTML='<div class="tip w">Configure <code>APPS_SCRIPT_URL</code> e <code>CULTURAS_SHEET_ID</code> no index.html. Use "<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M11 2.5l2.5 2.5-7.5 7.5L3.5 15l2.5-2.5z"/><line x1="9.5" y1="4" x2="12" y2="6.5"/></svg>️ Adicionar manual" enquanto isso.</div>';
     $('modal-culturas').classList.add('show'); return;
   }
   const cont=$('culturas-conteudo');
@@ -1849,7 +1849,7 @@ function _renderCulturasModal(res,nomePlanilha){
       const antibjson=r.antibiograma?JSON.stringify(r.antibiograma):'null';
       return `<div style="border:1px solid #f3c2bd;background:#fde8e6;border-radius:9px;padding:8px 10px;margin-bottom:6px;">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px;">
-          <strong style="color:var(--vermelho);">🦠 ${r.microorg}</strong>
+          <strong style="color:var(--vermelho);"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><circle cx="8" cy="8" r="4"/><circle cx="8" cy="8" r="1.5"/><line x1="8" y1="2" x2="8" y2="4"/><line x1="12.2" y1="3.8" x2="10.8" y2="5.2"/><line x1="14" y1="8" x2="12" y2="8"/><line x1="3.8" y1="3.8" x2="5.2" y2="5.2"/><line x1="2" y1="8" x2="4" y2="8"/><line x1="3.8" y1="12.2" x2="5.2" y2="10.8"/><line x1="12.2" y1="12.2" x2="10.8" y2="10.8"/></svg> ${r.microorg}</strong>
           ${cls?`<span style="font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:8px;background:${corBg};color:white;">${cls}</span>`:''}
         </div>
         <div style="font-size:.74rem;color:var(--muted);margin-top:2px;">${r.cultura||'?'}${r.dataResultado?' · '+r.dataResultado:''}</div>
@@ -1917,7 +1917,7 @@ async function _ccihCarregarAgregado(forcar,maxAbas){
   const c=$('ind-conteudo');
   c.innerHTML=`<div style="text-align:center;padding:60px 20px;">
     <div class="sae-spinner" style="border-top-color:var(--vinho);margin:0 auto 16px;"></div>
-    <div style="font-weight:700;color:var(--vinho);">🏥 Buscando panorama institucional CCIH...</div>
+    <div style="font-weight:700;color:var(--vinho);"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><rect x="2" y="4" width="12" height="10" rx="1"/><path d="M2 7h12"/><line x1="6" y1="10" x2="10" y2="10"/><line x1="8" y1="8" x2="8" y2="12"/><path d="M5 4V3h6v1"/></svg> Buscando panorama institucional CCIH...</div>
     <div style="font-size:.74rem;color:var(--muted);margin-top:6px;">${nAbas} meses · até ${nPDFs} antibiogramas. Aguarde ${nAbas<=3?'30–60':'60–120'} s.</div>
   </div>`;
   try{
@@ -1925,10 +1925,10 @@ async function _ccihCarregarAgregado(forcar,maxAbas){
     if(data.error) throw new Error(data.error);
     data._maxAbas=nAbas; _culturasAgregadoCache=data;
     renderIndicadores();
-    toast(`✓ ${data.totalCulturas} culturas · ${data.pdfsExtraidos} antibiogramas`);
+    toast(`<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> ${data.totalCulturas} culturas · ${data.pdfsExtraidos} antibiogramas`);
   }catch(e){
     console.error('[CCIH agregado]',e);
-    c.innerHTML=`<div class="tip d">❌ Erro: ${e.message}. <button onclick="_ccihCarregarAgregado(true)" class="btn btn-sm">Tentar novamente</button></div>`;
+    c.innerHTML=`<div class="tip d"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><circle cx="8" cy="8" r="6"/><line x1="5.5" y1="5.5" x2="10.5" y2="10.5"/><line x1="10.5" y1="5.5" x2="5.5" y2="10.5"/></svg> Erro: ${e.message}. <button onclick="_ccihCarregarAgregado(true)" class="btn btn-sm">Tentar novamente</button></div>`;
   }
 }
 function _ccihLimparAgregado(){ _culturasAgregadoCache=null; renderIndicadores(); }
@@ -1988,7 +1988,7 @@ function _htmlAvisoAuto(){
   const a=_itensSAPS._auto||{};
   const n=Object.keys(a).length;
   if(!n) return '<div class="tip i" style="margin-bottom:10px;">A <strong>idade</strong> já entra automaticamente no escore a partir da DN. Marque os demais itens conforme a admissão.</div>';
-  return `<div class="tip w" style="margin-bottom:10px;">✨ <strong>${n} item(ns) pré-marcado(s) automaticamente</strong> a partir do quadro (DVA, ventilação, diagnóstico, Glasgow, comorbidades). <strong>Revise e ajuste</strong> — você é responsável pela conferência. A idade já entra pela DN.</div>`;
+  return `<div class="tip w" style="margin-bottom:10px;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 2v3M8 11v3M2 8h3M11 8h3"/><path d="M4.2 4.2l2 2M9.8 9.8l2 2M4.2 11.8l2-2M9.8 6.2l2-2"/><circle cx="8" cy="8" r="1.5"/></svg> <strong>${n} item(ns) pré-marcado(s) automaticamente</strong> a partir do quadro (DVA, ventilação, diagnóstico, Glasgow, comorbidades). <strong>Revise e ajuste</strong> — você é responsável pela conferência. A idade já entra pela DN.</div>`;
 }
 function salvarItensSAPS(){
   // os ids no modal SAPS são os mesmos (sa-*) — reusa o coletor
@@ -2010,11 +2010,11 @@ async function _sugerirCID(idDiag,idCid){
   try{
     const cache=JSON.parse(localStorage.getItem('uti_med_cid_cache')||'{}');
     const key=_normalizarNome(diag);
-    if(cache[key]){ sf(idCid,cache[key]); if(st) st.textContent='✓ cache'; return; }
+    if(cache[key]){ sf(idCid,cache[key]); if(st) st.textContent='<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> cache'; return; }
     const resp=await fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({action:'cid',diagnostico:diag})});
     const data=JSON.parse(await resp.text());
-    if(data.codigo){ sf(idCid,data.codigo); cache[key]=data.codigo; localStorage.setItem('uti_med_cid_cache',JSON.stringify(cache)); if(st) st.textContent='✓ IA'; }
+    if(data.codigo){ sf(idCid,data.codigo); cache[key]=data.codigo; localStorage.setItem('uti_med_cid_cache',JSON.stringify(cache)); if(st) st.textContent='<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> IA'; }
     else if(st) st.textContent='';
   }catch(e){ if(st) st.textContent=''; }
 }
@@ -2208,7 +2208,7 @@ async function adicionarUsuario(){
       if(r.status!=='ok'&&!r.jaExiste) throw new Error(r.msg||'Falha ao criar conta.');
     }
     if(db) await db.collection('usuarios_med').doc(email).set({nome:nome.toUpperCase(),crm,role:'medico',ativo:true,senhaTrocada:false,criadoEm:new Date().toISOString(),criadoPor:usuarioEmail});
-    toast('✓ Médico cadastrado.');
+    toast('<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> Médico cadastrado.');
     ['add-nome','add-email','add-crm','add-senha'].forEach(id=>sf(id,''));
     await renderListaUsuarios();
   }catch(e){ err.textContent=e.message||'Erro.'; }
@@ -2293,7 +2293,7 @@ function _indOcupacao(per){
   h+=_card('Admissões',admPer,'no período','vinho');
   h+=_card('Altas',altPer.length,`${obitos} óbito(s)`, obitos>0?'laranja':'verde');
   h+='</div>';
-  h+='<div class="ind-hint">📌 Pacientes-dia = pares únicos (leito × dia) com evolução registrada no período (convenção ANVISA). A taxa de ocupação reflete o estado atual dos leitos.</div>';
+  h+='<div class="ind-hint"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M10 2L14 6l-3 3-2-1-4 4-1-1 4-4-1-2z"/><line x1="3" y1="13" x2="7" y2="9"/></svg> Pacientes-dia = pares únicos (leito × dia) com evolução registrada no período (convenção ANVISA). A taxa de ocupação reflete o estado atual dos leitos.</div>';
   return h;
 }
 
@@ -2321,7 +2321,7 @@ function _indGravidade(per){
   h+='<div class="ind-sec-titulo">Distribuição por faixa de risco (SAPS 3)</div><table class="ind-tabela"><tr><th>Faixa de mortalidade prevista</th><th>Pacientes</th></tr>';
   Object.entries(faixas).forEach(([k,v])=>{ h+=`<tr><td>${k}</td><td>${v}</td></tr>`; });
   h+='</table>';
-  h+='<div class="ind-hint">📌 SMR (Standardized Mortality Ratio) = óbitos observados ÷ soma das mortalidades previstas. SMR &lt; 1 sugere desempenho melhor que o previsto pelo escore; &gt; 1, pior. Interpretar com cautela em amostras pequenas.</div>';
+  h+='<div class="ind-hint"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M10 2L14 6l-3 3-2-1-4 4-1-1 4-4-1-2z"/><line x1="3" y1="13" x2="7" y2="9"/></svg> SMR (Standardized Mortality Ratio) = óbitos observados ÷ soma das mortalidades previstas. SMR &lt; 1 sugere desempenho melhor que o previsto pelo escore; &gt; 1, pior. Interpretar com cautela em amostras pequenas.</div>';
   return h;
 }
 
@@ -2339,7 +2339,7 @@ function _indDispositivos(per){
   h+=_card('Suporte de O₂',taxa(o2Dia)+'%',`${o2Dia}/${pacDia} pac.-dia`,'vinho');
   h+=_card('Pacientes-dia',pacDia,'denominador','verde');
   h+='</div>';
-  h+='<div class="ind-hint">📌 Taxas = (dispositivo-dia ÷ pacientes-dia) × 100. Dispositivo-dia = pares únicos (leito × dia) com o suporte registrado na evolução.</div>';
+  h+='<div class="ind-hint"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M10 2L14 6l-3 3-2-1-4 4-1-1 4-4-1-2z"/><line x1="3" y1="13" x2="7" y2="9"/></svg> Taxas = (dispositivo-dia ÷ pacientes-dia) × 100. Dispositivo-dia = pares únicos (leito × dia) com o suporte registrado na evolução.</div>';
   return h;
 }
 
@@ -2355,7 +2355,7 @@ function _renderCCIHLocal(per){
   const todas=[]; evPer.forEach(e=>(e.culturas||[]).forEach(c=>{ if(c.micro) todas.push(c); }));
   const btn=APPS_SCRIPT_URL&&CULTURAS_SHEET_ID
     ? `<div style="margin-bottom:10px;display:flex;gap:6px;flex-wrap:wrap;">
-        <button class="btn btn-pri btn-sm" onclick="_ccihCarregarAgregado(false,3)">🏥 Panorama institucional (3 meses)</button>
+        <button class="btn btn-pri btn-sm" onclick="_ccihCarregarAgregado(false,3)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><rect x="2" y="4" width="12" height="10" rx="1"/><path d="M2 7h12"/><line x1="6" y1="10" x2="10" y2="10"/><line x1="8" y1="8" x2="8" y2="12"/><path d="M5 4V3h6v1"/></svg> Panorama institucional (3 meses)</button>
         <button class="btn btn-sm" onclick="_ccihCarregarAgregado(false,6)">6 meses</button>
         <button class="btn btn-sm" onclick="_ccihCarregarAgregado(false,99)">Todas</button>
       </div>` : '<div class="tip i" style="margin-bottom:8px;">Configure <code>APPS_SCRIPT_URL</code> e <code>CULTURAS_SHEET_ID</code> para o panorama institucional completo com antibiogramas.</div>';
@@ -2381,7 +2381,7 @@ function _renderCCIHLocal(per){
     h+=`<tr><td>${m}</td><td>${n}</td><td style="${cor}">${pior||'—'}</td></tr>`;
   });
   h+='</table>';
-  h+='<div class="ind-hint">📌 Baseado nas culturas registradas nas evoluções. Para o panorama completo com antibiograma de todos os pacientes da planilha CCIH, use o botão "Panorama institucional" acima.</div>';
+  h+='<div class="ind-hint"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M10 2L14 6l-3 3-2-1-4 4-1-1 4-4-1-2z"/><line x1="3" y1="13" x2="7" y2="9"/></svg> Baseado nas culturas registradas nas evoluções. Para o panorama completo com antibiograma de todos os pacientes da planilha CCIH, use o botão "Panorama institucional" acima.</div>';
   return h;
 }
 
@@ -2396,7 +2396,7 @@ function _renderCCIHAgregado(dados){
   let h=`<div style="background:var(--vinho);color:white;padding:10px 14px;border-radius:8px;margin-bottom:10px;">
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
       <div>
-        <div style="font-weight:700;font-size:.86rem;">🏥 Panorama institucional CCIH</div>
+        <div style="font-weight:700;font-size:.86rem;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><rect x="2" y="4" width="12" height="10" rx="1"/><path d="M2 7h12"/><line x1="6" y1="10" x2="10" y2="10"/><line x1="8" y1="8" x2="8" y2="12"/><path d="M5 4V3h6v1"/></svg> Panorama institucional CCIH</div>
         <div style="font-size:.72rem;opacity:.9;">${dados.totalCulturas||0} culturas · ${dados.pacientesAnalisados||0} pacientes · ${dados.pdfsExtraidos||0} antibiogramas · ${abas===99?'todas as abas':abas+(abas===1?' mês':' meses')}</div>
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;">
@@ -2404,7 +2404,7 @@ function _renderCCIHAgregado(dados){
           <option value="1" ${abas===1?'selected':''}>1 mês</option><option value="3" ${abas===3?'selected':''}>3 meses</option>
           <option value="6" ${abas===6?'selected':''}>6 meses</option><option value="99" ${abas===99?'selected':''}>Todas</option>
         </select>
-        <button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:white;border-color:rgba(255,255,255,.3);" onclick="_ccihLimparAgregado()">← Local</button>
+        <button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:white;border-color:rgba(255,255,255,.3);" onclick="_ccihLimparAgregado()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M13 8H3"/><path d="M6.5 4.5L3 8l3.5 3.5"/></svg> Local</button>
       </div>
     </div>
   </div>`;
@@ -2417,7 +2417,7 @@ function _renderCCIHAgregado(dados){
   // Alerta antibiogramas
   const comAtb=positivas.filter(c=>c.antibiograma&&c.antibiograma.length).length;
   if(positivas.length>0&&comAtb===0)
-    h+=`<div class="tip d" style="margin-top:8px;">⚠️ Nenhum antibiograma extraído dos PDFs. Verifique se a conta do Apps Script tem acesso aos arquivos no Drive. Rode <code>_testarColunaL</code> no editor do Apps Script.</div>`;
+    h+=`<div class="tip d" style="margin-top:8px;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg>️ Nenhum antibiograma extraído dos PDFs. Verifique se a conta do Apps Script tem acesso aos arquivos no Drive. Rode <code>_testarColunaL</code> no editor do Apps Script.</div>`;
   else if(positivas.length>0&&comAtb<positivas.length)
     h+=`<div class="tip i" style="margin-top:8px;">ℹ️ ${comAtb} de ${positivas.length} isolados têm antibiograma extraído. Os demais não têm laudo PDF vinculado.</div>`;
   // Classificação
@@ -2444,7 +2444,7 @@ function _renderCCIHAgregado(dados){
     });
     h+='</table>';
   }
-  h+='<div class="ind-hint" style="margin-top:8px;">📌 PDR = Pan-resistente · XDR = Extensivamente resistente · MDR = Multirresistente (Magiorakos et al. 2012). Versão simplificada: conta classes de antibióticos com resistência.</div>';
+  h+='<div class="ind-hint" style="margin-top:8px;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M10 2L14 6l-3 3-2-1-4 4-1-1 4-4-1-2z"/><line x1="3" y1="13" x2="7" y2="9"/></svg> PDR = Pan-resistente · XDR = Extensivamente resistente · MDR = Multirresistente (Magiorakos et al. 2012). Versão simplificada: conta classes de antibióticos com resistência.</div>';
   return h;
 }
 
@@ -2805,46 +2805,46 @@ const RX_BANCO = [
   {nome:'SULFADIAZINA DE PRATA', qtd:'1', apres:'BISN', dose:'', diluicao:'', via:'TD', freq:'ACM', hor:['ACM'], cat:'ATB', obs:'ATB tópico'},
   {nome:'SULFAMETOXAZOL+TRIMETOPRIMA', qtd:'1', apres:'AMP', dose:'', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'ATB', obs:'Sulfa'},
   {nome:'VORICONAZOL', qtd:'1', apres:'FA', dose:'200MG', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'ATB', obs:'Antifúngico'},
-  {nome:'DOPAMINA', qtd:'1', apres:'AMP', dose:'50MG', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Droga Vasoativa', obs:'Amina Vasoativa · ⚠ MPP/ALTA VIGILÂNCIA'},
-  {nome:'EFEDRINA', qtd:'1', apres:'AMP', dose:'5%', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Droga Vasoativa', obs:'Amina Vasoativa · ⚠ MPP/ALTA VIGILÂNCIA'},
-  {nome:'EPINEFRINA', qtd:'1', apres:'AMP', dose:'1MG/ML', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Droga Vasoativa', obs:'Amina Vasoativa · ⚠ MPP/ALTA VIGILÂNCIA'},
-  {nome:'ISOPRENALINA', qtd:'1', apres:'AMP', dose:'0,2MG/ML', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Droga Vasoativa', obs:'Amina Vasoativa · ⚠ MPP/ALTA VIGILÂNCIA'},
+  {nome:'DOPAMINA', qtd:'1', apres:'AMP', dose:'50MG', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Droga Vasoativa', obs:'Amina Vasoativa · <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> MPP/ALTA VIGILÂNCIA'},
+  {nome:'EFEDRINA', qtd:'1', apres:'AMP', dose:'5%', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Droga Vasoativa', obs:'Amina Vasoativa · <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> MPP/ALTA VIGILÂNCIA'},
+  {nome:'EPINEFRINA', qtd:'1', apres:'AMP', dose:'1MG/ML', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Droga Vasoativa', obs:'Amina Vasoativa · <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> MPP/ALTA VIGILÂNCIA'},
+  {nome:'ISOPRENALINA', qtd:'1', apres:'AMP', dose:'0,2MG/ML', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Droga Vasoativa', obs:'Amina Vasoativa · <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> MPP/ALTA VIGILÂNCIA'},
   {nome:'LEVOSIMENDANA', qtd:'1', apres:'FA', dose:'12,5MG', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Droga Vasoativa', obs:'Estimulante cardíaco'},
-  {nome:'METARAMINOL', qtd:'1', apres:'AMP', dose:'10MG', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Droga Vasoativa', obs:'Amina Vasoativa · ⚠ MPP/ALTA VIGILÂNCIA'},
+  {nome:'METARAMINOL', qtd:'1', apres:'AMP', dose:'10MG', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Droga Vasoativa', obs:'Amina Vasoativa · <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> MPP/ALTA VIGILÂNCIA'},
   {nome:'MILRINONE', qtd:'1', apres:'FA', dose:'1MG/ML', diluicao:'', via:'EV', freq:'BIC ACM', hor:['BIC'], cat:'Droga Vasoativa', obs:'Cardiotônico'},
-  {nome:'CISATRACÚRIO', qtd:'1', apres:'AMP', dose:'2MG/ML', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Sedação', obs:'Bloq. Neuromuscular · ⚠ MPP/ALTA VIGILÂNCIA'},
+  {nome:'CISATRACÚRIO', qtd:'1', apres:'AMP', dose:'2MG/ML', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Sedação', obs:'Bloq. Neuromuscular · <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> MPP/ALTA VIGILÂNCIA'},
   {nome:'CLONAZEPAM', qtd:'1', apres:'COMP', dose:'2MG', diluicao:'', via:'VO', freq:'ACM', hor:['ACM'], cat:'Sedação', obs:'Anticonvulsivante/BZD'},
-  {nome:'CODEÍNA', qtd:'', apres:'ML', dose:'3MG/ML', diluicao:'', via:'VO', freq:'ACM', hor:['ACM'], cat:'Sedação', obs:'Analgésico Narcótico · ⚠ MPP/ALTA VIGILÂNCIA'},
+  {nome:'CODEÍNA', qtd:'', apres:'ML', dose:'3MG/ML', diluicao:'', via:'VO', freq:'ACM', hor:['ACM'], cat:'Sedação', obs:'Analgésico Narcótico · <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> MPP/ALTA VIGILÂNCIA'},
   {nome:'DEXMEDETOMIDINA', qtd:'1', apres:'BOLSA', dose:'4MCG/ML', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Sedação', obs:'Sedativo'},
   {nome:'DIAZEPAM', qtd:'1', apres:'AMP', dose:'10MG', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Sedação', obs:'BZD/Anticonvulsivante'},
   {nome:'ETOMIDATO', qtd:'1', apres:'AMP', dose:'20MG', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Sedação', obs:'Anestésico venoso'},
-  {nome:'FENTANILA', qtd:'1', apres:'AMP', dose:'50MCG/ML', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Sedação', obs:'Analgésico Narcótico · ⚠ MPP/ALTA VIGILÂNCIA'},
+  {nome:'FENTANILA', qtd:'1', apres:'AMP', dose:'50MCG/ML', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Sedação', obs:'Analgésico Narcótico · <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> MPP/ALTA VIGILÂNCIA'},
   {nome:'FLUMAZENIL', qtd:'1', apres:'AMP', dose:'0,5MG', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Sedação', obs:'Antídoto BZD'},
   {nome:'KETAMINA', qtd:'1', apres:'AMP', dose:'50MG/ML', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Sedação', obs:'Anestésico venoso'},
-  {nome:'METADONA', qtd:'1', apres:'AMP', dose:'10MG', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Sedação', obs:'Analgésico Narcótico · ⚠ MPP/ALTA VIGILÂNCIA'},
-  {nome:'METADONA', qtd:'1', apres:'COMP', dose:'10MG', diluicao:'', via:'VO', freq:'ACM', hor:['ACM'], cat:'Sedação', obs:'Analgésico Narcótico · ⚠ MPP/ALTA VIGILÂNCIA'},
-  {nome:'MORFINA', qtd:'1', apres:'BOLSA', dose:'1MG/ML', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Sedação', obs:'Analgésico Narcótico · ⚠ MPP/ALTA VIGILÂNCIA'},
-  {nome:'NALBUFINA', qtd:'1', apres:'AMP', dose:'10MG/ML', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Sedação', obs:'Analgésico Narcótico · ⚠ MPP/ALTA VIGILÂNCIA'},
+  {nome:'METADONA', qtd:'1', apres:'AMP', dose:'10MG', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Sedação', obs:'Analgésico Narcótico · <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> MPP/ALTA VIGILÂNCIA'},
+  {nome:'METADONA', qtd:'1', apres:'COMP', dose:'10MG', diluicao:'', via:'VO', freq:'ACM', hor:['ACM'], cat:'Sedação', obs:'Analgésico Narcótico · <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> MPP/ALTA VIGILÂNCIA'},
+  {nome:'MORFINA', qtd:'1', apres:'BOLSA', dose:'1MG/ML', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Sedação', obs:'Analgésico Narcótico · <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> MPP/ALTA VIGILÂNCIA'},
+  {nome:'NALBUFINA', qtd:'1', apres:'AMP', dose:'10MG/ML', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Sedação', obs:'Analgésico Narcótico · <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> MPP/ALTA VIGILÂNCIA'},
   {nome:'NEOSTIGMINA', qtd:'1', apres:'AMP', dose:'0,5MG/ML', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Sedação', obs:'Antídoto BNM'},
   {nome:'PROPOFOL', qtd:'1', apres:'FR', dose:'10MG/ML', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Sedação', obs:'Anestésico venoso'},
   {nome:'PROPOFOL', qtd:'1', apres:'AMP', dose:'10MG/ML', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Sedação', obs:'Anestésico venoso'},
-  {nome:'REMIFENTANILA', qtd:'1', apres:'FA', dose:'2MG', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Sedação', obs:'Analgésico Narcótico · ⚠ MPP/ALTA VIGILÂNCIA'},
-  {nome:'ROCURÔNIO', qtd:'1', apres:'FA', dose:'50MG', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Sedação', obs:'Bloq. Neuromuscular · ⚠ MPP/ALTA VIGILÂNCIA'},
-  {nome:'SUFENTANILA', qtd:'1', apres:'AMP', dose:'5MCG/ML', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Sedação', obs:'Analgésico Narcótico · ⚠ MPP/ALTA VIGILÂNCIA'},
+  {nome:'REMIFENTANILA', qtd:'1', apres:'FA', dose:'2MG', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Sedação', obs:'Analgésico Narcótico · <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> MPP/ALTA VIGILÂNCIA'},
+  {nome:'ROCURÔNIO', qtd:'1', apres:'FA', dose:'50MG', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Sedação', obs:'Bloq. Neuromuscular · <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> MPP/ALTA VIGILÂNCIA'},
+  {nome:'SUFENTANILA', qtd:'1', apres:'AMP', dose:'5MCG/ML', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Sedação', obs:'Analgésico Narcótico · <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> MPP/ALTA VIGILÂNCIA'},
   {nome:'SUGAMADEX', qtd:'1', apres:'FA', dose:'100MG/ML', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Sedação', obs:'Antídoto BNM'},
-  {nome:'SUXAMETÔNIO', qtd:'1', apres:'FA', dose:'100MG', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Sedação', obs:'Bloq. Neuromuscular · ⚠ MPP/ALTA VIGILÂNCIA'},
+  {nome:'SUXAMETÔNIO', qtd:'1', apres:'FA', dose:'100MG', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Sedação', obs:'Bloq. Neuromuscular · <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> MPP/ALTA VIGILÂNCIA'},
   {nome:'TIOPENTAL', qtd:'1', apres:'FA', dose:'1G', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Sedação', obs:'Anestésico venoso'},
-  {nome:'TRAMADOL', qtd:'1', apres:'CAP', dose:'50MG', diluicao:'', via:'VO', freq:'ACM', hor:['ACM'], cat:'Sedação', obs:'Analgésico Narcótico · ⚠ MPP/ALTA VIGILÂNCIA'},
+  {nome:'TRAMADOL', qtd:'1', apres:'CAP', dose:'50MG', diluicao:'', via:'VO', freq:'ACM', hor:['ACM'], cat:'Sedação', obs:'Analgésico Narcótico · <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> MPP/ALTA VIGILÂNCIA'},
   {nome:'ALBUMINA HUMANA', qtd:'1', apres:'FR', dose:'20%', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Hidratação', obs:'Expansor volemico'},
   {nome:'CITRATO TRISSÓDICO 4%', qtd:'1', apres:'BOLSA', dose:'', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Hidratação', obs:'Solução diálise'},
   {nome:'CLORETO DE SÓDIO', qtd:'1', apres:'FR', dose:'0,9%', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Hidratação', obs:'Solução parenteral'},
   {nome:'GLICOSE', qtd:'1', apres:'FR', dose:'5%', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Hidratação', obs:'Solução parenteral'},
   {nome:'SOLUÇÃO DIÁLISE PERITONEAL 1,5%', qtd:'1', apres:'BOLSA', dose:'', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Hidratação', obs:'Solução diálise'},
   {nome:'ACETAZOLAMIDA', qtd:'1', apres:'COMP', dose:'250MG', diluicao:'', via:'VO', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Diurético/Antiglaucoma'},
-  {nome:'ADENOSINA', qtd:'1', apres:'AMP', dose:'3MG/ML', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Antiarrítmico · ⚠ MPP/ALTA VIGILÂNCIA'},
+  {nome:'ADENOSINA', qtd:'1', apres:'AMP', dose:'3MG/ML', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Antiarrítmico · <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> MPP/ALTA VIGILÂNCIA'},
   {nome:'ALTEPLASE', qtd:'1', apres:'FA', dose:'20MG', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Trombolítico'},
   {nome:'AMINOFILINA', qtd:'1', apres:'AMP', dose:'24MG/ML', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Broncodilatador'},
-  {nome:'APIXABANA', qtd:'1', apres:'COMP', dose:'2,5MG', diluicao:'', via:'VO', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Anticoagulante · ⚠ MPP/ALTA VIGILÂNCIA'},
+  {nome:'APIXABANA', qtd:'1', apres:'COMP', dose:'2,5MG', diluicao:'', via:'VO', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Anticoagulante · <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> MPP/ALTA VIGILÂNCIA'},
   {nome:'ATENOLOL', qtd:'1', apres:'COMP', dose:'25MG', diluicao:'', via:'VO', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Beta-bloq.'},
   {nome:'ATROPINA', qtd:'1', apres:'AMP', dose:'0,25MG', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Anticolinérgico/Antídoto'},
   {nome:'BICARBONATO DE SÓDIO', qtd:'1', apres:'AMP', dose:'8,4%', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Eletrólito'},
@@ -2854,19 +2854,19 @@ const RX_BANCO = [
   {nome:'CARBAMAZEPINA', qtd:'1', apres:'COMP', dose:'200MG', diluicao:'', via:'VO', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Anticonvulsivante'},
   {nome:'CETOPROFENO', qtd:'1', apres:'AMP', dose:'100MG', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'AINE'},
   {nome:'CETOROLACO', qtd:'1', apres:'AMP', dose:'30MG', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'AINE'},
-  {nome:'CITRATO DE SÓDIO', qtd:'1', apres:'AMP', dose:'4%', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Anticoagulante regional · ⚠ MPP/ALTA VIGILÂNCIA'},
+  {nome:'CITRATO DE SÓDIO', qtd:'1', apres:'AMP', dose:'4%', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Anticoagulante regional · <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> MPP/ALTA VIGILÂNCIA'},
   {nome:'CLONIDINA', qtd:'1', apres:'AMP', dose:'150MCG', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Anti-hipertensivo'},
   {nome:'CLOPIDOGREL', qtd:'1', apres:'COMP', dose:'75MG', diluicao:'', via:'VO', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Antiagregante'},
   {nome:'CLORETO DE CÁLCIO', qtd:'1', apres:'AMP', dose:'10%', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Eletrólito'},
-  {nome:'CLORETO DE POTÁSSIO', qtd:'', apres:'—', dose:'7GENV(HEMODIÁLISE)', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Eletrólito · ⚠ MPP/ALTA VIGILÂNCIA'},
-  {nome:'CLORETO DE SÓDIO', qtd:'1', apres:'AMP', dose:'20%', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Eletrólito · ⚠ MPP/ALTA VIGILÂNCIA'},
+  {nome:'CLORETO DE POTÁSSIO', qtd:'', apres:'—', dose:'7GENV(HEMODIÁLISE)', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Eletrólito · <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> MPP/ALTA VIGILÂNCIA'},
+  {nome:'CLORETO DE SÓDIO', qtd:'1', apres:'AMP', dose:'20%', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Eletrólito · <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> MPP/ALTA VIGILÂNCIA'},
   {nome:'COLAGENASE', qtd:'1', apres:'BISN', dose:'', diluicao:'', via:'TD', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Cicatrizante'},
-  {nome:'DABIGATRANA', qtd:'1', apres:'CAP', dose:'150MG', diluicao:'', via:'VO', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Anticoagulante · ⚠ MPP/ALTA VIGILÂNCIA'},
+  {nome:'DABIGATRANA', qtd:'1', apres:'CAP', dose:'150MG', diluicao:'', via:'VO', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Anticoagulante · <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> MPP/ALTA VIGILÂNCIA'},
   {nome:'DESLANOSÍDEO', qtd:'1', apres:'AMP', dose:'0,4MG', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Glicosídeo cardíaco'},
   {nome:'DESMOPRESSINA', qtd:'1', apres:'AMP', dose:'4MCG', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Hormônio antidiurético'},
   {nome:'DEXAMETASONA', qtd:'1', apres:'FA', dose:'4MG/ML', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Corticosteroide'},
   {nome:'DILTIAZEM', qtd:'1', apres:'COMP', dose:'60MG', diluicao:'', via:'VO', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'BCC/Antiarrítmico'},
-  {nome:'ESMOLOL', qtd:'1', apres:'FA', dose:'2500MG', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Antiarrítmico · ⚠ MPP/ALTA VIGILÂNCIA'},
+  {nome:'ESMOLOL', qtd:'1', apres:'FA', dose:'2500MG', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Antiarrítmico · <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> MPP/ALTA VIGILÂNCIA'},
   {nome:'ESOMEPRAZOL', qtd:'1', apres:'FA', dose:'40MG', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'IBP'},
   {nome:'FATOR VII RECOMBINANTE', qtd:'1', apres:'FA', dose:'1MG', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Hemostático'},
   {nome:'FENOBARBITAL', qtd:'1', apres:'AMP', dose:'100MG/ML', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Anticonvulsivante'},
@@ -2880,16 +2880,16 @@ const RX_BANCO = [
   {nome:'GLUCAGON', qtd:'', apres:'—', dose:'1MGINJETÁVEL', diluicao:'', via:'IM', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Hormônio contra-regulador'},
   {nome:'HALOPERIDOL', qtd:'1', apres:'AMP', dose:'5MG', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Neuroléptico'},
   {nome:'HALOPERIDOL', qtd:'1', apres:'COMP', dose:'5MG', diluicao:'', via:'VO', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Neuroléptico'},
-  {nome:'HEPARINA', qtd:'1', apres:'FA', dose:'5000UI/ML', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Anticoagulante · ⚠ MPP/ALTA VIGILÂNCIA'},
-  {nome:'HEPARINA', qtd:'1', apres:'AMP', dose:'5000UI/0,25ML', diluicao:'', via:'SC', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Anticoagulante · ⚠ MPP/ALTA VIGILÂNCIA'},
+  {nome:'HEPARINA', qtd:'1', apres:'FA', dose:'5000UI/ML', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Anticoagulante · <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> MPP/ALTA VIGILÂNCIA'},
+  {nome:'HEPARINA', qtd:'1', apres:'AMP', dose:'5000UI/0,25ML', diluicao:'', via:'SC', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Anticoagulante · <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> MPP/ALTA VIGILÂNCIA'},
   {nome:'HIDROCLOROTIAZIDA', qtd:'1', apres:'COMP', dose:'25MG', diluicao:'', via:'VO', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Diurético'},
   {nome:'IDARUCIZUMABE', qtd:'1', apres:'FA', dose:'50MG/ML', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Antídoto anticoag.'},
-  {nome:'INSULINA ASPARTE', qtd:'', apres:'—', dose:'100UI/MLCARPULE', diluicao:'', via:'SC', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Insulina · ⚠ MPP/ALTA VIGILÂNCIA'},
-  {nome:'INSULINA DEGLUDECA', qtd:'', apres:'—', dose:'100UI/MLCANETA', diluicao:'', via:'SC', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Insulina · ⚠ MPP/ALTA VIGILÂNCIA'},
-  {nome:'INSULINA GLARGINA', qtd:'1', apres:'FA', dose:'100UI/ML', diluicao:'', via:'SC', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Insulina · ⚠ MPP/ALTA VIGILÂNCIA'},
-  {nome:'INSULINA HUMANA REGULAR', qtd:'1', apres:'FA', dose:'100UI/ML', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Insulina · ⚠ MPP/ALTA VIGILÂNCIA'},
-  {nome:'INSULINA LISPRO', qtd:'1', apres:'FA', dose:'100UI/ML', diluicao:'', via:'SC', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Insulina · ⚠ MPP/ALTA VIGILÂNCIA'},
-  {nome:'INSULINA NPH', qtd:'1', apres:'FA', dose:'100UI/ML', diluicao:'', via:'SC', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Insulina · ⚠ MPP/ALTA VIGILÂNCIA'},
+  {nome:'INSULINA ASPARTE', qtd:'', apres:'—', dose:'100UI/MLCARPULE', diluicao:'', via:'SC', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Insulina · <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> MPP/ALTA VIGILÂNCIA'},
+  {nome:'INSULINA DEGLUDECA', qtd:'', apres:'—', dose:'100UI/MLCANETA', diluicao:'', via:'SC', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Insulina · <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> MPP/ALTA VIGILÂNCIA'},
+  {nome:'INSULINA GLARGINA', qtd:'1', apres:'FA', dose:'100UI/ML', diluicao:'', via:'SC', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Insulina · <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> MPP/ALTA VIGILÂNCIA'},
+  {nome:'INSULINA HUMANA REGULAR', qtd:'1', apres:'FA', dose:'100UI/ML', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Insulina · <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> MPP/ALTA VIGILÂNCIA'},
+  {nome:'INSULINA LISPRO', qtd:'1', apres:'FA', dose:'100UI/ML', diluicao:'', via:'SC', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Insulina · <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> MPP/ALTA VIGILÂNCIA'},
+  {nome:'INSULINA NPH', qtd:'1', apres:'FA', dose:'100UI/ML', diluicao:'', via:'SC', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Insulina · <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> MPP/ALTA VIGILÂNCIA'},
   {nome:'IPRATRÓPIO', qtd:'', apres:'—', dose:'0,025%SOLUÇÃO', diluicao:'', via:'IN', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Broncodilatador'},
   {nome:'LACOSAMIDA', qtd:'1', apres:'FA', dose:'10MG/ML', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Anticonvulsivante'},
   {nome:'LACOSAMIDA', qtd:'1', apres:'COMP', dose:'100MG', diluicao:'', via:'VO', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Anticonvulsivante'},
@@ -2906,19 +2906,19 @@ const RX_BANCO = [
   {nome:'PARACETAMOL', qtd:'1', apres:'BOLSA', dose:'10MG/ML', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Analgésico/Antipirético'},
   {nome:'PARACETAMOL', qtd:'1', apres:'COMP', dose:'750MG', diluicao:'', via:'VO', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Analgésico/Antipirético'},
   {nome:'PREDNISOLONA', qtd:'1', apres:'COMP', dose:'20MG', diluicao:'', via:'VO', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Corticosteroide'},
-  {nome:'PROPAFENONA', qtd:'1', apres:'COMP', dose:'300MG', diluicao:'', via:'VO', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Antiarrítmico · ⚠ MPP/ALTA VIGILÂNCIA'},
+  {nome:'PROPAFENONA', qtd:'1', apres:'COMP', dose:'300MG', diluicao:'', via:'VO', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Antiarrítmico · <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> MPP/ALTA VIGILÂNCIA'},
   {nome:'PROPRANOLOL', qtd:'1', apres:'COMP', dose:'40MG', diluicao:'', via:'VO', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Beta-bloq.'},
   {nome:'PROTAMINA', qtd:'1', apres:'AMP', dose:'', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Antídoto anticoag.'},
   {nome:'RANITIDINA/CIMETIDINA', qtd:'1', apres:'AMP', dose:'150MG/ML', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Anti-H2'},
   {nome:'SALBUTAMOL', qtd:'1', apres:'SPRAY', dose:'', diluicao:'', via:'IN', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Beta2-agonista'},
-  {nome:'SOTALOL', qtd:'1', apres:'COMP', dose:'120MG', diluicao:'', via:'VO', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Antiarrítmico · ⚠ MPP/ALTA VIGILÂNCIA'},
+  {nome:'SOTALOL', qtd:'1', apres:'COMP', dose:'120MG', diluicao:'', via:'VO', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Antiarrítmico · <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> MPP/ALTA VIGILÂNCIA'},
   {nome:'SUCRALFATO', qtd:'', apres:'—', dose:'2G/10MLFLACONETE', diluicao:'', via:'VO', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Protetor gástrico'},
   {nome:'SULFATO DE MAGNÉSIO', qtd:'1', apres:'AMP', dose:'50%', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Anticonvulsivante/Eletrólito'},
   {nome:'TENECTEPLASE', qtd:'1', apres:'FA', dose:'50MG', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Trombolítico'},
   {nome:'TERLIPRESSINA', qtd:'1', apres:'FA', dose:'1MG', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Hormônio sistêmico'},
   {nome:'TICAGRELOR', qtd:'1', apres:'COMP', dose:'90MG', diluicao:'', via:'VO', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Antiagregante'},
   {nome:'VALPROATO DE SÓDIO', qtd:'', apres:'—', dose:'50MG/MLSOLUÇÃO', diluicao:'', via:'VO', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Anticonvulsivante'},
-  {nome:'VERAPAMIL', qtd:'1', apres:'COMP', dose:'80MG', diluicao:'', via:'VO', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Antiarrítmico · ⚠ MPP/ALTA VIGILÂNCIA'},
+  {nome:'VERAPAMIL', qtd:'1', apres:'COMP', dose:'80MG', diluicao:'', via:'VO', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Antiarrítmico · <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> MPP/ALTA VIGILÂNCIA'},
   {nome:'ÁCIDO AMINOCAPROICO', qtd:'1', apres:'FR', dose:'1G', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Antifibrinolítico'},
   {nome:'ÁCIDO TRANEXÂMICO', qtd:'1', apres:'AMP', dose:'250MG', diluicao:'', via:'EV', freq:'ACM', hor:['ACM'], cat:'Medicação Geral', obs:'Antifibrinolítico'},
 ];
@@ -2932,7 +2932,7 @@ let _rxAcTarget = null; // input do autocomplete ativo
 
 const RX_HORAS = ['20','22','24','02','04','06','08','10','12','14','16','18'];
 
-// Ordena horários conforme a ordem de validade da prescrição (20h → 18h do dia seguinte)
+// Ordena horários conforme a ordem de validade da prescrição (20h <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M3 8h10"/><path d="M9.5 4.5L13 8l-3.5 3.5"/></svg> 18h do dia seguinte)
 // Horários especiais (BIC, SND, SN, ACM, EM USO) ficam no final
 function _ordenarHorarios(hor){
   if(!hor||!hor.length) return hor;
@@ -3151,7 +3151,7 @@ const RX_DOSE_FAIXAS = {
   'nitroprussiato': { maxBolus:0, maxBIC:10,  unidBIC:'mcg/kg/min', alerta:'Faixa 0,5–10 mcg/kg/min.' },
   'fentanil':       { maxBolus:300, maxBIC:5, unidBIC:'mcg/kg/h',   alerta:'BIC 0,5–3 mcg/kg/h (até 5 em casos selecionados).' },
   'midazolam':      { maxBolus:10,  maxBIC:0.2, unidBIC:'mg/kg/h',  alerta:'BIC 0,02–0,1 mg/kg/h.' },
-  'propofol':       { maxBolus:0,   maxBIC:4,   unidBIC:'mg/kg/h',  alerta:'BIC 1–3 mg/kg/h; >4 → risco de PRIS.' },
+  'propofol':       { maxBolus:0,   maxBIC:4,   unidBIC:'mg/kg/h',  alerta:'BIC 1–3 mg/kg/h; >4 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M3 8h10"/><path d="M9.5 4.5L13 8l-3.5 3.5"/></svg> risco de PRIS.' },
   // Antibióticos
   'meropenem':      { maxDose:2000, unid:'mg',  alerta:'Máx 2g por dose (SNC).' },
   'piperacilina':   { maxDose:4500, unid:'mg',  alerta:'Máx 4,5g por dose.' },
@@ -3282,7 +3282,7 @@ function _sugerirDosePorPeso(item){
   if(m){
     const dMin=parseFloat(m[1].replace(',','.')), dMax=m[2]?parseFloat(m[2].replace(',','.')):dMin;
     const totMin=Math.round(dMin*peso), totMax=Math.round(dMax*peso);
-    calc = ` → <b>${totMin===totMax?totMin:totMin+'-'+totMax} mg</b> p/ ${peso}kg`;
+    calc = ` <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M3 8h10"/><path d="M9.5 4.5L13 8l-3.5 3.5"/></svg> <b>${totMin===totMax?totMin:totMin+'-'+totMax} mg</b> p/ ${peso}kg`;
   }
   return { farm, intervalo:d.intervalo, uso:d.uso, nota:d.nota, calc };
 }
@@ -3463,7 +3463,7 @@ function _calcularMLhBIC(d, dose, peso){
   return null;
 }
 // Retorna true apenas quando a unidade extraída é farmacológica (mcg/kg/min, etc.)
-// Concentrações como "25MG/ML" → unid='mg' → false (não é dose de infusão)
+// Concentrações como "25MG/ML" <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M3 8h10"/><path d="M9.5 4.5L13 8l-3.5 3.5"/></svg> unid='mg' <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M3 8h10"/><path d="M9.5 4.5L13 8l-3.5 3.5"/></svg> false (não é dose de infusão)
 function _doseBICUnidCompativel(unidExtraida){
   const u = (unidExtraida||'').toLowerCase().replace(/\s+/g,'');
   const CONC = ['ml','mg','mcg','g','ui','%',''];
@@ -3530,9 +3530,9 @@ async function _calcularDiffOntem(){
       else {
         const a=mapOntem[k], b=mapHoje[k];
         const diffs=[];
-        if((a.dose||'').toUpperCase()!==(b.dose||'').toUpperCase()) diffs.push(`dose ${a.dose||'?'} → ${b.dose||'?'}`);
-        if((a.freq||'').toUpperCase()!==(b.freq||'').toUpperCase()) diffs.push(`freq ${a.freq||'?'} → ${b.freq||'?'}`);
-        if((a.via ||'').toUpperCase()!==(b.via ||'').toUpperCase()) diffs.push(`via ${a.via||'?'} → ${b.via||'?'}`);
+        if((a.dose||'').toUpperCase()!==(b.dose||'').toUpperCase()) diffs.push(`dose ${a.dose||'?'} <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M3 8h10"/><path d="M9.5 4.5L13 8l-3.5 3.5"/></svg> ${b.dose||'?'}`);
+        if((a.freq||'').toUpperCase()!==(b.freq||'').toUpperCase()) diffs.push(`freq ${a.freq||'?'} <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M3 8h10"/><path d="M9.5 4.5L13 8l-3.5 3.5"/></svg> ${b.freq||'?'}`);
+        if((a.via ||'').toUpperCase()!==(b.via ||'').toUpperCase()) diffs.push(`via ${a.via||'?'} <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M3 8h10"/><path d="M9.5 4.5L13 8l-3.5 3.5"/></svg> ${b.via||'?'}`);
         if(diffs.length) alterados.push({item:b, diffs});
       }
     });
@@ -3599,7 +3599,7 @@ async function _renderApoioClinico(){
   // ── #1 ALERGIAS — TOPO, em vermelho intenso ─────────────────────────────
   if(alergias.length){
     h+=`<div class="apoio-card apoio-alerta" style="border-left:4px solid #b71c1c;background:#ffeae8;">
-      <div class="apoio-titulo" style="color:#b71c1c;">🚨 ALERGIA × PRESCRIÇÃO (${alergias.length})</div>
+      <div class="apoio-titulo" style="color:#b71c1c;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3a5 5 0 015 5v2H3V8a5 5 0 015-5z"/><rect x="3" y="10" width="10" height="2" rx=".5"/><line x1="8" y1="1" x2="8" y2="2.5"/><line x1="3" y1="3" x2="4" y2="4"/><line x1="13" y1="3" x2="12" y2="4"/></svg> ALERGIA × PRESCRIÇÃO (${alergias.length})</div>
       ${alergias.map(a=>`<div class="apoio-item apoio-alta">
         <b>${(a.farmaco||'').toUpperCase()}</b> conflita com alergia a <b>${a.alergeno}</b>${a.motivo==='cross-reatividade'?` <em>(cross-reatividade: ${a.grupo})</em>`:''}
       </div>`).join('')}
@@ -3609,7 +3609,7 @@ async function _renderApoioClinico(){
   // ── #2 DUPLICATAS MANUAIS ────────────────────────────────────────────────
   if(duplicatas.length){
     h+=`<div class="apoio-card apoio-warn">
-      <div class="apoio-titulo">⚠ ITEM DUPLICADO (${duplicatas.length})</div>
+      <div class="apoio-titulo"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> ITEM DUPLICADO (${duplicatas.length})</div>
       ${duplicatas.map(d=>`<div class="apoio-item">
         <b>${d.base.toUpperCase()}</b> prescrito ${d.itens.length}× —
         ${d.itens.map(x=>`<span>${(x.nome||'').toUpperCase()}${x.dose?' '+x.dose:''}${x.freq?' · '+x.freq:''}</span>`).join(' / ')}
@@ -3632,7 +3632,7 @@ async function _renderApoioClinico(){
     const cgFormula = tfg.cg!=null
       ? `CG = (140 − ${tfg.idade}a) × ${tfg.peso||'?'}kg / (72 × ${tfg.cr} mg/dL)${tfg.sexo==='FEMININO'?' × 0,85':''} = <b>${tfg.cg} mL/min</b>`
       : 'CG: peso não registrado (necessário para calcular)';
-    const ckFormula = `CKD-EPI 2021 (sem raça): Cr ${tfg.cr} · ${tfg.idade}a · ${tfg.sexo==='FEMININO'?'♀ fem.':'♂ masc.'} → <b>${tfg.ckdepi} mL/min/1,73m²</b>`;
+    const ckFormula = `CKD-EPI 2021 (sem raça): Cr ${tfg.cr} · ${tfg.idade}a · ${tfg.sexo==='FEMININO'?'<svg xmlns="http://www.w3.org/2000/svg" width="14" height="16" viewBox="0 0 14 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><circle cx="8" cy="6" r="3.5"/><line x1="8" y1="9.5" x2="8" y2="14"/><line x1="6" y1="12" x2="10" y2="12"/></svg> fem.':'<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><circle cx="6.5" cy="9.5" r="3.5"/><line x1="9.5" y1="6.5" x2="14" y2="2"/><polyline points="10,2 14,2 14,6"/></svg> masc.'} <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M3 8h10"/><path d="M9.5 4.5L13 8l-3.5 3.5"/></svg> <b>${tfg.ckdepi} mL/min/1,73m²</b>`;
     const estadios = [
       {min:90,label:'G1 — Normal ou aumentada (≥90)'},
       {min:60,label:'G2 — Levemente diminuída (60–89)'},
@@ -3645,38 +3645,38 @@ async function _renderApoioClinico(){
     const estadio = estadios.find(e=>tfgRef>=e.min) || estadios[estadios.length-1];
     h+=`<div class="apoio-card apoio-tfg">
       <div class="apoio-titulo" style="display:flex;align-items:center;gap:6px;">
-        <span>⚕ FUNÇÃO RENAL</span>
+        <span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><line x1="8" y1="2" x2="8" y2="14"/><line x1="5" y1="5" x2="11" y2="5"/><line x1="5" y1="11" x2="11" y2="11"/><ellipse cx="8" cy="8" rx="4.5" ry="6"/></svg> FUNÇÃO RENAL</span>
         <span style="font-weight:500;font-size:.78rem;color:var(--muted);">— equação p/ ajuste: <b>${tfg.equacaoPreferida}</b></span>
         <button onclick="_toggleTFGInfo()" title="Ver fórmulas e estadiamento"
           style="margin-left:auto;background:none;border:1.5px solid var(--muted);border-radius:50%;width:20px;height:20px;font-size:.72rem;font-weight:700;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;">ⓘ</button>
       </div>
       <div class="apoio-tfg-vals">
         ${tfg.cg!=null
-          ? `<div><span class="tfg-num" style="color:${corCG}">${tfg.cg}</span><span class="tfg-unit">Cockcroft-Gault${tfg.equacaoPreferida==='CG'?' ✓':''}</span></div>`
+          ? `<div><span class="tfg-num" style="color:${corCG}">${tfg.cg}</span><span class="tfg-unit">Cockcroft-Gault${tfg.equacaoPreferida==='CG'?' <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg>':''}</span></div>`
           : `<div><span class="tfg-num" style="color:#aaa">?</span><span class="tfg-unit">CG (sem peso)</span></div>`}
-        <div><span class="tfg-num" style="color:${corCK}">${tfg.ckdepi}</span><span class="tfg-unit">CKD-EPI 2021${tfg.equacaoPreferida==='CKD-EPI'?' ✓':''}</span></div>
+        <div><span class="tfg-num" style="color:${corCK}">${tfg.ckdepi}</span><span class="tfg-unit">CKD-EPI 2021${tfg.equacaoPreferida==='CKD-EPI'?' <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg>':''}</span></div>
       </div>
       <div class="apoio-sub">
         Cr <b>${tfg.cr}</b> de <b>${dataCrTxt}</b>
         <span style="color:${crAvisoCor};font-weight:600;">${crAvisoTxt?'· '+crAvisoTxt:''}</span>
-        ${crVelha?' <span style="color:var(--vermelho);">⚠ creatinina &gt;48h — reavaliar exame antes de ajustar dose</span>':''}
-        · ${tfg.idade}a · ${tfg.sexo==='FEMININO'?'♀':'♂'}${tfg.peso?' · '+tfg.peso+'kg':' · sem peso'}
+        ${crVelha?' <span style="color:var(--vermelho);"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> creatinina &gt;48h — reavaliar exame antes de ajustar dose</span>':''}
+        · ${tfg.idade}a · ${tfg.sexo==='FEMININO'?'<svg xmlns="http://www.w3.org/2000/svg" width="14" height="16" viewBox="0 0 14 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><circle cx="8" cy="6" r="3.5"/><line x1="8" y1="9.5" x2="8" y2="14"/><line x1="6" y1="12" x2="10" y2="12"/></svg>':'<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><circle cx="6.5" cy="9.5" r="3.5"/><line x1="9.5" y1="6.5" x2="14" y2="2"/><polyline points="10,2 14,2 14,6"/></svg>'}${tfg.peso?' · '+tfg.peso+'kg':' · sem peso'}
       </div>
       <div id="tfg-info-panel" style="display:none;margin-top:10px;padding:10px 12px;background:var(--bg2);border-radius:8px;border:1px solid var(--borda);font-size:.8rem;line-height:1.8;">
-        <div style="font-weight:700;font-size:.76rem;color:var(--muted);text-transform:uppercase;margin-bottom:6px;">📐 Fórmulas utilizadas</div>
-        <div style="margin-bottom:4px;">🔹 <b>Cockcroft-Gault (CG):</b><br>
-          <span style="margin-left:14px;font-family:monospace;font-size:.78rem;">(140 − idade) × peso / (72 × Cr) ${tfg.sexo==='FEMININO'?'× 0,85 se ♀':''}</span><br>
-          <span style="margin-left:14px;color:var(--muted);">→ ${cgFormula}</span>
+        <div style="font-weight:700;font-size:.76rem;color:var(--muted);text-transform:uppercase;margin-bottom:6px;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2 14L8 2l6 12H2z"/><line x1="5" y1="11" x2="8" y2="5"/></svg> Fórmulas utilizadas</div>
+        <div style="margin-bottom:4px;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><polygon points="8,3 12,8 8,13 4,8"/><polygon points="8,5 11,8 8,11 5,8" stroke="none" fill="currentColor" opacity=".35"/></svg> <b>Cockcroft-Gault (CG):</b><br>
+          <span style="margin-left:14px;font-family:monospace;font-size:.78rem;">(140 − idade) × peso / (72 × Cr) ${tfg.sexo==='FEMININO'?'× 0,85 se <svg xmlns="http://www.w3.org/2000/svg" width="14" height="16" viewBox="0 0 14 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><circle cx="8" cy="6" r="3.5"/><line x1="8" y1="9.5" x2="8" y2="14"/><line x1="6" y1="12" x2="10" y2="12"/></svg>':''}</span><br>
+          <span style="margin-left:14px;color:var(--muted);"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M3 8h10"/><path d="M9.5 4.5L13 8l-3.5 3.5"/></svg> ${cgFormula}</span>
         </div>
-        <div style="margin-bottom:4px;">🔹 <b>CKD-EPI 2021 (sem raça):</b><br>
-          <span style="margin-left:14px;font-size:.78rem;">142 × min(Cr/κ, 1)<sup>α</sup> × max(Cr/κ, 1)<sup>−1,200</sup> × 0,9938<sup>idade</sup> ${tfg.sexo==='FEMININO'?'× 1,012':''}<br><span style="color:var(--muted);">κ=0,7 (♀) ou 0,9 (♂) · α=−0,241 (♀) ou −0,302 (♂)</span></span><br>
-          <span style="margin-left:14px;color:var(--muted);">→ ${ckFormula}</span>
+        <div style="margin-bottom:4px;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><polygon points="8,3 12,8 8,13 4,8"/><polygon points="8,5 11,8 8,11 5,8" stroke="none" fill="currentColor" opacity=".35"/></svg> <b>CKD-EPI 2021 (sem raça):</b><br>
+          <span style="margin-left:14px;font-size:.78rem;">142 × min(Cr/κ, 1)<sup>α</sup> × max(Cr/κ, 1)<sup>−1,200</sup> × 0,9938<sup>idade</sup> ${tfg.sexo==='FEMININO'?'× 1,012':''}<br><span style="color:var(--muted);">κ=0,7 (<svg xmlns="http://www.w3.org/2000/svg" width="14" height="16" viewBox="0 0 14 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><circle cx="8" cy="6" r="3.5"/><line x1="8" y1="9.5" x2="8" y2="14"/><line x1="6" y1="12" x2="10" y2="12"/></svg>) ou 0,9 (<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><circle cx="6.5" cy="9.5" r="3.5"/><line x1="9.5" y1="6.5" x2="14" y2="2"/><polyline points="10,2 14,2 14,6"/></svg>) · α=−0,241 (<svg xmlns="http://www.w3.org/2000/svg" width="14" height="16" viewBox="0 0 14 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><circle cx="8" cy="6" r="3.5"/><line x1="8" y1="9.5" x2="8" y2="14"/><line x1="6" y1="12" x2="10" y2="12"/></svg>) ou −0,302 (<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><circle cx="6.5" cy="9.5" r="3.5"/><line x1="9.5" y1="6.5" x2="14" y2="2"/><polyline points="10,2 14,2 14,6"/></svg>)</span></span><br>
+          <span style="margin-left:14px;color:var(--muted);"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M3 8h10"/><path d="M9.5 4.5L13 8l-3.5 3.5"/></svg> ${ckFormula}</span>
         </div>
-        <div style="margin-top:8px;font-weight:700;font-size:.76rem;color:var(--muted);text-transform:uppercase;margin-bottom:4px;">🏷 Estadiamento KDIGO (TFG preferida: ${tfgRef} mL/min)</div>
+        <div style="margin-top:8px;font-weight:700;font-size:.76rem;color:var(--muted);text-transform:uppercase;margin-bottom:4px;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2 2h5l7 7a2 2 0 010 2.8L11 14.8a2 2 0 01-2.8 0L1 7.8V2z"/><circle cx="5" cy="5" r="1" fill="currentColor" stroke="none"/></svg> Estadiamento KDIGO (TFG preferida: ${tfgRef} mL/min)</div>
         ${estadios.map(e=>{
           const ativo = tfgRef>=e.min && (e===estadios[estadios.length-1] || tfgRef<estadios[estadios.indexOf(e)-1]?.min||Infinity);
           const isAtual = e===estadio;
-          return `<div style="margin-left:6px;${isAtual?'font-weight:700;color:var(--vinho);':'color:var(--muted);'}">${isAtual?'▶ ':''} ${e.label}</div>`;
+          return `<div style="margin-left:6px;${isAtual?'font-weight:700;color:var(--vinho);':'color:var(--muted);'}">${isAtual?'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><polygon points="4,3 13,8 4,13"/></svg> ':''} ${e.label}</div>`;
         }).join('')}
         <div style="margin-top:8px;font-size:.74rem;color:var(--muted);">Equação preferida: <b>${tfg.equacaoPreferida}</b> — ${tfg.cg!=null?'CG usado quando há peso registrado.':'CKD-EPI usado (sem peso registrado).'}</div>
       </div>
@@ -3686,7 +3686,7 @@ async function _renderApoioClinico(){
   // ── Interações ───────────────────────────────────────────────────────────
   if(interacoes.length){
     h+=`<div class="apoio-card apoio-alerta">
-      <div class="apoio-titulo">⚠ INTERAÇÕES (${interacoes.length})</div>
+      <div class="apoio-titulo"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> INTERAÇÕES (${interacoes.length})</div>
       ${interacoes.map(i=>`<div class="apoio-item apoio-${i.grav}">
         <b>${i.a.toUpperCase()} + ${i.b.toUpperCase()}</b><br>${i.texto}</div>`).join('')}
     </div>`;
@@ -3695,7 +3695,7 @@ async function _renderApoioClinico(){
   // ── Redundância de classe ───────────────────────────────────────────────
   if(redund.length){
     h+=`<div class="apoio-card apoio-warn">
-      <div class="apoio-titulo">⚠ REDUNDÂNCIA DE CLASSE</div>
+      <div class="apoio-titulo"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> REDUNDÂNCIA DE CLASSE</div>
       ${redund.map(r=>`<div class="apoio-item">
         <b>${r.classe}:</b> ${r.itens.join(' + ').toUpperCase()}</div>`).join('')}
     </div>`;
@@ -3704,7 +3704,7 @@ async function _renderApoioClinico(){
   // ── Omissões ─────────────────────────────────────────────────────────────
   if(omissoes.length){
     h+=`<div class="apoio-card apoio-warn">
-      <div class="apoio-titulo">💡 OMISSÕES POSSÍVEIS</div>
+      <div class="apoio-titulo"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 2a5 5 0 013.5 8.5L11 12H5l-.5-1.5A5 5 0 018 2z"/><line x1="5.5" y1="13.5" x2="10.5" y2="13.5"/><line x1="6.5" y1="14.8" x2="9.5" y2="14.8"/></svg> OMISSÕES POSSÍVEIS</div>
       ${omissoes.map(o=>`<div class="apoio-item">${o}</div>`).join('')}
     </div>`;
   }
@@ -3712,14 +3712,14 @@ async function _renderApoioClinico(){
   // ── #7 SANITY-CHECK DE DOSE ─────────────────────────────────────────────
   if(dosesAbsurdas.length){
     h+=`<div class="apoio-card apoio-alerta">
-      <div class="apoio-titulo">⚠ DOSE ALÉM DA FAIXA (${dosesAbsurdas.length})</div>
+      <div class="apoio-titulo"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> DOSE ALÉM DA FAIXA (${dosesAbsurdas.length})</div>
       ${dosesAbsurdas.map(d=>`<div class="apoio-item apoio-alta">
         <b>${(d.nome||'').toUpperCase()}:</b> ${d.dose||'?'} — ${d.motivo}</div>`).join('')}
     </div>`;
   }
 
-  // ── #4 BICs e DOSE POR PESO → movidos para dentro da Calc BIC (abrirCalcBIC) ──
-  // Estes painéis não aparecem mais no painel de apoio; acesse via botão ⚗ Calc BIC.
+  // ── #4 BICs e DOSE POR PESO <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M3 8h10"/><path d="M9.5 4.5L13 8l-3.5 3.5"/></svg> movidos para dentro da Calc BIC (abrirCalcBIC) ──
+  // Estes painéis não aparecem mais no painel de apoio; acesse via botão <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M6 2h4M7 2v5L3.5 13.5A1 1 0 004.4 15h7.2a1 1 0 00.9-1.5L9 7V2"/><line x1="4" y1="11" x2="12" y2="11"/></svg> Calc BIC.
 
   // ── Ajustes renais (mantidos aqui pois dependem da TFG) ─────────────────
   const sugestoes=[], ajustes=[];
@@ -3733,7 +3733,7 @@ async function _renderApoioClinico(){
   });
   if(ajustes.length){
     h+=`<div class="apoio-card apoio-info">
-      <div class="apoio-titulo">🔧 AJUSTE PARA FUNÇÃO RENAL <span style="font-weight:500;font-size:.78rem;">(TFG ${ajustes[0].tfgUsar} via ${ajustes[0].equacao})</span></div>
+      <div class="apoio-titulo"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M12.5 3a3 3 0 00-3.5 3.5L3.5 12A1.5 1.5 0 005.5 14l5.5-5.5A3 3 0 0012.5 3z"/><line x1="4" y1="12" x2="5.5" y2="13.5"/></svg> AJUSTE PARA FUNÇÃO RENAL <span style="font-weight:500;font-size:.78rem;">(TFG ${ajustes[0].tfgUsar} via ${ajustes[0].equacao})</span></div>
       ${ajustes.map(a=>`<div class="apoio-item">
         <b>${a.nome}:</b> ${a.dose}${a.nota?' — <em>'+a.nota+'</em>':''}</div>`).join('')}
     </div>`;
@@ -3743,7 +3743,7 @@ async function _renderApoioClinico(){
   if(diff && !diff.semAnterior && (diff.novos.length||diff.suspensos.length||diff.alterados.length)){
     const fmt = _fmtDataCurta(diff.data)||diff.data;
     h+=`<div class="apoio-card apoio-info" style="border-left-color:#6a1b9a;">
-      <div class="apoio-titulo">🔄 MUDANÇAS DESDE ${fmt.toUpperCase()}</div>
+      <div class="apoio-titulo"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2 9a6 6 0 0010.9 2.4"/><path d="M14 7A6 6 0 003.1 4.6"/><path d="M12.5 12L15 9.5l-2.5-2"/><path d="M3.5 4L1 6.5l2.5 2"/></svg> MUDANÇAS DESDE ${fmt.toUpperCase()}</div>
       ${diff.novos.length?`<div class="apoio-item">
         <b style="color:#0a6b3a;">+ NOVO${diff.novos.length>1?'S':''} (${diff.novos.length}):</b>
         ${diff.novos.map(it=>(it.farm||'').toUpperCase()).join(' · ')}</div>`:''}
@@ -3957,7 +3957,7 @@ function _mrxSalvar(){
 
   fecharModalRxItem();
   _renderPrescricao();
-  toast(_mrxEditId ? '✓ Item atualizado' : '✓ Item adicionado');
+  toast(_mrxEditId ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> Item atualizado' : '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> Item adicionado');
 }
 
 /* ─── AUTOCOMPLETE DO MODAL ────────────────────────────────────────────── */
@@ -4214,7 +4214,7 @@ function _renderPrescricao(){
   if(alertaEl){
     if(alergia && !/^nega$/i.test(alergia.trim())){
       alertaEl.style.display='flex';
-      alertaEl.innerHTML=`<div class="presc-alerta">⚠️ <strong>ALERGIA:</strong> ${alergia.toUpperCase()}</div>`;
+      alertaEl.innerHTML=`<div class="presc-alerta"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg>️ <strong>ALERGIA:</strong> ${alergia.toUpperCase()}</div>`;
     } else { alertaEl.style.display='none'; }
   }
   // ── Painel de apoio clínico (TFG, alertas, omissões) ─────────
@@ -4238,7 +4238,7 @@ function _renderPrescricao(){
     const dosePendente = !dispensa && (!it.dose || it.dose.trim()===''||it.dose==='—');
     const doseStyle = dosePendente ? 'border-color:#e53935!important;background:#fff5f5!important;' : '';
     return `<tr class="${rowCls}" data-rx-id="${it.id}" ondblclick="abrirModalRxItem(${it.id})">
-      <td class="presc-td-drag"><span class="rx-drag-handle" draggable="true" title="Arraste para reordenar">⠿</span></td>
+      <td class="presc-td-drag"><span class="rx-drag-handle" draggable="true" title="Arraste para reordenar"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><circle cx="6" cy="5" r="1" fill="currentColor" stroke="none"/><circle cx="10" cy="5" r="1" fill="currentColor" stroke="none"/><circle cx="6" cy="8" r="1" fill="currentColor" stroke="none"/><circle cx="10" cy="8" r="1" fill="currentColor" stroke="none"/><circle cx="6" cy="11" r="1" fill="currentColor" stroke="none"/><circle cx="10" cy="11" r="1" fill="currentColor" stroke="none"/></svg></span></td>
       <td class="presc-num">${i+1}</td>
       <td class="td-farm">
         <div style="display:flex;align-items:center;gap:4px;">
@@ -4274,7 +4274,7 @@ function _renderPrescricao(){
           style="text-transform:uppercase;">${it.obs||''}</textarea>
       </td>
       <td>
-        <button class="presc-del" onclick="_rxRemover(${it.id})" title="Excluir item">🗑</button>
+        <button class="presc-del" onclick="_rxRemover(${it.id})" title="Excluir item"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><polyline points="3,5 5,5 13,5"/><path d="M6 5V3.5A.5.5 0 016.5 3h3a.5.5 0 01.5.5V5"/><path d="M5 5l.7 8.5a.8.8 0 00.8.5h3a.8.8 0 00.8-.5L11 5"/><line x1="7" y1="8" x2="7" y2="12"/><line x1="9" y1="8" x2="9" y2="12"/></svg></button>
       </td>
     </tr>`;
   }).join('');
@@ -4439,7 +4439,7 @@ async function importarPrescricaoOntem(){
     // Clona com novos IDs para evitar conflito
     _rxItens = ult.itens.map(it=>({...it, id:Date.now()+Math.random()}));
     _renderPrescricao();
-    toast(`✓ ${_rxItens.length} itens importados de ${_fmtDataCurta(ult.data)}.`);
+    toast(`<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> ${_rxItens.length} itens importados de ${_fmtDataCurta(ult.data)}.`);
   }catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
 }
 
@@ -4476,7 +4476,7 @@ function _medcontRenderLista(){
   lista.innerHTML = _medcontItens.map((item,idx)=>`
     <div class="medcont-item">
       <span>${item}</span>
-      <button class="mc-rm" onclick="_medcontRemover(${idx})" title="Remover">✕</button>
+      <button class="mc-rm" onclick="_medcontRemover(${idx})" title="Remover"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><line x1="3.5" y1="3.5" x2="12.5" y2="12.5"/><line x1="12.5" y1="3.5" x2="3.5" y2="12.5"/></svg></button>
     </div>`).join('');
 }
 
@@ -4506,7 +4506,7 @@ function salvarModalMedcont(){
   const el = $('f-medcont');
   if(el&&el.closest('.fl')) el.closest('.fl').classList.remove('field-invalid');
   fecharModalMedcont();
-  toast('✓ Medicamentos de uso contínuo atualizados.');
+  toast('<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> Medicamentos de uso contínuo atualizados.');
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
@@ -4541,7 +4541,7 @@ function importarUsoContinuo(){
       _rxItens.push(novo); adicionados++;
     }
   });
-  if(adicionados){ _renderPrescricao(); toast(`✓ ${adicionados} item(ns) de uso contínuo importado(s). Revise as doses.`); }
+  if(adicionados){ _renderPrescricao(); toast(`<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> ${adicionados} item(ns) de uso contínuo importado(s). Revise as doses.`); }
   else toast('Nenhum item novo (já estavam na prescrição).',true);
 }
 
@@ -4574,7 +4574,7 @@ async function _renderListaTemplates(){
         </div>
         <div style="display:flex;gap:4px;">
           <button class="btn btn-pri btn-sm" onclick="aplicarTemplate('${t.key}')">+ Aplicar</button>
-          <button class="btn btn-sm" style="color:var(--vermelho);" onclick="excluirTemplate('${t.key}','${t.nome.replace(/'/g,'')}')">🗑</button>
+          <button class="btn btn-sm" style="color:var(--vermelho);" onclick="excluirTemplate('${t.key}','${t.nome.replace(/'/g,'')}')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><polyline points="3,5 5,5 13,5"/><path d="M6 5V3.5A.5.5 0 016.5 3h3a.5.5 0 01.5.5V5"/><path d="M5 5l.7 8.5a.8.8 0 00.8.5h3a.8.8 0 00.8-.5L11 5"/><line x1="7" y1="8" x2="7" y2="12"/><line x1="9" y1="8" x2="9" y2="12"/></svg></button>
         </div>
       </div>
     </div>
@@ -4593,7 +4593,7 @@ async function salvarTemplateAtual(){
     await dbSet(key,{ nome, itens:itensSemId,
       autor:usuarioEmail, autorNome:perfilUsuario?perfilUsuario.nome:'',
       criadoEm:new Date().toISOString() });
-    hideLoading(); toast('✓ Template salvo e compartilhado.');
+    hideLoading(); toast('<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> Template salvo e compartilhado.');
     sf('tpl-nome','');
     await _renderListaTemplates();
   }catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
@@ -4613,7 +4613,7 @@ async function aplicarTemplate(key){
     });
     $('modal-tpl').classList.remove('show');
     _renderPrescricao();
-    toast(`✓ Template "${tpl.nome}" aplicado.`);
+    toast(`<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> Template "${tpl.nome}" aplicado.`);
   }catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
 }
 
@@ -4646,18 +4646,18 @@ function abrirCalcBIC(){
   let bicsHtml='';
   if(bics.length){
     bicsHtml=`<div class="apoio-card apoio-info" style="margin-bottom:12px;">
-      <div class="apoio-titulo">💧 BICs — mL/h calculado (prescrição atual)</div>
+      <div class="apoio-titulo"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 2C8 2 3 8 3 11a5 5 0 0010 0C13 8 8 2 8 2z"/></svg> BICs — mL/h calculado (prescrição atual)</div>
       ${bics.map(b=>{
         if(b.semPeso){
           return `<div class="apoio-item"><b>${(b.nomeItem||'').toUpperCase()}:</b>
-            <span style="color:var(--vermelho);">⚠ dose por peso, sem peso registrado</span>
+            <span style="color:var(--vermelho);"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> dose por peso, sem peso registrado</span>
             <div style="font-size:.76rem;color:var(--muted);">${b.droga} · diluição: ${b.diluicao} · faixa ${b.faixa} ${b.doseUnidade}</div></div>`;
         }
         if(b.mlh==null){
           return `<div class="apoio-item"><b>${(b.nomeItem||'').toUpperCase()}:</b>
             <span style="color:var(--muted);">informe a dose para calcular</span></div>`;
         }
-        const aviso = b.foraFaixa ? ` <span style="color:var(--laranja);font-weight:700;">⚠ fora da faixa típica ${b.faixa}</span>` : '';
+        const aviso = b.foraFaixa ? ` <span style="color:var(--laranja);font-weight:700;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> fora da faixa típica ${b.faixa}</span>` : '';
         return `<div class="apoio-item"><b>${(b.nomeItem||'').toUpperCase()}:</b>
           <b style="color:var(--vinho);">${b.mlh.toFixed(2)} mL/h</b>${aviso}
           <div style="font-size:.76rem;color:var(--muted);">${b.droga} · dose ${b.dose} ${b.doseUnidade} · diluição: ${b.diluicao}</div></div>`;
@@ -4671,7 +4671,7 @@ function abrirCalcBIC(){
   let dosesPesoHtml='';
   if(sugestoes.length){
     dosesPesoHtml=`<div class="apoio-card apoio-info" style="margin-bottom:12px;">
-      <div class="apoio-titulo">📐 DOSE POR PESO (prescrição atual)</div>
+      <div class="apoio-titulo"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2 14L8 2l6 12H2z"/><line x1="5" y1="11" x2="8" y2="5"/></svg> DOSE POR PESO (prescrição atual)</div>
       ${sugestoes.map(s=>`<div class="apoio-item">
         <b>${s.nome}:</b> ${s.intervalo} ${s.uso}${s.calc||''}${s.nota?' <em>('+s.nota+')</em>':''}</div>`).join('')}
     </div>`;
@@ -4680,9 +4680,9 @@ function abrirCalcBIC(){
   // ── Painel 3: Calculadora manual ──
   let h=bicsHtml+dosesPesoHtml+
     `<div class="apoio-card apoio-info" style="margin-bottom:0;">
-      <div class="apoio-titulo">⚗ Calculadora manual de BIC</div>
+      <div class="apoio-titulo"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M6 2h4M7 2v5L3.5 13.5A1 1 0 004.4 15h7.2a1 1 0 00.9-1.5L9 7V2"/><line x1="4" y1="11" x2="12" y2="11"/></svg> Calculadora manual de BIC</div>
       <div class="tip i" style="margin-bottom:10px;">
-        Calcula mL/h conforme as diluições padrão da UTI. ${peso?'Peso atual: <b>'+peso+'kg</b>':'<b style="color:var(--vermelho);">⚠ Sem peso registrado</b> — preencha na evolução.'}</div>
+        Calcula mL/h conforme as diluições padrão da UTI. ${peso?'Peso atual: <b>'+peso+'kg</b>':'<b style="color:var(--vermelho);"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> Sem peso registrado</b> — preencha na evolução.'}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
         <div class="fl"><label>Droga</label>
           <select id="bic-droga" onchange="_bicCalc()">
@@ -4711,7 +4711,7 @@ function _bicCalc(){
   let html=`<div style="background:var(--bg2);border:1px solid var(--borda);border-radius:9px;padding:10px 14px;font-size:.86rem;line-height:1.7;">
     <strong>${d.nome}</strong> · ${d.amp}<br>
     <strong>Diluição padrão:</strong> ${d.diluicao} (volume final ${d.vol}mL)<br>`;
-  if(d.porPeso && !peso) html+=`<span style="color:var(--vermelho);">⚠ Esta droga é dose por peso — registre o peso do paciente.</span>`;
+  if(d.porPeso && !peso) html+=`<span style="color:var(--vermelho);"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> Esta droga é dose por peso — registre o peso do paciente.</span>`;
   if(!dose) html+=`<span style="color:var(--muted);">Informe a dose desejada acima para calcular mL/h.</span>`;
   if(dose){
     // Calcula mL/h
@@ -4804,10 +4804,10 @@ async function _rxHistoricoRenderizar(){
     const idBody = `rxh-body-${idx}`;
     h+=`<div class="rx-hist-dia">
       <div class="rx-hist-dia-hdr" onclick="_rxHistToggleDia('${idBody}')">
-        <span>📋 ${dtFmt} <span style="font-weight:400;color:var(--muted);">(${total} item${total!==1?'s':''})</span></span>
+        <span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><rect x="3.5" y="3" width="9" height="11" rx="1.2"/><path d="M6 3V2h4v1"/><line x1="6" y1="7" x2="10" y2="7"/><line x1="6" y1="9.5" x2="10" y2="9.5"/><line x1="6" y1="12" x2="9" y2="12"/></svg> ${dtFmt} <span style="font-weight:400;color:var(--muted);">(${total} item${total!==1?'s':''})</span></span>
         <span style="display:flex;gap:6px;align-items:center;">
           <button class="rx-hist-btn-usar" onclick="event.stopPropagation();_rxHistUsarDia('${dia.d}')">Usar esta</button>
-          <span style="font-size:.7rem;color:var(--muted);">▼</span>
+          <span style="font-size:.7rem;color:var(--muted);"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M4 6l4 4 4-4"/></svg></span>
         </span>
       </div>
       <div class="rx-hist-dia-body" id="${idBody}" style="display:none;">`;
@@ -4851,7 +4851,7 @@ async function _rxHistUsarDia(data){
     _cat:it.cat||'normal', obs:'', d0:it.d0||null, mpp:false
   }));
   _renderPrescricao();
-  toast(`✓ ${_rxItens.length} itens carregados de ${_fmtDataCurta(data)}`);
+  toast(`<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> ${_rxItens.length} itens carregados de ${_fmtDataCurta(data)}`);
 }
 
 async function _salvarPrescricaoCore(){
@@ -4860,7 +4860,7 @@ async function _salvarPrescricaoCore(){
   const semDose=_rxItens.filter(it=>!_rxDispensaDose(it)&&(!it.dose||it.dose.trim()===''||it.dose.trim()==='—'));
   if(semDose.length){
     const nomes=semDose.map((it,i)=>`${i===0?'':'  '}${it.farm||'item '+(it.id)}`).join('\n');
-    toast(`❌ Dose obrigatória:\n${nomes}`,true);
+    toast(`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><circle cx="8" cy="8" r="6"/><line x1="5.5" y1="5.5" x2="10.5" y2="10.5"/><line x1="10.5" y1="5.5" x2="5.5" y2="10.5"/></svg> Dose obrigatória:\n${nomes}`,true);
     // Rola até o primeiro item sem dose
     setTimeout(()=>{
       const el=document.querySelector('#presc-tbody input[style*="fff5f5"]');
@@ -4876,7 +4876,7 @@ async function _salvarPrescricaoCore(){
       itens:_rxItens, autor:usuarioEmail, autorNome:perfilUsuario?perfilUsuario.nome:'',
       salvadoEm:new Date().toISOString() });
     await _rxGravarHistorico(_rxItens, data, perfilUsuario?perfilUsuario.nome:usuarioEmail);
-    hideLoading(); toast('✓ Prescrição salva.');
+    hideLoading(); toast('<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> Prescrição salva.');
     _rxHistoricoInit();
   }catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
 }
@@ -5024,7 +5024,7 @@ function _rxMostrarAvisoHeranca(){
   }
   if(_rxItensHerdadosData){
     av.style.display = '';
-    av.innerHTML = `⚠ Exibindo última prescrição salva (${_fmtDataCurta(_rxItensHerdadosData)}) — salve para registrar a de hoje.`;
+    av.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> Exibindo última prescrição salva (${_fmtDataCurta(_rxItensHerdadosData)}) — salve para registrar a de hoje.`;
   } else {
     av.style.display = 'none';
   }
@@ -5091,7 +5091,7 @@ function imprimirPrescricao(){
     <div class="meta-box"><strong>ADM UTI:</strong> ${_fmtDataCurta(adm)||'—'}</div>
     ${diag?`<div class="meta-box" style="flex:2;"><strong>DIAGNÓSTICO:</strong> ${diag}</div>`:''}
   </div>
-  ${alergia&&!/^NEGA$/.test(alergia.trim())?`<div class="alerta">⚠ ALERGIA: ${alergia}</div>`:''}
+  ${alergia&&!/^NEGA$/.test(alergia.trim())?`<div class="alerta"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> ALERGIA: ${alergia}</div>`:''}
   <table>
     <thead>
       <tr>
@@ -5205,7 +5205,7 @@ function _fatbRenderLinhas(){
         <input type="number" value="${l.dias||7}" min="1" max="90" style="width:70px;"
           oninput="_fichaATBLinhas[${i}].dias=this.value">
       </div>
-      ${_fichaATBLinhas.length>1?`<button class="presc-del" onclick="_fichaATBLinhas.splice(${i},1);_fatbRenderLinhas()" title="Remover">🗑</button>`:''}
+      ${_fichaATBLinhas.length>1?`<button class="presc-del" onclick="_fichaATBLinhas.splice(${i},1);_fatbRenderLinhas()" title="Remover"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><polyline points="3,5 5,5 13,5"/><path d="M6 5V3.5A.5.5 0 016.5 3h3a.5.5 0 01.5.5V5"/><path d="M5 5l.7 8.5a.8.8 0 00.8.5h3a.8.8 0 00.8-.5L11 5"/><line x1="7" y1="8" x2="7" y2="12"/><line x1="9" y1="8" x2="9" y2="12"/></svg></button>`:''}
     </div>
   `).join('<hr style="border:none;border-top:1px dashed var(--borda);margin:6px 0;">');
 }
@@ -5270,7 +5270,7 @@ async function salvarFichaATB(){
     await dbSet(key, ficha);
     _fichaATBKey=key;
     hideLoading();
-    toast('✓ Ficha salva.');
+    toast('<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> Ficha salva.');
     _renderGuiasFichas();
   }catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
 }
@@ -5316,28 +5316,28 @@ async function _renderGuiasFichas(){
     w.innerHTML=arr.map(f=>{
       let icon, titulo, edit, impr;
       if(f._tipo==='me'){
-        icon='🧠';
+        icon='<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 13.5C8 13.5 3 12 3 8a5 5 0 0110 0c0 4-5 5.5-5 5.5z"/><path d="M8 13.5V6"/><path d="M8 9c0 0-2-1-2-3"/><path d="M8 7.5c0 0 2-1 2-3"/><circle cx="6" cy="4.5" r="1.2"/><circle cx="10" cy="4" r="1.2"/></svg>';
         titulo=`Morte Encefálica: ${(f.pac||'').split(' ').slice(0,2).join(' ')||'—'}`;
         edit=`_abrirMEExistente('${f.key}')`;
         impr=`_imprimirMEChave('${f.key}')`;
       } else if(f._tipo==='trilogy'){
-        icon='🫁';
+        icon='<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 2v8"/><path d="M8 6C8 6 5 6 4 8s-1.5 4-1 5 2 1.5 3 1c1-.5 2-2 2-4"/><path d="M8 6c0 0 3 0 4 2s1.5 4 1 5-2 1.5-3 1-2-2-2-4"/></svg>';
         titulo=`Plano Terapêutico (Trilogy): ${(f.pac||'').split(' ').slice(0,2).join(' ')||'—'}`;
         edit=`_abrirTrilogyExistente('${f.key}')`;
         impr=`_imprimirTrilogyChave('${f.key}')`;
       } else if(f._tipo==='hemo'){
-        icon='🩸';
+        icon='<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;color:#b91c1c;"><path d="M8 2C8 2 4 7.5 4 10a4 4 0 008 0C12 7.5 8 2 8 2z"/><path d="M6 10.5a2 2 0 002 1.5"/></svg>';
         titulo=`Hemoterápicos: ${(f.pedidos||[]).filter(p=>p.selecionado).map(p=>p.label.split(' ').slice(0,2).join(' ')).join(', ')||'—'}`;
         edit=`_abrirHemoExistente('${f.key}')`;
         impr=`_imprimirHemoChave('${f.key}')`;
       } else if(f._tipo==='termo'){
-        icon='📋';
+        icon='<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><rect x="3.5" y="3" width="9" height="11" rx="1.2"/><path d="M6 3V2h4v1"/><line x1="6" y1="7" x2="10" y2="7"/><line x1="6" y1="9.5" x2="10" y2="9.5"/><line x1="6" y1="12" x2="9" y2="12"/></svg>';
         const nomeTermo = f.tipo==='paliativo'?'Cuidados Paliativos':f.tipo==='traqueo'?'Autorização de Traqueostomia':'Termo';
         titulo=`Termo: ${nomeTermo}`;
         edit=`_abrirTermoExistente('${f.key}')`;
         impr=`_imprimirTermoChave('${f.key}')`;
       } else {
-        icon='🦠';
+        icon='<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><circle cx="8" cy="8" r="4"/><circle cx="8" cy="8" r="1.5"/><line x1="8" y1="2" x2="8" y2="4"/><line x1="12.2" y1="3.8" x2="10.8" y2="5.2"/><line x1="14" y1="8" x2="12" y2="8"/><line x1="3.8" y1="3.8" x2="5.2" y2="5.2"/><line x1="2" y1="8" x2="4" y2="8"/><line x1="3.8" y1="12.2" x2="5.2" y2="10.8"/><line x1="12.2" y1="12.2" x2="10.8" y2="10.8"/></svg>';
         titulo=`ATB: ${(f.atbs||[]).map(a=>a.atb).filter(Boolean).join(', ')||'—'}`;
         edit=`_abrirFichaExistente('${f.key}')`;
         impr=`_imprimirFichaChave('${f.key}')`;
@@ -5349,8 +5349,8 @@ async function _renderGuiasFichas(){
           <span style="font-size:.74rem;color:var(--muted);">${dataf} · ${f.autorNome||f.autor||'?'}</span>
         </div>
         <div style="display:flex;gap:4px;">
-          <button class="btn btn-sm" onclick="${edit}">✎ Editar</button>
-          <button class="btn btn-sm" onclick="${impr}">🖨 Imprimir</button>
+          <button class="btn btn-sm" onclick="${edit}"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M11 2.5l2.5 2.5-7.5 7.5L3.5 15l2.5-2.5z"/><line x1="9.5" y1="4" x2="12" y2="6.5"/></svg> Editar</button>
+          <button class="btn btn-sm" onclick="${impr}"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><rect x="3" y="6" width="10" height="7" rx="1"/><path d="M5 6V3h6v3"/><rect x="5" y="9.5" width="6" height="2.5" rx=".4"/><line x1="5" y1="7.8" x2="11" y2="7.8"/></svg> Imprimir</button>
         </div>
       </div>`;
     }).join('');
@@ -5399,13 +5399,13 @@ function _detectarATBsNovos(){
 /* ── Detecção de ATBs novos/alterados — chamada dentro de salvarPrescricao ── */
 
 function _mostrarModalATBNovos(atbs){
-  const nomes=atbs.map(a=>`${a.motivo==='novo'?'🆕':'✏️'} ${a.farm}`).join('<br>');
+  const nomes=atbs.map(a=>`${a.motivo==='novo'?'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><rect x="1.5" y="4" width="13" height="8" rx="1.5"/><path d="M5 11V5l2.5 4L10 5v6"/><line x1="6" y1="8" x2="8.5" y2="8"/></svg>':'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M11 2.5l2.5 2.5-7.5 7.5L3.5 15l2.5-2.5z"/><line x1="9.5" y1="4" x2="12" y2="6.5"/></svg>️'} ${a.farm}`).join('<br>');
   // Guarda os ATBs num campo global para evitar problemas com aspas no onclick
   window._atbsPendentes = atbs.map(a=>a.farm);
   const el=document.createElement('div');
   el.className='modal show'; el.id='modal-atb-prompt';
   el.innerHTML=`<div class="modal-box" style="max-width:480px;">
-    <div class="modal-head"><h3>🦠 Ficha de Antimicrobiano</h3></div>
+    <div class="modal-head"><h3><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><circle cx="8" cy="8" r="4"/><circle cx="8" cy="8" r="1.5"/><line x1="8" y1="2" x2="8" y2="4"/><line x1="12.2" y1="3.8" x2="10.8" y2="5.2"/><line x1="14" y1="8" x2="12" y2="8"/><line x1="3.8" y1="3.8" x2="5.2" y2="5.2"/><line x1="2" y1="8" x2="4" y2="8"/><line x1="3.8" y1="12.2" x2="5.2" y2="10.8"/><line x1="12.2" y1="12.2" x2="10.8" y2="10.8"/></svg> Ficha de Antimicrobiano</h3></div>
     <div class="modal-body">
       <div class="tip i" style="margin-bottom:12px;">
         ${atbs.length===1?'Um antimicrobiano foi':'Antimicrobianos foram'}
@@ -5414,7 +5414,7 @@ function _mostrarModalATBNovos(atbs){
       </div>
       <p style="font-size:.86rem;margin-bottom:14px;">Deseja preencher a ficha de solicitação de antimicrobiano agora?</p>
       <div style="display:flex;gap:8px;justify-content:flex-end;">
-        <button class="btn btn-pri" onclick="document.getElementById('modal-atb-prompt').remove();abrirFichaATBComATBs(window._atbsPendentes||[])">✓ Sim, preencher ficha</button>
+        <button class="btn btn-pri" onclick="document.getElementById('modal-atb-prompt').remove();abrirFichaATBComATBs(window._atbsPendentes||[])"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> Sim, preencher ficha</button>
         <button class="btn" onclick="document.getElementById('modal-atb-prompt').remove()">Agora não</button>
       </div>
     </div>
@@ -5454,8 +5454,8 @@ function _imprimirFichaObj(f){
   const ccihHtml=(f.atbs||[]).map((a,i)=>`
     <tr>
       <td style="font-weight:700;">${(a.atb||'').toUpperCase()}</td>
-      <td style="white-space:nowrap;">☐ SIM &nbsp; ☐ NÃO</td>
-      <td style="white-space:nowrap;">☐ SIM &nbsp; ☐ NÃO</td>
+      <td style="white-space:nowrap;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><rect x="3" y="3" width="10" height="10" rx="1.5"/></svg> SIM &nbsp; <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><rect x="3" y="3" width="10" height="10" rx="1.5"/></svg> NÃO</td>
+      <td style="white-space:nowrap;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><rect x="3" y="3" width="10" height="10" rx="1.5"/></svg> SIM &nbsp; <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><rect x="3" y="3" width="10" height="10" rx="1.5"/></svg> NÃO</td>
       <td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
     </tr>`).join('');
 
@@ -5513,8 +5513,8 @@ function _imprimirFichaObj(f){
     <div class="secao-titulo">Infecção</div>
     <div class="secao-corpo">
       <div class="grid2" style="margin-bottom:8px;">
-        <div class="campo"><label>Origem</label><div class="val">${f.origem==='comunitaria'?'☑ Comunitária  ☐ Hospitalar':'☐ Comunitária  ☑ Hospitalar'}</div></div>
-        <div class="campo"><label>Uso</label><div class="val">${f.uso==='profilatico'?'☑ Profilático  ☐ Terapêutico':'☐ Profilático  ☑ Terapêutico'}</div></div>
+        <div class="campo"><label>Origem</label><div class="val">${f.origem==='comunitaria'?'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><rect x="3" y="3" width="10" height="10" rx="1.5"/><path d="M5.5 8l2 2 3-3"/></svg> Comunitária  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><rect x="3" y="3" width="10" height="10" rx="1.5"/></svg> Hospitalar':'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><rect x="3" y="3" width="10" height="10" rx="1.5"/></svg> Comunitária  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><rect x="3" y="3" width="10" height="10" rx="1.5"/><path d="M5.5 8l2 2 3-3"/></svg> Hospitalar'}</div></div>
+        <div class="campo"><label>Uso</label><div class="val">${f.uso==='profilatico'?'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><rect x="3" y="3" width="10" height="10" rx="1.5"/><path d="M5.5 8l2 2 3-3"/></svg> Profilático  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><rect x="3" y="3" width="10" height="10" rx="1.5"/></svg> Terapêutico':'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><rect x="3" y="3" width="10" height="10" rx="1.5"/></svg> Profilático  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><rect x="3" y="3" width="10" height="10" rx="1.5"/><path d="M5.5 8l2 2 3-3"/></svg> Terapêutico'}</div></div>
       </div>
       <div class="campo"><label>Diagnóstico infeccioso provável</label>
         <div class="val" style="min-height:20px;">${diagTxt.toUpperCase()}</div>
@@ -5561,7 +5561,7 @@ function _imprimirFichaObj(f){
         ${(f.atbs||[]).map(a=>`<tr>
           <td style="font-weight:700;">${(a.atb||'').toUpperCase()}</td>
           <td>&nbsp;<br>&nbsp;</td><td>&nbsp;</td>
-          <td>☐ SIM  ☐ NÃO</td>
+          <td><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><rect x="3" y="3" width="10" height="10" rx="1.5"/></svg> SIM  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><rect x="3" y="3" width="10" height="10" rx="1.5"/></svg> NÃO</td>
         </tr>`).join('')}
       </table>
       <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:flex-end;">
@@ -5666,7 +5666,7 @@ async function _buscarCartaoSUSAuto(){
   const nome = (gf('fhemo-nome')||gf('f-pac')||'').trim();
   const cns  = (gf('fhemo-cns') ||gf('f-cns') ||'').replace(/\D/g,'');
   if(!nome && !cns) return;
-  _atualizarStatusCartaoSUS('⏳ Buscando cartão SUS no Drive...');
+  _atualizarStatusCartaoSUS('<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M4 2h8M4 14h8"/><path d="M5 2v3l3 3-3 3v3"/><path d="M11 2v3L8 8l3 3v3"/></svg> Buscando cartão SUS no Drive...');
   try{
     const r = await _apsFetch({
       action: 'cartao_sus',
@@ -5688,20 +5688,20 @@ async function _buscarCartaoSUSAuto(){
       }
       _cartaoSUSPDF = r.pdfBase64 || null;
       _cartaoSUSStatus = 'ok';
-      _atualizarStatusCartaoSUS('✓ Cartão SUS encontrado — será impresso junto');
+      _atualizarStatusCartaoSUS('<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> Cartão SUS encontrado — será impresso junto');
     } else if(r.status === 'nao_encontrado'){
       _cartaoSUSStatus = 'sem_pasta';
-      _atualizarStatusCartaoSUS('⚠ Subpasta do paciente não encontrada no Drive');
+      _atualizarStatusCartaoSUS('<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> Subpasta do paciente não encontrada no Drive');
     } else if(r.status === 'nao_encontrado_cartao'){
       _cartaoSUSStatus = 'sem_cartao';
-      _atualizarStatusCartaoSUS('⚠ Pasta encontrada, mas sem PDF do Cartão SUS');
+      _atualizarStatusCartaoSUS('<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> Pasta encontrada, mas sem PDF do Cartão SUS');
     } else {
       _cartaoSUSStatus = 'erro';
-      _atualizarStatusCartaoSUS('⚠ ' + (r.msg||'Erro ao buscar cartão SUS'));
+      _atualizarStatusCartaoSUS('<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> ' + (r.msg||'Erro ao buscar cartão SUS'));
     }
   } catch(e){
     console.warn('[Cartão SUS]', e);
-    _atualizarStatusCartaoSUS('⚠ Falha na busca (sem conexão?)');
+    _atualizarStatusCartaoSUS('<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> Falha na busca (sem conexão?)');
   }
 }
 
@@ -5710,7 +5710,7 @@ function _atualizarStatusCartaoSUS(msg){
   if(!el) return;
   if(!msg){ el.style.display='none'; el.textContent=''; return; }
   el.style.display=''; el.textContent = msg;
-  el.style.color = msg.startsWith('✓') ? '#0a6b3a' : msg.startsWith('⏳') ? '#666' : '#a35200';
+  el.style.color = msg.startsWith('<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg>') ? '#0a6b3a' : msg.startsWith('<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M4 2h8M4 14h8"/><path d="M5 2v3l3 3-3 3v3"/><path d="M11 2v3L8 8l3 3v3"/></svg>') ? '#666' : '#a35200';
 }
 
 async function rebuscarCartaoSUS(){ await _buscarCartaoSUSAuto(); }
@@ -5764,7 +5764,7 @@ async function salvarFichaHemo(){
     const f=_coletarFichaHemo();
     const key=`uti_med_hemo_ficha_${leitoAtual}_${f.data}_${Date.now()}`;
     await dbSet(key,f);
-    hideLoading(); toast('✓ Ficha de hemoterápicos salva.');
+    hideLoading(); toast('<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> Ficha de hemoterápicos salva.');
     _renderGuiasFichas();
   }catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
 }
@@ -5826,7 +5826,7 @@ function _imprimirFichaHemoObj(f){
   <!-- CABEÇALHO HEMONORTE -->
   <div class="topo">
     <div class="topo-logo">
-      <div class="sangue">🩸</div>
+      <div class="sangue"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;color:#b91c1c;"><path d="M8 2C8 2 4 7.5 4 10a4 4 0 008 0C12 7.5 8 2 8 2z"/><path d="M6 10.5a2 2 0 002 1.5"/></svg></div>
       <div><div class="hemo">HEMONORTE</div><div style="font-size:7pt;color:#555;">Centro de Hematologia e Hemoterapia do RN</div></div>
     </div>
     <div style="text-align:right;font-size:8pt;"></div>
@@ -6103,7 +6103,7 @@ async function _gerarEtiquetasComCartao(cartaoBase64, dadosPac, tipo, materiais)
     const FS = 6;
     // Altura de linha = 1.4 * FS
     const LH = FS * 1.4;
-    // Largura de cada etiqueta (mm→pts: 88mm × 2.835 ≈ 249 pts)
+    // Largura de cada etiqueta (mm<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M3 8h10"/><path d="M9.5 4.5L13 8l-3.5 3.5"/></svg>pts: 88mm × 2.835 ≈ 249 pts)
     // Mas vamos usar um terço da largura da página para caber 2 lado a lado
     const etiqW = (cartaoPageW - 40) / 2;  // 2 colunas com margem
     const etiqH = _linhasEtiqueta().length * LH + 8; // altura com padding
@@ -6291,7 +6291,7 @@ async function _gerarHemoCompleto(htmlFicha, f){
 
     const canvas = await html2canvas(container, { scale:2, backgroundColor:'#ffffff', useCORS:true });
 
-    // ── 2. Ficha → jsPDF → forçada em exatamente 1 A4 ─────────────────────────
+    // ── 2. Ficha <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M3 8h10"/><path d="M9.5 4.5L13 8l-3.5 3.5"/></svg> jsPDF <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M3 8h10"/><path d="M9.5 4.5L13 8l-3.5 3.5"/></svg> forçada em exatamente 1 A4 ─────────────────────────
     const { jsPDF } = window.jspdf;
     const fichaJsPDF = new jsPDF('p','mm','a4');
     const pdfW = fichaJsPDF.internal.pageSize.getWidth();  // 210 mm
@@ -6331,7 +6331,7 @@ async function _gerarHemoCompleto(htmlFicha, f){
 
     // ── 4. Etiqueta de prova cruzada centrada no espaço em branco ─────────────
     //   O Cartão SUS ocupa visualmente a metade SUPERIOR da página.
-    //   Em pdf-lib y=0 é o FUNDO → espaço em branco fica em y ∈ [0, pgH*0.48]
+    //   Em pdf-lib y=0 é o FUNDO <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M3 8h10"/><path d="M9.5 4.5L13 8l-3.5 3.5"/></svg> espaço em branco fica em y ∈ [0, pgH*0.48]
     const font     = await merged.embedFont(StandardFonts.TimesRoman);
     const fontBold = await merged.embedFont(StandardFonts.TimesRomanBold);
     const FS = 8;          // 8pt — legibilidade em 1 etiqueta
@@ -6480,7 +6480,7 @@ async function salvarTermo(){
     const t=_coletarTermo();
     const key=`uti_med_termo_${leitoAtual}_${t.data}_${Date.now()}`;
     await dbSet(key,t);
-    hideLoading(); toast('✓ Termo salvo.');
+    hideLoading(); toast('<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> Termo salvo.');
     _renderGuiasFichas();
   }catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
 }
@@ -6708,7 +6708,7 @@ function _solRender(){
       <input type="text" value="${l.exame||''}" placeholder="Nome do exame"
         style="flex:1;text-transform:uppercase;padding:7px 10px;border:1.5px solid var(--borda);border-radius:8px;font-size:.9rem;"
         oninput="_solLinhas[${i}].exame=this.value.toUpperCase()">
-      ${_solLinhas.length>1?`<button class="presc-del" onclick="_solLinhas.splice(${i},1);_solRender()" title="Remover">🗑</button>`:''}
+      ${_solLinhas.length>1?`<button class="presc-del" onclick="_solLinhas.splice(${i},1);_solRender()" title="Remover"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><polyline points="3,5 5,5 13,5"/><path d="M6 5V3.5A.5.5 0 016.5 3h3a.5.5 0 01.5.5V5"/><path d="M5 5l.7 8.5a.8.8 0 00.8.5h3a.8.8 0 00.8-.5L11 5"/><line x1="7" y1="8" x2="7" y2="12"/><line x1="9" y1="8" x2="9" y2="12"/></svg></button>`:''}
     </div>`).join('');
 }
 
@@ -6751,7 +6751,7 @@ async function salvarSolicitacaoExames(){
     // Adiciona à lista local para impressão futura
     _solSalvas.push({key,...s});
     hideLoading();
-    toast('✓ Solicitação salva. Clique em 🖨 Imprimir para gerar o documento.');
+    toast('<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> Solicitação salva. Clique em <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><rect x="3" y="6" width="10" height="7" rx="1"/><path d="M5 6V3h6v3"/><rect x="5" y="9.5" width="6" height="2.5" rx=".4"/><line x1="5" y1="7.8" x2="11" y2="7.8"/></svg> Imprimir para gerar o documento.');
     _solLinhas=[{exame:''}];
     _solRender();
     sf('sol-indicacao','');
@@ -7083,7 +7083,7 @@ async function salvarESimprimirRotina(){
       });
     }));
     hideLoading();
-    toast(`✓ ${selecionados.length} solicitações salvas.`);
+    toast(`<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> ${selecionados.length} solicitações salvas.`);
     imprimirRotinaExames();
   }catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
 }
@@ -7293,7 +7293,7 @@ function _coletarCultura(){
 
 // Resumo para o card do histórico
 // Retorna array de strings, cada uma = 1 etiqueta individual.
-// Ex: Hemo 2 pares → ['HEMOCULTURA 1ª AMOSTRA','HEMOCULTURA 2ª AMOSTRA']
+// Ex: Hemo 2 pares <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M3 8h10"/><path d="M9.5 4.5L13 8l-3.5 3.5"/></svg> ['HEMOCULTURA 1ª AMOSTRA','HEMOCULTURA 2ª AMOSTRA']
 function _cultResumir(c){
   const lista=[];
 
@@ -7570,7 +7570,7 @@ async function salvarParecer(){
     const key = `uti_med_parecer_${leitoAtual}_${p.data}_${Date.now()}`;
     await dbSet(key, p);
     hideLoading();
-    toast('✓ Parecer salvo.');
+    toast('<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> Parecer salvo.');
     _renderHistoricoSolicitacoes();
   } catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
 }
@@ -7857,7 +7857,7 @@ async function salvarTrilogy(){
   try{
     const key = `uti_med_trilogy_${leitoAtual}_${t.data}_${Date.now()}`;
     await dbSet(key, t);
-    hideLoading(); toast('✓ Plano terapêutico salvo.');
+    hideLoading(); toast('<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> Plano terapêutico salvo.');
     _renderGuiasFichas();
   }catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
 }
@@ -8153,7 +8153,7 @@ async function salvarME(){
   try{
     const key = `uti_med_me_${leitoAtual}_${m.data}_${Date.now()}`;
     await dbSet(key, m);
-    hideLoading(); toast('✓ Termo de morte encefálica salvo.');
+    hideLoading(); toast('<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> Termo de morte encefálica salvo.');
     _renderGuiasFichas();
   }catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
 }
@@ -8428,7 +8428,7 @@ async function salvarSolicitacaoCultura(){
   try{
     const key=`uti_med_sol_cult_${leitoAtual}_${c.data}_${Date.now()}`;
     await dbSet(key,c);
-    hideLoading(); toast('✓ Requisição de cultura salva.');
+    hideLoading(); toast('<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> Requisição de cultura salva.');
     fecharSolicitacaoCultura();
     _renderHistoricoSolicitacoes();
   }catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
@@ -8674,7 +8674,7 @@ async function _gerarCulturaCompleto(htmlFicha, c){
 
     const canvas = await html2canvas(container, { scale:2, backgroundColor:'#ffffff', useCORS:true });
 
-    // ── 2. Canvas → 1 A4 forçado via jsPDF ────────────────────────────────────
+    // ── 2. Canvas <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M3 8h10"/><path d="M9.5 4.5L13 8l-3.5 3.5"/></svg> 1 A4 forçado via jsPDF ────────────────────────────────────
     const { jsPDF } = window.jspdf;
     const fichaJsPDF = new jsPDF('p','mm','a4');
     const pdfW = fichaJsPDF.internal.pageSize.getWidth();
