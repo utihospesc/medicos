@@ -7152,9 +7152,9 @@ function abrirSolicitacaoCultura(){
   const sel=$('cult-sexo');
   if(sel) sel.value=s.includes('FEM')?'F':s.includes('MAS')?'M':'';
   // Data/hora coleta
-  sf('cult-data-coleta', gf('f-data')||hoje());
-  const now=new Date();
-  sf('cult-hora-coleta', now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0'));
+  // Data/hora coleta — deixados em branco para preenchimento manual na coleta
+  sf('cult-data-coleta', '');
+  sf('cult-hora-coleta', '');
   // Indicação clínica do diagnóstico
   sf('cult-indicacao', (gf('f-diag')||'').toUpperCase());
   // Limpar checkboxes
@@ -7192,7 +7192,7 @@ function _coletarCultura(){
     obs:gf('cult-obs'),
     // Exames selecionados
     uro:chk('cult-uro'), uroTp:uroTp?uroTp.value:'',
-    copro:chk('cult-copro'), hemo:chk('cult-hemo'), cateter:chk('cult-cateter'),
+    copro:chk('cult-copro'), hemo:chk('cult-hemo'), hemoN:parseInt(gf('cult-hemo-n'))||1, cateter:chk('cult-cateter'),
     sec:chk('cult-sec'),
     secSubs:['traq','fo','up','abs'].filter(t=>chk('cult-sec-'+t)),
     secOutros:gf('cult-sec-out-txt'),
@@ -7212,32 +7212,71 @@ function _coletarCultura(){
 }
 
 // Resumo para o card do histórico
+// Retorna array de strings, cada uma = 1 etiqueta individual.
+// Ex: Hemo 2 pares → ['HEMOCULTURA 1ª AMOSTRA','HEMOCULTURA 2ª AMOSTRA']
 function _cultResumir(c){
   const lista=[];
-  if(c.uro) lista.push('Urocultura'+(c.uroTp?' ('+c.uroTp+')':''));
-  if(c.copro) lista.push('Coprocultura');
-  if(c.hemo) lista.push('Hemocultura');
-  if(c.cateter) lista.push('Ponta cateter');
+
+  // Urocultura
+  if(c.uro){
+    const tp = c.uroTp==='svd'?'SVD':c.uroTp==='jato'?'JATO MÉDIO':c.uroTp==='aliv'?'SONDA DE ALÍVIO':'';
+    lista.push('UROCULTURA'+(tp?' ('+tp+')':''));
+  }
+
+  // Coprocultura
+  if(c.copro) lista.push('COPROCULTURA');
+
+  // Hemocultura — 1 etiqueta por amostra (par)
+  if(c.hemo){
+    const n = Math.max(1, parseInt(c.hemoN)||1);
+    const ord = ['1ª','2ª','3ª','4ª'];
+    for(let i=0;i<n;i++)
+      lista.push('HEMOCULTURA '+(ord[i]||`${i+1}ª`)+' AMOSTRA');
+  }
+
+  // Ponta de cateter
+  if(c.cateter) lista.push('PONTA DE CATETER');
+
+  // Secreção — 1 etiqueta por sítio
   if(c.sec){
-    const s=['Secreção'];
-    if(c.secSubs&&c.secSubs.length) s.push('('+c.secSubs.join(',').replace(/traq/,'Traqueal').replace(/fo/,'FO').replace(/up/,'UP').replace(/abs/,'Abs.')+')');
-    lista.push(s.join(' '));
+    const MAP_SEC={traq:'SECREÇÃO TRAQUEAL',fo:'SECREÇÃO / FERIDA OPERATÓRIA',up:'SECREÇÃO / ÚLCERA DE PRESSÃO',abs:'SECREÇÃO / ABSCESSO'};
+    const subs=c.secSubs||[];
+    if(subs.length) subs.forEach(t=>lista.push(MAP_SEC[t]||'SECREÇÃO ('+t.toUpperCase()+')'));
+    else lista.push('SECREÇÃO');
+    if(c.secOutros&&c.secOutros.trim()) lista.push('SECREÇÃO / '+c.secOutros.trim().toUpperCase());
   }
+
+  // Líquidos cavitários — 1 etiqueta por tipo
   if(c.liq){
-    const l=['Líq.Cavitário'];
-    if(c.liqSubs&&c.liqSubs.length) l.push('('+c.liqSubs.join(',')+')');
-    lista.push(l.join(' '));
+    const MAP_LIQ={liquor:'LÍQUOR',pleural:'LÍQUIDO PLEURAL',sinov:'LÍQUIDO SINOVIAL',ascit:'LÍQUIDO ASCÍTICO'};
+    const subs=c.liqSubs||[];
+    if(subs.length) subs.forEach(t=>lista.push(MAP_LIQ[t]||'LÍQ. CAVITÁRIO ('+t.toUpperCase()+')'));
+    else lista.push('LÍQ. CAVITÁRIO');
+    if(c.liqOutros&&c.liqOutros.trim()) lista.push('LÍQ. CAVITÁRIO / '+c.liqOutros.trim().toUpperCase());
   }
-  if(c.frag) lista.push('Fragmento');
-  if(c.bk) lista.push('BK');
-  if(c.fungos) lista.push('Fungos');
-  if(c.vig) lista.push('Vigilância');
-  if(c.bordet) lista.push('Bordetella');
-  if(c.virus) lista.push('Vírus resp.');
-  if(c.gram) lista.push('GRAM');
-  if(c.fresco) lista.push('Microscopia fresco');
-  if(c.ziehl) lista.push('ZIEHL-NEELSEN');
-  return lista.length?lista:['Cultura'];
+
+  // Fragmento, BK, Fungos
+  if(c.frag) lista.push('FRAGMENTO DE TECIDO');
+  if(c.bk)   lista.push('BK (MYCOBACTERIUM)');
+  if(c.fungos) lista.push('FUNGOS');
+
+  // Vigilância — 1 etiqueta por swab
+  if(c.vig){
+    const MAP_VIG={nasal:'SWAB NASAL',retal:'SWAB RETAL'};
+    const subs=c.vigSubs||[];
+    if(subs.length) subs.forEach(t=>lista.push('VIGILÂNCIA / '+(MAP_VIG[t]||t.toUpperCase())));
+    else lista.push('VIGILÂNCIA');
+    if(c.vigOutros&&c.vigOutros.trim()) lista.push('VIGILÂNCIA / '+c.vigOutros.trim().toUpperCase());
+  }
+
+  // Outros exames
+  if(c.bordet) lista.push('BORDETELLA PERTUSSIS');
+  if(c.virus)  lista.push('VÍRUS RESP.'+(c.virusTxt?' ('+c.virusTxt.trim().toUpperCase()+')':''));
+  if(c.gram)   lista.push('MICROSCOPIA GRAM');
+  if(c.fresco) lista.push('MICROSCOPIA A FRESCO');
+  if(c.ziehl)  lista.push('ZIEHL-NEELSEN');
+
+  return lista.length?lista:['CULTURA'];
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
