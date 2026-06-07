@@ -1003,6 +1003,67 @@ a:hover{text-decoration:underline}
 }
 .lab-ro-item b{ color:var(--muted); font-weight:600; font-size:.72rem; margin-right:2px; }
 
+/* ── EXAMES PASSADOS — dropdown somente leitura ────────────── */
+.lab-past-wrap{
+  border:1px solid var(--borda); border-radius:8px;
+  margin-bottom:5px; overflow:hidden; background:var(--bg2);
+  transition:border-color .15s;
+}
+.lab-past-wrap.lab-past-open{
+  border-color:var(--vinho-borda);
+  background:#fff;
+}
+.lab-past-btn{
+  display:flex; align-items:center; gap:7px;
+  width:100%; background:none; border:none; cursor:pointer;
+  padding:7px 10px; font-family:inherit; text-align:left;
+  transition:background .12s;
+}
+.lab-past-btn:hover{ background:var(--vinho-claro); }
+.lab-past-ico{ font-size:.85rem; flex-shrink:0; }
+.lab-past-date{
+  font-family:var(--font-mono); font-size:.75rem; font-weight:700;
+  color:var(--vinho); white-space:nowrap;
+}
+.lab-past-count{
+  font-size:.7rem; color:var(--muted); font-family:var(--font-mono);
+  flex:1;
+}
+.lab-past-lock{
+  font-size:.72rem; opacity:.45; flex-shrink:0;
+}
+.lab-past-chev{
+  font-size:.7rem; color:var(--muted); flex-shrink:0;
+  transition:transform .18s;
+}
+.lab-past-body{
+  padding:8px 10px 10px;
+  border-top:1px solid var(--borda);
+  animation:labPastIn .15s ease;
+}
+@keyframes labPastIn{ from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:none} }
+.lab-past-chips{
+  display:flex; flex-wrap:wrap; gap:4px 6px;
+}
+.lab-past-chip{
+  display:inline-flex; align-items:baseline; gap:3px;
+  background:var(--vinho-claro); border:1px solid var(--vinho-borda);
+  border-radius:5px; padding:2px 7px;
+  font-family:var(--font-mono); font-size:.76rem; color:var(--tinta);
+  white-space:nowrap;
+}
+.lab-past-chip.lab-past-outros{
+  background:#f5f5f5; border-color:var(--borda);
+  color:var(--tinta-2); font-size:.72rem; font-style:italic;
+}
+.lab-past-k{
+  font-size:.65rem; font-weight:700; color:var(--muted);
+  text-transform:uppercase; margin-right:1px;
+}
+.lab-past-empty{
+  font-size:.76rem; color:var(--muted); font-style:italic;
+}
+
 /* Histórico de solicitações */
 .sol-hist-data{ margin-bottom:14px; }
 .sol-hist-data-lbl{
