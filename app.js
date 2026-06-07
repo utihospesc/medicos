@@ -1510,7 +1510,11 @@ function _calcIdadeDisplay(idDN,idOut){
 function _renderLabLinhas(){
   const wrap=$('lab-linhas'); if(!wrap) return;
   if(!_labLinhas.length){ wrap.innerHTML='<div style="font-size:.78rem;color:var(--muted);padding:.4rem;">Nenhuma data registrada. Clique em "+ Adicionar data de exames".</div>'; return; }
+  const dataAtual = gf('f-data') || dataDoTurno(turnoAtual) || hoje();
   wrap.innerHTML = _labLinhas.map((lin,idx)=>{
+    const isPast = lin.data && lin.data < dataAtual;
+    if(isPast) return _renderLabLinhaPast(lin, idx);
+    // Data atual ou futura: formulário editável normal
     const campos = LAB_CAMPOS.map(c=>`
       <div class="fl"><label>${c.l}</label><input type="number" step="any" value="${(lin.valores&&lin.valores[c.k]!=null)?lin.valores[c.k]:''}" oninput="_setLabVal(${idx},'${c.k}',this.value)"></div>`).join('');
     const outrosVal = (lin.outros||'').replace(/"/g,'&quot;');
@@ -1531,6 +1535,40 @@ function _renderLabLinhas(){
       </div>
     </div>`;
   }).join('');
+}
+
+function _renderLabLinhaPast(lin, idx){
+  const campLbl = Object.fromEntries(LAB_CAMPOS.map(c=>[c.k,c.l]));
+  const vals = Object.entries(lin.valores||{})
+    .filter(([,v])=>v!=null&&v!=='')
+    .map(([k,v])=>`<span class="lab-past-chip"><span class="lab-past-k">${campLbl[k]||k}</span>${v}</span>`)
+    .join('');
+  const outrosTag = lin.outros && lin.outros.trim()
+    ? `<span class="lab-past-chip lab-past-outros"><span class="lab-past-k">Outros</span>${lin.outros}</span>` : '';
+  const tudo = vals + outrosTag;
+  const countVals = Object.values(lin.valores||{}).filter(v=>v!=null&&v!=='').length + (lin.outros&&lin.outros.trim()?1:0);
+  const uid = `lab-past-${idx}`;
+  return `<div class="lab-past-wrap" id="${uid}-wrap">
+    <button class="lab-past-btn" onclick="_toggleLabPast('${uid}')" title="Expandir / recolher">
+      <span class="lab-past-ico">📅</span>
+      <span class="lab-past-date">${_fmtDataCurta(lin.data)||'?'}</span>
+      <span class="lab-past-count">${countVals} resultado${countVals!==1?'s':''}</span>
+      <span class="lab-past-lock" title="Somente leitura">🔒</span>
+      <span class="lab-past-chev" id="${uid}-chev">▾</span>
+    </button>
+    <div class="lab-past-body" id="${uid}-body" style="display:none;">
+      ${tudo ? `<div class="lab-past-chips">${tudo}</div>` : '<div class="lab-past-empty">Nenhum valor registrado.</div>'}
+    </div>
+  </div>`;
+}
+
+function _toggleLabPast(uid){
+  const body=$(uid+'-body'), chev=$(uid+'-chev'), wrap=$(uid+'-wrap');
+  if(!body) return;
+  const open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : 'block';
+  if(chev) chev.textContent = open ? '▾' : '▴';
+  if(wrap) wrap.classList.toggle('lab-past-open', !open);
 }
 function addLinhaLab(){ _labLinhas.push({data:gf('f-data')||hoje(), valores:{}}); _renderLabLinhas(); }
 function _setLabData(i,v){ if(_labLinhas[i]) _labLinhas[i].data=v; }
