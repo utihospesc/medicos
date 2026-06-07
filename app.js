@@ -3418,6 +3418,8 @@ function _detectarDosesAbsurdas(){
     let val=d.num, unid=d.unid;
     if(unid==='g'){ val=val*1000; unid='mg'; }
     if(ehBIC && r.maxBIC){
+      // Só alerta se a unidade é farmacológica (mcg/kg/min). "25MG/ML" é concentração, não dose.
+      if(!_doseBICUnidCompativel(unid)) return;
       if(val > r.maxBIC*1.2)
         achados.push({nome:it.farm, dose:it.dose, motivo:`Dose ${val}${unid||''} excede faixa esperada (${r.unidBIC}). ${r.alerta}`});
     } else if(r.maxDose && unid==='mg'){
@@ -3460,6 +3462,13 @@ function _calcularMLhBIC(d, dose, peso){
   if(d.unidade==='mg/kg/h'){  if(!peso) return null; return (dose*peso*d.vol)/d.totalMg; }
   return null;
 }
+// Retorna true apenas quando a unidade extraída é farmacológica (mcg/kg/min, etc.)
+// Concentrações como "25MG/ML" → unid='mg' → false (não é dose de infusão)
+function _doseBICUnidCompativel(unidExtraida){
+  const u = (unidExtraida||'').toLowerCase().replace(/\s+/g,'');
+  const CONC = ['ml','mg','mcg','g','ui','%',''];
+  return !CONC.includes(u);
+}
 function _calcularBICs(){
   const peso=parseFloat(gf('f-peso'))||null;
   const lista=[];
@@ -3469,8 +3478,10 @@ function _calcularBICs(){
     if(!droga) return;
     const d=_extrairDoseNumero(it.dose);
     if(!d) return;
-    const mlh=_calcularMLhBIC(droga, d.num, peso);
-    const semPeso = droga.porPeso && !peso;
+    // Só calcula mL/h e fora-da-faixa quando a dose está em unidade farmacológica
+    // (ex: mcg/kg/min). Concentrações como "25MG/ML" não são doses de infusão.
+    const unidOK = _doseBICUnidCompativel(d.unid);
+    const mlh = unidOK ? _calcularMLhBIC(droga, d.num, peso) : null;
     lista.push({
       nomeItem: it.farm,
       droga: droga.nome,
@@ -3479,8 +3490,8 @@ function _calcularBICs(){
       doseUnidade: droga.unidade,
       faixa: droga.faixa,
       mlh: (mlh!=null && isFinite(mlh)) ? mlh : null,
-      semPeso,
-      foraFaixa: _doseForaFaixa(d.num, droga.faixa),
+      semPeso: droga.porPeso && !peso && unidOK,
+      foraFaixa: unidOK ? _doseForaFaixa(d.num, droga.faixa) : false,
     });
   });
   return lista;
