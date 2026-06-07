@@ -1510,11 +1510,7 @@ function _calcIdadeDisplay(idDN,idOut){
 function _renderLabLinhas(){
   const wrap=$('lab-linhas'); if(!wrap) return;
   if(!_labLinhas.length){ wrap.innerHTML='<div style="font-size:.78rem;color:var(--muted);padding:.4rem;">Nenhuma data registrada. Clique em "+ Adicionar data de exames".</div>'; return; }
-  const dataAtual = gf('f-data') || dataDoTurno(turnoAtual) || hoje();
   wrap.innerHTML = _labLinhas.map((lin,idx)=>{
-    const isPast = lin.data && lin.data < dataAtual;
-    if(isPast) return _renderLabLinhaPast(lin, idx);
-    // Data atual ou futura: formulário editável normal
     const campos = LAB_CAMPOS.map(c=>`
       <div class="fl"><label>${c.l}</label><input type="number" step="any" value="${(lin.valores&&lin.valores[c.k]!=null)?lin.valores[c.k]:''}" oninput="_setLabVal(${idx},'${c.k}',this.value)"></div>`).join('');
     const outrosVal = (lin.outros||'').replace(/"/g,'&quot;');
@@ -1535,40 +1531,6 @@ function _renderLabLinhas(){
       </div>
     </div>`;
   }).join('');
-}
-
-function _renderLabLinhaPast(lin, idx){
-  const campLbl = Object.fromEntries(LAB_CAMPOS.map(c=>[c.k,c.l]));
-  const vals = Object.entries(lin.valores||{})
-    .filter(([,v])=>v!=null&&v!=='')
-    .map(([k,v])=>`<span class="lab-past-chip"><span class="lab-past-k">${campLbl[k]||k}</span>${v}</span>`)
-    .join('');
-  const outrosTag = lin.outros && lin.outros.trim()
-    ? `<span class="lab-past-chip lab-past-outros"><span class="lab-past-k">Outros</span>${lin.outros}</span>` : '';
-  const tudo = vals + outrosTag;
-  const countVals = Object.values(lin.valores||{}).filter(v=>v!=null&&v!=='').length + (lin.outros&&lin.outros.trim()?1:0);
-  const uid = `lab-past-${idx}`;
-  return `<div class="lab-past-wrap" id="${uid}-wrap">
-    <button class="lab-past-btn" onclick="_toggleLabPast('${uid}')" title="Expandir / recolher">
-      <span class="lab-past-ico">📅</span>
-      <span class="lab-past-date">${_fmtDataCurta(lin.data)||'?'}</span>
-      <span class="lab-past-count">${countVals} resultado${countVals!==1?'s':''}</span>
-      <span class="lab-past-lock" title="Somente leitura">🔒</span>
-      <span class="lab-past-chev" id="${uid}-chev">▾</span>
-    </button>
-    <div class="lab-past-body" id="${uid}-body" style="display:none;">
-      ${tudo ? `<div class="lab-past-chips">${tudo}</div>` : '<div class="lab-past-empty">Nenhum valor registrado.</div>'}
-    </div>
-  </div>`;
-}
-
-function _toggleLabPast(uid){
-  const body=$(uid+'-body'), chev=$(uid+'-chev'), wrap=$(uid+'-wrap');
-  if(!body) return;
-  const open = body.style.display !== 'none';
-  body.style.display = open ? 'none' : 'block';
-  if(chev) chev.textContent = open ? '▾' : '▴';
-  if(wrap) wrap.classList.toggle('lab-past-open', !open);
 }
 function addLinhaLab(){ _labLinhas.push({data:gf('f-data')||hoje(), valores:{}}); _renderLabLinhas(); }
 function _setLabData(i,v){ if(_labLinhas[i]) _labLinhas[i].data=v; }
@@ -5940,24 +5902,20 @@ function _imprimirFichaHemoObj(f){
   <script>window.onload=()=>{window.print();window.onafterprint=()=>window.close();}<\/script>
   </body></html>`;
 
-  // Se há cartão SUS carregado E PDF-lib disponível, mescla tudo num PDF único
-  if(_cartaoSUSPDF && window.PDFLib && window.html2canvas && window.jspdf){
-    _gerarPDFMescladoHemo(html, _cartaoSUSPDF).catch(e=>{
-      console.warn('[Mescla] falhou, abrindo só a ficha:', e);
+  // PDF unificado: pág. 1 = ficha (1 A4 forçado), pág. 2 = Cartão SUS + 1 etiqueta prova cruzada
+  if(window.PDFLib && window.html2canvas && window.jspdf){
+    _gerarHemoCompleto(html, f).catch(e=>{
+      console.warn('[HemoCompleto] falhou, abrindo HTML separado:', e);
       const w=window.open('','_blank','width=850,height=950');
       if(w){ w.document.write(html); w.document.close(); }
       else toast('Popup bloqueado — permita popups para imprimir.',true);
     });
-    // Etiquetas (cartão SUS já carregado)
-    _emitirEtiquetasHemo(f);
     return;
   }
-
+  // Fallback sem PDF-lib: comportamento anterior
   const w=window.open('','_blank','width=850,height=950');
   if(w){ w.document.write(html); w.document.close(); }
   else toast('Popup bloqueado — permita popups para imprimir.',true);
-
-  // Etiquetas para hemocomponentes (sem campo MATERIAL)
   _emitirEtiquetasHemo(f);
 }
 
@@ -6232,6 +6190,136 @@ async function _gerarPDFMescladoHemo(htmlFicha, cartaoBase64){
     setTimeout(() => URL.revokeObjectURL(url), 180000);
   } finally {
     if(container.parentNode) container.parentNode.removeChild(container);
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   PDF UNIFICADO DE HEMOTERÁPICOS
+   Pág. 1 — Ficha HEMONORTE forçada em 1 A4 (comprime levemente se necessário)
+   Pág. 2 — Cartão SUS (pág. 0 do PDF do Drive) + 1 etiqueta de prova cruzada
+            centrada no espaço em branco (metade inferior do cartão)
+   ════════════════════════════════════════════════════════════════════════════ */
+async function _gerarHemoCompleto(htmlFicha, f){
+  showLoading('Gerando PDF unificado...');
+  const container = document.createElement('div');
+  container.style.cssText = 'position:fixed;left:-99999px;top:0;width:794px;background:#fff;color:#000;';
+  try{
+    // ── 1. Renderiza o HTML da ficha em canvas ─────────────────────────────────
+    const parser  = new DOMParser();
+    const docHtml = parser.parseFromString(htmlFicha, 'text/html');
+    const styleEl = docHtml.querySelector('style');
+    if(styleEl){ const s=document.createElement('style'); s.textContent=styleEl.textContent; container.appendChild(s); }
+    const inner = document.createElement('div');
+    inner.innerHTML = docHtml.body.innerHTML.replace(/<script[\s\S]*?<\/script>/gi,'');
+    inner.style.cssText = 'padding:8mm 10mm;background:#fff;';
+    container.appendChild(inner);
+    document.body.appendChild(container);
+    await new Promise(r => setTimeout(r, 300));
+
+    const canvas = await html2canvas(container, { scale:2, backgroundColor:'#ffffff', useCORS:true });
+
+    // ── 2. Ficha → jsPDF → forçada em exatamente 1 A4 ─────────────────────────
+    const { jsPDF } = window.jspdf;
+    const fichaJsPDF = new jsPDF('p','mm','a4');
+    const pdfW = fichaJsPDF.internal.pageSize.getWidth();  // 210 mm
+    const pdfH = fichaJsPDF.internal.pageSize.getHeight(); // 297 mm
+    const dataURL = canvas.toDataURL('image/jpeg', 0.93);
+    fichaJsPDF.addImage(dataURL, 'JPEG', 0, 0, pdfW, pdfH); // força 1 página
+    const fichaBytes = fichaJsPDF.output('arraybuffer');
+
+    // ── 3. Monta PDF final com pdf-lib ─────────────────────────────────────────
+    const PDFDocument  = window.PDFLib.PDFDocument;
+    const StandardFonts = window.PDFLib.StandardFonts;
+    const rgb          = window.PDFLib.rgb;
+
+    const merged   = await PDFDocument.create();
+
+    // Pág. 1 — ficha
+    const fichaDoc  = await PDFDocument.load(fichaBytes);
+    const [fichaPg] = await merged.copyPages(fichaDoc, [0]);
+    merged.addPage(fichaPg);
+
+    // Pág. 2 — Cartão SUS (pág. 0) ou A4 em branco como fallback
+    let cartaoPage, pgW, pgH;
+    if(_cartaoSUSPDF){
+      const bin  = atob(_cartaoSUSPDF);
+      const cbytes = new Uint8Array(bin.length);
+      for(let i=0;i<bin.length;i++) cbytes[i] = bin.charCodeAt(i);
+      const cartaoDoc = await PDFDocument.load(cbytes);
+      // Sempre usa pág. 0 (a que contém os dados do paciente)
+      const [cpg] = await merged.copyPages(cartaoDoc, [0]);
+      merged.addPage(cpg);
+      cartaoPage = merged.getPage(1);
+    } else {
+      cartaoPage = merged.addPage([595.28, 841.89]);
+    }
+    const sz = cartaoPage.getSize();
+    pgW = sz.width; pgH = sz.height;   // pts  (A4 ≈ 595 × 842)
+
+    // ── 4. Etiqueta de prova cruzada centrada no espaço em branco ─────────────
+    //   O Cartão SUS ocupa visualmente a metade SUPERIOR da página.
+    //   Em pdf-lib y=0 é o FUNDO → espaço em branco fica em y ∈ [0, pgH*0.48]
+    const font     = await merged.embedFont(StandardFonts.TimesRoman);
+    const fontBold = await merged.embedFont(StandardFonts.TimesRomanBold);
+    const FS = 8;          // 8pt — legibilidade em 1 etiqueta
+    const LH = FS * 1.55;  // altura de linha
+
+    const leito = (f.leito || gf('f-leito') || '').toString().padStart(2,'0');
+    const nome  = (f.nome  || gf('f-pac')  || '').toUpperCase();
+    const dn    = _fmtDNEtiq(f.dn || gf('f-dn') || '');
+
+    const linhas = [
+      `HOSPITAL DOS PESCADORES - UTI (L-${leito})`,
+      `NOME: ${nome}`,
+      `DN: ${dn}`,
+      `PROVA CRUZADA`,
+      `DATA COLETA: ___/___/______`,
+      `COLETADO POR: ________________________`,
+    ];
+
+    const PAD    = 6;                          // padding interno (pts)
+    const etiqW  = pgW * 0.65;                 // 65% da largura
+    const etiqH  = linhas.length * LH + PAD*2; // altura total da caixa
+    const etiqX  = (pgW - etiqW) / 2;          // centrado horizontalmente
+
+    // Centro vertical do espaço em branco (y=0 fundo, pgH*0.48 = limite superior)
+    const blankMid = pgH * 0.24;              // ~¼ da página a partir do fundo
+    const boxY  = blankMid - etiqH / 2;       // y do canto inferior da caixa
+
+    // Caixa com borda
+    cartaoPage.drawRectangle({
+      x: etiqX - PAD, y: boxY,
+      width: etiqW + PAD*2, height: etiqH,
+      borderColor: rgb(0,0,0), borderWidth: 0.7,
+      color: rgb(1,1,1),
+    });
+
+    // Textos (de cima para baixo dentro da caixa)
+    linhas.forEach((txt, li) => {
+      const isBold = li === 0 || li === 3; // cabeçalho e "PROVA CRUZADA" em negrito
+      cartaoPage.drawText(txt, {
+        x: etiqX,
+        y: boxY + etiqH - PAD - LH*(li+1) + FS*0.3,
+        size: FS,
+        font: isBold ? fontBold : font,
+        color: rgb(0,0,0),
+        maxWidth: etiqW - 2,
+      });
+    });
+
+    // ── 5. Salva e abre para impressão ────────────────────────────────────────
+    const finalBytes = await merged.save();
+    const blob = new Blob([finalBytes], { type:'application/pdf' });
+    const url  = URL.createObjectURL(blob);
+    hideLoading();
+    const w = window.open(url, '_blank');
+    if(w){ setTimeout(()=>{ try{ w.focus(); w.print(); }catch(_){} }, 1200); }
+    else toast('Popup bloqueado — permita popups para imprimir.', true);
+    setTimeout(() => URL.revokeObjectURL(url), 180000);
+
+  } finally {
+    if(container.parentNode) container.parentNode.removeChild(container);
+    hideLoading();
   }
 }
 
