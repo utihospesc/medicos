@@ -316,25 +316,25 @@ async function _gestaoEscolher(tipo){
   if(tipo === 'alta_hosp'){
     destWrap.style.display = 'none';
     obitoW.style.display = 'none';
-    btn.textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> Confirmar alta hospitalar';
+    btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> Confirmar alta hospitalar';
     btn.style.background = '#0a6b3a';
   } else if(tipo === 'alta_uti'){
     destWrap.style.display = '';
     destLbl.textContent = 'Unidade/setor de destino';
     sf('g-saida-destino','ENFERMARIA');
     obitoW.style.display = 'none';
-    btn.textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> Confirmar alta da UTI';
+    btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> Confirmar alta da UTI';
     btn.style.background = '';
   } else if(tipo === 'obito'){
     destWrap.style.display = 'none';
     obitoW.style.display = '';
-    btn.textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> Registrar óbito';
+    btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> Registrar óbito';
     btn.style.background = '#7a1020';
   } else if(tipo === 'transf_ext'){
     destWrap.style.display = '';
     destLbl.textContent = 'Hospital de destino';
     obitoW.style.display = 'none';
-    btn.textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> Confirmar transferência';
+    btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> Confirmar transferência';
     btn.style.background = '';
   }
 }
@@ -862,7 +862,7 @@ function _recalcSAPS(){
   if(r.temDados){
     $('saps-mort').textContent = (r.mortCSA*100).toFixed(1)+'%';
     const temFisio=[_coletarDadosSAPS().glasgow,_coletarDadosSAPS().pas,_coletarDadosSAPS().fc].some(x=>x!=null);
-    $('saps-mort-glob').textContent = 'Equação global: '+(r.mortGlobal*100).toFixed(1)+'%'+(temFisio?'':' <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> score parcial — preencha os dados fisiológicos para maior precisão');
+    $('saps-mort-glob').innerHTML = 'Equação global: '+(r.mortGlobal*100).toFixed(1)+'%'+(temFisio?'':' <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> score parcial — preencha os dados fisiológicos para maior precisão');
   } else {
     $('saps-mort').textContent = '—';
     $('saps-mort-glob').textContent = 'Preencha a data de nascimento e ao menos um dado clínico.';
@@ -1002,7 +1002,7 @@ function abrirTrocaSenhaVoluntaria(){
    ════════════════════════════════════════════════════════════════════════════ */
 function irTurno(){ mostrarTela('t-turno'); $('t-turno').style.display='flex'; _atualizarBadgeUser(); _checarSync(); }
 function voltarTurno(){ irTurno(); }
-function escolherTurno(t){ turnoAtual=t; $('badge-turno-leitos').textContent=(t==='DIURNO'?'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><circle cx="8" cy="8" r="3"/><line x1="8" y1="1.5" x2="8" y2="3"/><line x1="8" y1="13" x2="8" y2="14.5"/><line x1="1.5" y1="8" x2="3" y2="8"/><line x1="13" y1="8" x2="14.5" y2="8"/><line x1="3.5" y1="3.5" x2="4.5" y2="4.5"/><line x1="11.5" y1="11.5" x2="12.5" y2="12.5"/><line x1="12.5" y1="3.5" x2="11.5" y2="4.5"/><line x1="4.5" y1="11.5" x2="3.5" y2="12.5"/></svg> DIURNO':'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M12.5 9A5.5 5.5 0 017 3.5a5.5 5.5 0 100 9A5.5 5.5 0 0112.5 9z"/></svg> NOTURNO'); renderLeitos(); mostrarTela('t-leitos'); }
+function escolherTurno(t){ turnoAtual=t; $('badge-turno-leitos').innerHTML=(t==='DIURNO'?'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><circle cx="8" cy="8" r="3"/><line x1="8" y1="1.5" x2="8" y2="3"/><line x1="8" y1="13" x2="8" y2="14.5"/><line x1="1.5" y1="8" x2="3" y2="8"/><line x1="13" y1="8" x2="14.5" y2="8"/><line x1="3.5" y1="3.5" x2="4.5" y2="4.5"/><line x1="11.5" y1="11.5" x2="12.5" y2="12.5"/><line x1="12.5" y1="3.5" x2="11.5" y2="4.5"/><line x1="4.5" y1="11.5" x2="3.5" y2="12.5"/></svg> DIURNO':'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M12.5 9A5.5 5.5 0 017 3.5a5.5 5.5 0 100 9A5.5 5.5 0 0112.5 9z"/></svg> NOTURNO'); renderLeitos(); mostrarTela('t-leitos'); }
 function voltarLeitos(){ renderLeitos(); mostrarTela('t-leitos'); }
 
 function _checarSync(){
@@ -1328,7 +1328,7 @@ async function abrirFormulario(leito){
     const ld=await _getLeitos(); const L=ld[leito]||{};
     const dataT=dataDoTurno(turnoAtual);
     $('form-titulo').textContent=`Evolução Médica – Leito ${pad(leito)}`;
-    $('form-sub').textContent=`${turnoAtual==='DIURNO'?'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><circle cx="8" cy="8" r="3"/><line x1="8" y1="1.5" x2="8" y2="3"/><line x1="8" y1="13" x2="8" y2="14.5"/><line x1="1.5" y1="8" x2="3" y2="8"/><line x1="13" y1="8" x2="14.5" y2="8"/><line x1="3.5" y1="3.5" x2="4.5" y2="4.5"/><line x1="11.5" y1="11.5" x2="12.5" y2="12.5"/><line x1="12.5" y1="3.5" x2="11.5" y2="4.5"/><line x1="4.5" y1="11.5" x2="3.5" y2="12.5"/></svg> Diurno':'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M12.5 9A5.5 5.5 0 017 3.5a5.5 5.5 0 100 9A5.5 5.5 0 0112.5 9z"/></svg> Noturno'} · ${_fmtDataCurta(dataT)} · ${perfilUsuario?perfilUsuario.nome:''}`;
+    $('form-sub').innerHTML=`${turnoAtual==='DIURNO'?'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><circle cx="8" cy="8" r="3"/><line x1="8" y1="1.5" x2="8" y2="3"/><line x1="8" y1="13" x2="8" y2="14.5"/><line x1="1.5" y1="8" x2="3" y2="8"/><line x1="13" y1="8" x2="14.5" y2="8"/><line x1="3.5" y1="3.5" x2="4.5" y2="4.5"/><line x1="11.5" y1="11.5" x2="12.5" y2="12.5"/><line x1="12.5" y1="3.5" x2="11.5" y2="4.5"/><line x1="4.5" y1="11.5" x2="3.5" y2="12.5"/></svg> Diurno':'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M12.5 9A5.5 5.5 0 017 3.5a5.5 5.5 0 100 9A5.5 5.5 0 0112.5 9z"/></svg> Noturno'} · ${_fmtDataCurta(dataT)} · ${perfilUsuario?perfilUsuario.nome:''}`;
     $('badge-form').textContent=turnoAtual;
 
     // limpa tudo
@@ -2010,11 +2010,11 @@ async function _sugerirCID(idDiag,idCid){
   try{
     const cache=JSON.parse(localStorage.getItem('uti_med_cid_cache')||'{}');
     const key=_normalizarNome(diag);
-    if(cache[key]){ sf(idCid,cache[key]); if(st) st.textContent='<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> cache'; return; }
+    if(cache[key]){ sf(idCid,cache[key]); if(st) st.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> cache'; return; }
     const resp=await fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({action:'cid',diagnostico:diag})});
     const data=JSON.parse(await resp.text());
-    if(data.codigo){ sf(idCid,data.codigo); cache[key]=data.codigo; localStorage.setItem('uti_med_cid_cache',JSON.stringify(cache)); if(st) st.textContent='<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> IA'; }
+    if(data.codigo){ sf(idCid,data.codigo); cache[key]=data.codigo; localStorage.setItem('uti_med_cid_cache',JSON.stringify(cache)); if(st) st.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> IA'; }
     else if(st) st.textContent='';
   }catch(e){ if(st) st.textContent=''; }
 }
