@@ -3627,8 +3627,29 @@ async function _renderApoioClinico(){
                        : tfg.diasCr>4 ? 'var(--vermelho)'
                        : tfg.diasCr>2 ? 'var(--laranja)' : 'var(--verde)';
     const crAvisoTxt = tfg.diasCr==null ? '' : (tfg.diasCr===0?'hoje':tfg.diasCr+'d');
+    // Detalhes das fórmulas para o painel ⓘ
+    const sexoFator = tfg.sexo==='FEMININO' ? '× 0,85 (sexo fem.)' : '';
+    const cgFormula = tfg.cg!=null
+      ? `CG = (140 − ${tfg.idade}a) × ${tfg.peso||'?'}kg / (72 × ${tfg.cr} mg/dL)${tfg.sexo==='FEMININO'?' × 0,85':''} = <b>${tfg.cg} mL/min</b>`
+      : 'CG: peso não registrado (necessário para calcular)';
+    const ckFormula = `CKD-EPI 2021 (sem raça): Cr ${tfg.cr} · ${tfg.idade}a · ${tfg.sexo==='FEMININO'?'♀ fem.':'♂ masc.'} → <b>${tfg.ckdepi} mL/min/1,73m²</b>`;
+    const estadios = [
+      {min:90,label:'G1 — Normal ou aumentada (≥90)'},
+      {min:60,label:'G2 — Levemente diminuída (60–89)'},
+      {min:45,label:'G3a — Leve a moderadamente diminuída (45–59)'},
+      {min:30,label:'G3b — Moderada a gravemente diminuída (30–44)'},
+      {min:15,label:'G4 — Gravemente diminuída (15–29)'},
+      {min:0, label:'G5 — Insuficiência renal (<15)'},
+    ];
+    const tfgRef = tfg.tfgPreferida;
+    const estadio = estadios.find(e=>tfgRef>=e.min) || estadios[estadios.length-1];
     h+=`<div class="apoio-card apoio-tfg">
-      <div class="apoio-titulo">⚕ FUNÇÃO RENAL <span style="font-weight:500;font-size:.78rem;color:var(--muted);">— equação p/ ajuste: <b>${tfg.equacaoPreferida}</b></span></div>
+      <div class="apoio-titulo" style="display:flex;align-items:center;gap:6px;">
+        <span>⚕ FUNÇÃO RENAL</span>
+        <span style="font-weight:500;font-size:.78rem;color:var(--muted);">— equação p/ ajuste: <b>${tfg.equacaoPreferida}</b></span>
+        <button onclick="_toggleTFGInfo()" title="Ver fórmulas e estadiamento"
+          style="margin-left:auto;background:none;border:1.5px solid var(--muted);border-radius:50%;width:20px;height:20px;font-size:.72rem;font-weight:700;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;">ⓘ</button>
+      </div>
       <div class="apoio-tfg-vals">
         ${tfg.cg!=null
           ? `<div><span class="tfg-num" style="color:${corCG}">${tfg.cg}</span><span class="tfg-unit">Cockcroft-Gault${tfg.equacaoPreferida==='CG'?' ✓':''}</span></div>`
@@ -3640,6 +3661,24 @@ async function _renderApoioClinico(){
         <span style="color:${crAvisoCor};font-weight:600;">${crAvisoTxt?'· '+crAvisoTxt:''}</span>
         ${crVelha?' <span style="color:var(--vermelho);">⚠ creatinina &gt;48h — reavaliar exame antes de ajustar dose</span>':''}
         · ${tfg.idade}a · ${tfg.sexo==='FEMININO'?'♀':'♂'}${tfg.peso?' · '+tfg.peso+'kg':' · sem peso'}
+      </div>
+      <div id="tfg-info-panel" style="display:none;margin-top:10px;padding:10px 12px;background:var(--bg2);border-radius:8px;border:1px solid var(--borda);font-size:.8rem;line-height:1.8;">
+        <div style="font-weight:700;font-size:.76rem;color:var(--muted);text-transform:uppercase;margin-bottom:6px;">📐 Fórmulas utilizadas</div>
+        <div style="margin-bottom:4px;">🔹 <b>Cockcroft-Gault (CG):</b><br>
+          <span style="margin-left:14px;font-family:monospace;font-size:.78rem;">(140 − idade) × peso / (72 × Cr) ${tfg.sexo==='FEMININO'?'× 0,85 se ♀':''}</span><br>
+          <span style="margin-left:14px;color:var(--muted);">→ ${cgFormula}</span>
+        </div>
+        <div style="margin-bottom:4px;">🔹 <b>CKD-EPI 2021 (sem raça):</b><br>
+          <span style="margin-left:14px;font-size:.78rem;">142 × min(Cr/κ, 1)<sup>α</sup> × max(Cr/κ, 1)<sup>−1,200</sup> × 0,9938<sup>idade</sup> ${tfg.sexo==='FEMININO'?'× 1,012':''}<br><span style="color:var(--muted);">κ=0,7 (♀) ou 0,9 (♂) · α=−0,241 (♀) ou −0,302 (♂)</span></span><br>
+          <span style="margin-left:14px;color:var(--muted);">→ ${ckFormula}</span>
+        </div>
+        <div style="margin-top:8px;font-weight:700;font-size:.76rem;color:var(--muted);text-transform:uppercase;margin-bottom:4px;">🏷 Estadiamento KDIGO (TFG preferida: ${tfgRef} mL/min)</div>
+        ${estadios.map(e=>{
+          const ativo = tfgRef>=e.min && (e===estadios[estadios.length-1] || tfgRef<estadios[estadios.indexOf(e)-1]?.min||Infinity);
+          const isAtual = e===estadio;
+          return `<div style="margin-left:6px;${isAtual?'font-weight:700;color:var(--vinho);':'color:var(--muted);'}">${isAtual?'▶ ':''} ${e.label}</div>`;
+        }).join('')}
+        <div style="margin-top:8px;font-size:.74rem;color:var(--muted);">Equação preferida: <b>${tfg.equacaoPreferida}</b> — ${tfg.cg!=null?'CG usado quando há peso registrado.':'CKD-EPI usado (sem peso registrado).'}</div>
       </div>
     </div>`;
   }
@@ -3679,29 +3718,10 @@ async function _renderApoioClinico(){
     </div>`;
   }
 
-  // ── #4 BICs com mL/h calculado por peso ─────────────────────────────────
-  if(bics.length){
-    h+=`<div class="apoio-card apoio-info">
-      <div class="apoio-titulo">💧 BICs — mL/h calculado</div>
-      ${bics.map(b=>{
-        if(b.semPeso){
-          return `<div class="apoio-item"><b>${(b.nomeItem||'').toUpperCase()}:</b>
-            <span style="color:var(--vermelho);">⚠ dose por peso, sem peso registrado</span>
-            <div style="font-size:.76rem;color:var(--muted);">${b.droga} · diluição: ${b.diluicao} · faixa ${b.faixa} ${b.doseUnidade}</div></div>`;
-        }
-        if(b.mlh==null){
-          return `<div class="apoio-item"><b>${(b.nomeItem||'').toUpperCase()}:</b>
-            <span style="color:var(--muted);">informe a dose para calcular</span></div>`;
-        }
-        const aviso = b.foraFaixa ? ` <span style="color:var(--laranja);font-weight:700;">⚠ fora da faixa típica ${b.faixa}</span>` : '';
-        return `<div class="apoio-item"><b>${(b.nomeItem||'').toUpperCase()}:</b>
-          <b style="color:var(--vinho);">${b.mlh.toFixed(2)} mL/h</b>${aviso}
-          <div style="font-size:.76rem;color:var(--muted);">${b.droga} · dose ${b.dose} ${b.doseUnidade} · diluição: ${b.diluicao}</div></div>`;
-      }).join('')}
-    </div>`;
-  }
+  // ── #4 BICs e DOSE POR PESO → movidos para dentro da Calc BIC (abrirCalcBIC) ──
+  // Estes painéis não aparecem mais no painel de apoio; acesse via botão ⚗ Calc BIC.
 
-  // ── Doses por peso pendentes e ajustes renais ───────────────────────────
+  // ── Ajustes renais (mantidos aqui pois dependem da TFG) ─────────────────
   const sugestoes=[], ajustes=[];
   _rxItens.forEach(it=>{
     const s=_sugerirDosePorPeso(it);
@@ -3711,13 +3731,6 @@ async function _renderApoioClinico(){
       if(a) ajustes.push({nome:it.farm, ...a, tfgUsar:tfg.tfgPreferida, equacao:tfg.equacaoPreferida});
     }
   });
-  if(sugestoes.length){
-    h+=`<div class="apoio-card apoio-info">
-      <div class="apoio-titulo">📐 DOSE POR PESO</div>
-      ${sugestoes.map(s=>`<div class="apoio-item">
-        <b>${s.nome}:</b> ${s.intervalo} ${s.uso}${s.calc||''}${s.nota?' <em>('+s.nota+')</em>':''}</div>`).join('')}
-    </div>`;
-  }
   if(ajustes.length){
     h+=`<div class="apoio-card apoio-info">
       <div class="apoio-titulo">🔧 AJUSTE PARA FUNÇÃO RENAL <span style="font-weight:500;font-size:.78rem;">(TFG ${ajustes[0].tfgUsar} via ${ajustes[0].equacao})</span></div>
@@ -3745,6 +3758,13 @@ async function _renderApoioClinico(){
 
   wrap.innerHTML=h;
   wrap.style.display=h ? '' : 'none';
+}
+
+// Alterna a visibilidade do painel de informações da TFG (ⓘ)
+function _toggleTFGInfo(){
+  const p=$('tfg-info-panel');
+  if(!p) return;
+  p.style.display = p.style.display==='none' ? '' : 'none';
 }
 
 
@@ -4620,20 +4640,62 @@ const BIC_DROGAS = [
 
 function abrirCalcBIC(){
   const peso=parseFloat(gf('f-peso'))||null;
-  let h=`<div class="tip i" style="margin-bottom:10px;">
-    Calcula mL/h conforme as diluições padrão da UTI. ${peso?'Peso atual: <b>'+peso+'kg</b>':'<b style="color:var(--vermelho);">⚠ Sem peso registrado</b> — preencha na evolução.'}</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
-      <div class="fl"><label>Droga</label>
-        <select id="bic-droga" onchange="_bicCalc()">
-          ${BIC_DROGAS.map((d,i)=>`<option value="${i}">${d.nome}</option>`).join('')}
-        </select>
+
+  // ── Painel 1: BICs da prescrição atual com mL/h ──
+  const bics=_calcularBICs();
+  let bicsHtml='';
+  if(bics.length){
+    bicsHtml=`<div class="apoio-card apoio-info" style="margin-bottom:12px;">
+      <div class="apoio-titulo">💧 BICs — mL/h calculado (prescrição atual)</div>
+      ${bics.map(b=>{
+        if(b.semPeso){
+          return `<div class="apoio-item"><b>${(b.nomeItem||'').toUpperCase()}:</b>
+            <span style="color:var(--vermelho);">⚠ dose por peso, sem peso registrado</span>
+            <div style="font-size:.76rem;color:var(--muted);">${b.droga} · diluição: ${b.diluicao} · faixa ${b.faixa} ${b.doseUnidade}</div></div>`;
+        }
+        if(b.mlh==null){
+          return `<div class="apoio-item"><b>${(b.nomeItem||'').toUpperCase()}:</b>
+            <span style="color:var(--muted);">informe a dose para calcular</span></div>`;
+        }
+        const aviso = b.foraFaixa ? ` <span style="color:var(--laranja);font-weight:700;">⚠ fora da faixa típica ${b.faixa}</span>` : '';
+        return `<div class="apoio-item"><b>${(b.nomeItem||'').toUpperCase()}:</b>
+          <b style="color:var(--vinho);">${b.mlh.toFixed(2)} mL/h</b>${aviso}
+          <div style="font-size:.76rem;color:var(--muted);">${b.droga} · dose ${b.dose} ${b.doseUnidade} · diluição: ${b.diluicao}</div></div>`;
+      }).join('')}
+    </div>`;
+  }
+
+  // ── Painel 2: Dose por peso (sugestões) ──
+  const sugestoes=[];
+  _rxItens.forEach(it=>{ const s=_sugerirDosePorPeso(it); if(s) sugestoes.push({nome:it.farm,...s}); });
+  let dosesPesoHtml='';
+  if(sugestoes.length){
+    dosesPesoHtml=`<div class="apoio-card apoio-info" style="margin-bottom:12px;">
+      <div class="apoio-titulo">📐 DOSE POR PESO (prescrição atual)</div>
+      ${sugestoes.map(s=>`<div class="apoio-item">
+        <b>${s.nome}:</b> ${s.intervalo} ${s.uso}${s.calc||''}${s.nota?' <em>('+s.nota+')</em>':''}</div>`).join('')}
+    </div>`;
+  }
+
+  // ── Painel 3: Calculadora manual ──
+  let h=bicsHtml+dosesPesoHtml+
+    `<div class="apoio-card apoio-info" style="margin-bottom:0;">
+      <div class="apoio-titulo">⚗ Calculadora manual de BIC</div>
+      <div class="tip i" style="margin-bottom:10px;">
+        Calcula mL/h conforme as diluições padrão da UTI. ${peso?'Peso atual: <b>'+peso+'kg</b>':'<b style="color:var(--vermelho);">⚠ Sem peso registrado</b> — preencha na evolução.'}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+        <div class="fl"><label>Droga</label>
+          <select id="bic-droga" onchange="_bicCalc()">
+            ${BIC_DROGAS.map((d,i)=>`<option value="${i}">${d.nome}</option>`).join('')}
+          </select>
+        </div>
+        <div class="fl"><label>Dose desejada</label>
+          <input type="number" step="0.01" id="bic-dose" placeholder="ex: 0.1" oninput="_bicCalc()">
+          <span id="bic-unidade" style="font-size:.72rem;color:var(--muted);"></span>
+        </div>
       </div>
-      <div class="fl"><label>Dose desejada</label>
-        <input type="number" step="0.01" id="bic-dose" placeholder="ex: 0.1" oninput="_bicCalc()">
-        <span id="bic-unidade" style="font-size:.72rem;color:var(--muted);"></span>
-      </div>
-    </div>
-    <div id="bic-resultado"></div>`;
+      <div id="bic-resultado"></div>
+    </div>`;
   $('bic-body').innerHTML=h;
   $('modal-bic').classList.add('show');
   _bicCalc();
