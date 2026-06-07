@@ -610,7 +610,7 @@ function mostrarTela(id){
 }
 function showLoading(t){ const o=$('loading-overlay'); $('loading-txt').textContent=t||'Carregando...'; o.classList.add('show'); }
 function hideLoading(){ $('loading-overlay').classList.remove('show'); }
-function toast(msg,err=false){ const t=$('toast'); t.textContent=msg; t.className='toast'+(err?' err':''); t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3200); }
+function toast(msg,err=false){ const t=$('toast'); t.innerHTML=msg; t.className='toast'+(err?' err':''); t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3200); }
 function fecharModal(){ $('modal-adm').classList.remove('show'); }
 
 /* ── LOGO — usa logo.png do repositório; cai no SVG se a imagem faltar ─── */
