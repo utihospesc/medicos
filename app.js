@@ -8487,15 +8487,25 @@ function _imprimirCulturaObj(c){
   <script>window.onload=()=>{window.print();window.onafterprint=()=>window.close();}<\/script>
   </body></html>`;
 
+  // PDF unificado: pág. 1 = solicitação (1 A4 forçado), pág. 2 = Cartão SUS + 1 etiqueta por material
+  if(window.PDFLib && window.html2canvas && window.jspdf){
+    _gerarCulturaCompleto(html, c).catch(e=>{
+      console.warn('[CulturaCompleto] falhou, abrindo HTML separado:', e);
+      const w=window.open('','_blank','width=820,height=1000');
+      if(w){ w.document.write(html); w.document.close(); }
+      else toast('Popup bloqueado — permita popups para imprimir.',true);
+    });
+    return;
+  }
+  // Fallback sem PDF-lib: comportamento anterior
   const w=window.open('','_blank','width=820,height=1000');
   if(w){ w.document.write(html); w.document.close(); }
   else toast('Popup bloqueado — permita popups para imprimir.',true);
-
-  // Gera etiquetas com cartão SUS (busca independente para culturas)
   _emitirEtiquetasCultura(c);
 }
 
 async function _emitirEtiquetasCultura(c){
+  // Fallback: usado apenas quando PDF-lib não está disponível
   const pac  = c.pac||gf('f-pac')||'';
   const cns  = gf('f-cns')||'';
   const dn   = gf('f-dn')||'';
@@ -8507,4 +8517,166 @@ async function _emitirEtiquetasCultura(c){
   const cartaoB64 = await _buscarCartaoSUSGenerico(pac, cns);
   hideLoading();
   await _gerarEtiquetasComCartao(cartaoB64, dadosPac, 'cultura', materiais);
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   PDF UNIFICADO DE REQUISIÇÃO DE CULTURAS
+   Pág. 1 — Solicitação forçada em 1 A4
+   Pág. 2 — Cartão SUS (pág. 0) + 1 etiqueta por material solicitado
+            em grid 2 colunas no espaço em branco (metade inferior do cartão)
+   ════════════════════════════════════════════════════════════════════════════ */
+async function _gerarCulturaCompleto(htmlFicha, c){
+  showLoading('Gerando PDF unificado...');
+  const container = document.createElement('div');
+  container.style.cssText = 'position:fixed;left:-99999px;top:0;width:794px;background:#fff;color:#000;';
+  try{
+    // ── 1. Renderiza HTML da solicitação em canvas ─────────────────────────────
+    const parser  = new DOMParser();
+    const docHtml = parser.parseFromString(htmlFicha, 'text/html');
+    const styleEl = docHtml.querySelector('style');
+    if(styleEl){ const s=document.createElement('style'); s.textContent=styleEl.textContent; container.appendChild(s); }
+    const inner = document.createElement('div');
+    inner.innerHTML = docHtml.body.innerHTML.replace(/<script[\s\S]*?<\/script>/gi,'');
+    inner.style.cssText = 'padding:8mm 10mm;background:#fff;';
+    container.appendChild(inner);
+    document.body.appendChild(container);
+    await new Promise(r => setTimeout(r, 300));
+
+    const canvas = await html2canvas(container, { scale:2, backgroundColor:'#ffffff', useCORS:true });
+
+    // ── 2. Canvas → 1 A4 forçado via jsPDF ────────────────────────────────────
+    const { jsPDF } = window.jspdf;
+    const fichaJsPDF = new jsPDF('p','mm','a4');
+    const pdfW = fichaJsPDF.internal.pageSize.getWidth();
+    const pdfH = fichaJsPDF.internal.pageSize.getHeight();
+    fichaJsPDF.addImage(canvas.toDataURL('image/jpeg',0.93), 'JPEG', 0, 0, pdfW, pdfH);
+    const fichaBytes = fichaJsPDF.output('arraybuffer');
+
+    // ── 3. PDF final com pdf-lib ───────────────────────────────────────────────
+    const PDFDocument   = window.PDFLib.PDFDocument;
+    const StandardFonts = window.PDFLib.StandardFonts;
+    const rgb           = window.PDFLib.rgb;
+    const merged = await PDFDocument.create();
+
+    // Pág. 1 — ficha
+    const fichaDoc  = await PDFDocument.load(fichaBytes);
+    const [fichaPg] = await merged.copyPages(fichaDoc, [0]);
+    merged.addPage(fichaPg);
+
+    // Pág. 2 — Cartão SUS ou A4 em branco
+    let cartaoPage, pgW, pgH2;
+    const pac = c.pac || gf('f-pac') || '';
+    const cns = gf('f-cns') || '';
+    showLoading('Buscando cartão SUS...');
+    const cartaoB64 = await _buscarCartaoSUSGenerico(pac, cns);
+    hideLoading();
+
+    if(cartaoB64){
+      const bin = atob(cartaoB64);
+      const cb  = new Uint8Array(bin.length);
+      for(let i=0;i<bin.length;i++) cb[i] = bin.charCodeAt(i);
+      const cartaoDoc = await PDFDocument.load(cb);
+      const [cpg] = await merged.copyPages(cartaoDoc, [0]);
+      merged.addPage(cpg);
+      cartaoPage = merged.getPage(1);
+    } else {
+      cartaoPage = merged.addPage([595.28, 841.89]);
+    }
+    const sz = cartaoPage.getSize();
+    pgW  = sz.width;
+    pgH2 = sz.height;
+
+    // ── 4. Etiquetas: 1 por material, grid 2 colunas ──────────────────────────
+    const font     = await merged.embedFont(StandardFonts.TimesRoman);
+    const fontBold = await merged.embedFont(StandardFonts.TimesRomanBold);
+
+    const materiais = _cultResumir(c);          // ex: ['Urocultura (SVD)', 'Hemocultura', ...]
+    const leito = (c.leito || gf('f-leito') || '').toString().padStart(2,'0');
+    const nome  = (c.pac   || gf('f-pac')   || '').toUpperCase();
+    const dn    = _fmtDNEtiq(c.dn || gf('f-dn') || '');
+
+    const N    = Math.min(materiais.length, 8); // máx 8 etiquetas
+    const COLS = 2;
+    const ROWS = Math.ceil(N / COLS);
+
+    const FS  = 6.5;         // tamanho da fonte
+    const LH  = FS * 1.55;  // altura de linha
+    const PAD = 4;           // padding interno da caixa
+    const N_LINHAS = 6;      // header + nome + dn + material + data + coletado por
+    const etiqH = N_LINHAS * LH + PAD * 2;
+
+    const MARG_ESQ  = 16;
+    const MARG_DIR  = 16;
+    const ENTRE_COL = 10;
+    const etiqW = (pgW - MARG_ESQ - MARG_DIR - ENTRE_COL) / COLS;
+
+    // Espaço em branco do Cartão SUS: de y=0 (fundo) até y≈pgH2*0.49 (pdf-lib: y=0 é fundo)
+    const blankTop  = pgH2 * 0.49;
+    const MARG_INF  = 6;
+    const areaH     = blankTop - MARG_INF;
+    const blocoH    = areaH / ROWS;
+
+    // Linha separadora tracejada no topo do espaço em branco
+    cartaoPage.drawLine({
+      start: { x: MARG_ESQ, y: blankTop },
+      end:   { x: pgW - MARG_DIR, y: blankTop },
+      thickness: 0.4,
+      color: rgb(0.5,0.5,0.5),
+      dashArray: [4, 3],
+    });
+
+    for(let i = 0; i < N; i++){
+      const col = i % COLS;
+      const row = Math.floor(i / COLS);
+
+      const xBase = MARG_ESQ + col * (etiqW + ENTRE_COL);
+      // Centra verticalmente a etiqueta dentro do bloco de cada linha
+      const blocoTopo = blankTop - row * blocoH;
+      const blocoBot  = blocoTopo - blocoH;
+      const boxY = blocoBot + (blocoH - etiqH) / 2;  // y do canto inferior da caixa
+
+      // Borda da etiqueta
+      cartaoPage.drawRectangle({
+        x: xBase - 2, y: boxY,
+        width: etiqW + 4, height: etiqH,
+        borderColor: rgb(0,0,0), borderWidth: 0.6,
+        color: rgb(1,1,1),
+      });
+
+      // Linhas do texto (de cima para baixo dentro da caixa)
+      const linhas = [
+        `HOSPITAL DOS PESCADORES - UTI (L-${leito})`,
+        `NOME: ${nome}`,
+        `DN: ${dn}`,
+        `MATERIAL: ${materiais[i].toUpperCase()}`,
+        `DATA COLETA: ___/___/______`,
+        `COLETADO POR: ________________________`,
+      ];
+      linhas.forEach((txt, li) => {
+        const isBold = li === 0 || li === 3; // cabeçalho e MATERIAL em negrito
+        cartaoPage.drawText(txt, {
+          x: xBase,
+          y: boxY + etiqH - PAD - LH*(li+1) + FS*0.25,
+          size: FS,
+          font: isBold ? fontBold : font,
+          color: rgb(0,0,0),
+          maxWidth: etiqW - 2,
+        });
+      });
+    }
+
+    // ── 5. Salva e abre para impressão ────────────────────────────────────────
+    const finalBytes = await merged.save();
+    const blob = new Blob([finalBytes], { type:'application/pdf' });
+    const url  = URL.createObjectURL(blob);
+    hideLoading();
+    const w = window.open(url, '_blank');
+    if(w){ setTimeout(()=>{ try{ w.focus(); w.print(); }catch(_){} }, 1200); }
+    else toast('Popup bloqueado — permita popups para imprimir.', true);
+    setTimeout(() => URL.revokeObjectURL(url), 180000);
+
+  } finally {
+    if(container.parentNode) container.parentNode.removeChild(container);
+    hideLoading();
+  }
 }
