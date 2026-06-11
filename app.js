@@ -402,9 +402,32 @@ async function confirmarSaidaLeito(){
       registradoEm: new Date().toISOString()
     });
 
-    // Libera o leito (mantém todas as chaves históricas preservadas)
+    // Libera o leito
     ld[leito] = { ocupado:false };
     await dbSet('uti_leitos', ld);
+
+    // Apaga todos os dados clínicos do leito (prescrições, evoluções, guias, etc.)
+    // Os logs de admissão e alta ficam preservados para os indicadores.
+    try {
+      const prefixosParaApagar = _PREFIXOS_LEITO.filter(p => p !== 'uti_med_adm_log_');
+      const batchDel = [];
+      for (const prefixo of prefixosParaApagar) {
+        const chavePref = `${prefixo}${leito}_`;
+        const regs = await dbListByPrefix(chavePref);
+        for (const ch of Object.keys(regs)) batchDel.push(dbDelete(ch).catch(()=>{}));
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith(chavePref)) localStorage.removeItem(k);
+        }
+      }
+      await Promise.all(batchDel);
+      // Zera variáveis em memória
+      if (typeof _rxItens !== 'undefined') _rxItens = [];
+      if (typeof _labLinhas !== 'undefined') _labLinhas = [];
+      if (typeof _itensSAPS !== 'undefined') _itensSAPS = {};
+      if (typeof _culturasForm !== 'undefined') _culturasForm = [];
+      console.log('[Alta] Leito ' + leito + ': dados clínicos apagados (' + batchDel.length + ' chaves).');
+    } catch(e){ console.warn('[Alta] limpeza de dados clínicos:', e); }
 
     hideLoading();
     fecharGestaoLeito();
@@ -1300,7 +1323,28 @@ async function confirmarAltaFinal(){
     // libera o leito
     ld[leito]={ocupado:false};
     await dbSet('uti_leitos',ld);
-    // arquiva evoluções (mantém para indicadores — não apaga)
+    // Apaga dados clínicos do leito (prescrições, evoluções, guias, etc.)
+    try {
+      const _prefAlt = typeof _PREFIXOS_LEITO !== 'undefined'
+        ? _PREFIXOS_LEITO.filter(p => p !== 'uti_med_adm_log_')
+        : ['uti_med_ev_','uti_med_rx_','uti_med_imgs_','uti_med_atb_ficha_',
+           'uti_med_hemo_ficha_','uti_med_sol_exam_','uti_med_sol_cult_',
+           'uti_med_parecer_','uti_med_trilogy_','uti_med_me_',
+           'uti_med_diarista_','uti_med_termo_'];
+      const _balt = [];
+      for (const prefixo of _prefAlt) {
+        const chavePref = `${prefixo}${leito}_`;
+        if (typeof dbListByPrefix === 'function') {
+          const regs = await dbListByPrefix(chavePref);
+          for (const ch of Object.keys(regs)) _balt.push(dbDelete(ch).catch(()=>{}));
+        }
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith(chavePref)) localStorage.removeItem(k);
+        }
+      }
+      await Promise.all(_balt);
+    } catch(e){ console.warn('[Alta simples] limpeza:', e); }
     hideLoading();
     $('modal-alta').classList.remove('show');
     await renderLeitos(); mostrarTela('t-leitos');
