@@ -2324,8 +2324,8 @@ function abrirPreview(){
     ${d.imagem?`<div class="pv-secao">Exames de Imagem</div><div>${d.imagem}</div>`:''}
     <div class="pv-secao">SAPS 3</div>
     <div>Escore: <strong>${r.score}</strong> pontos · Mortalidade prevista (Am. do Sul): <strong>${r.temDados?(r.mortCSA*100).toFixed(1)+'%':'—'}</strong>${r.temDados?' · global: '+(r.mortGlobal*100).toFixed(1)+'%':''}</div>
-    <div class="pv-secao">Condutas</div><div>${d.condutas||'—'}</div>
-    <div class="pv-assinatura"><div class="linha"></div>${assinatura}<br><span style="font-size:.68rem;color:#888;">Evolução médica · ${_fmtDataCurta(d.data)} ${agoraHora()}</span></div>
+    <div class="pv-secao">Condutas</div><div>${d.condutas ? d.condutas.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>`<div style="margin:2px 0;">${l}</div>`).join('') : '—'}</div>
+    <div class="pv-assinatura" style="margin-top:2.5rem;"><div class="linha"></div>${assinatura}<br><span style="font-size:.68rem;color:#888;">Evolução médica · ${_fmtDataCurta(d.data)} ${agoraHora()}</span></div>
   `;
   $('modal-preview').classList.add('show');
 }
