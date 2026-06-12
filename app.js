@@ -541,11 +541,17 @@ function _renderImgGrid(){
   const addBtn = grid.querySelector('.img-exame-add');
   grid.innerHTML = '';
   _imgExameBuffer.forEach((item, idx) => {
+    const temLaudo = !!(item.laudo && item.laudo.nome);
     const div = document.createElement('div');
     div.className = 'img-exame-item';
     div.title = item.legenda || '';
-    div.innerHTML = `<img src="${item.b64}" alt="exame">
-      <button class="img-exame-del" onclick="_imgExameRemover(${idx})" title="Remover">×</button>`;
+    div.innerHTML = `
+      <img src="${item.b64}" alt="exame">
+      <button class="img-exame-del" onclick="_imgExameRemover(${idx})" title="Remover">×</button>
+      <button class="img-exame-laudo${temLaudo?' tem-laudo':''}" onclick="abrirModalLaudo(${idx})" title="${temLaudo?'Ver laudo anexado':'Anexar laudo'}">
+        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="2" width="10" height="12" rx="1"/><line x1="5.5" y1="5.5" x2="10.5" y2="5.5"/><line x1="5.5" y1="8" x2="10.5" y2="8"/><line x1="5.5" y1="10.5" x2="8.5" y2="10.5"/></svg>
+        ${temLaudo?'Laudo ✓':'Laudo'}
+      </button>`;
     div.querySelector('img').addEventListener('click', () => _abrirLightbox(item.b64));
     grid.appendChild(div);
   });
@@ -623,6 +629,194 @@ async function _salvarImgsExame(leito, data){
   if(!_imgExameBuffer.length) return;
   const chave = _chaveImgs(leito, data);
   await dbSet(chave, { imgs: _imgExameBuffer, leito, data, atualizadoEm: new Date().toISOString() });
+}
+
+/* ============================================================================
+   LAUDOS — IndexedDB local (binário) + metadados no Firestore (nome/data)
+   Chave IDB:  laudo_<leito>_<data>_<idx>
+   Metadado:   salvo dentro de _imgExameBuffer[idx].laudo  →  Firestore
+   ============================================================================ */
+
+/* — IndexedDB: abre / cria banco —————————————————————————————————————————— */
+let _idbPromise = null;
+function _idbAbrir(){
+  if(_idbPromise) return _idbPromise;
+  _idbPromise = new Promise((res, rej) => {
+    const req = indexedDB.open('hospesc_laudos', 1);
+    req.onupgradeneeded = e => { e.target.result.createObjectStore('laudos'); };
+    req.onsuccess = e => res(e.target.result);
+    req.onerror   = e => rej(e.target.error);
+  });
+  return _idbPromise;
+}
+async function _idbSalvar(chave, blob){
+  const db = await _idbAbrir();
+  return new Promise((res, rej) => {
+    const tx = db.transaction('laudos', 'readwrite');
+    tx.objectStore('laudos').put(blob, chave);
+    tx.oncomplete = () => res(true);
+    tx.onerror    = e  => rej(e.target.error);
+  });
+}
+async function _idbLer(chave){
+  const db = await _idbAbrir();
+  return new Promise((res, rej) => {
+    const tx = db.transaction('laudos', 'readonly');
+    const req = tx.objectStore('laudos').get(chave);
+    req.onsuccess = e => res(e.target.result || null);
+    req.onerror   = e => rej(e.target.error);
+  });
+}
+async function _idbRemover(chave){
+  const db = await _idbAbrir();
+  return new Promise((res, rej) => {
+    const tx = db.transaction('laudos', 'readwrite');
+    tx.objectStore('laudos').delete(chave);
+    tx.oncomplete = () => res(true);
+    tx.onerror    = e  => rej(e.target.error);
+  });
+}
+
+function _chaveLaudo(leito, data, idx){ return `laudo_${leito}_${data}_${idx}`; }
+
+/* — Estado do modal ———————————————————————————————————————————————————————— */
+let _laudoIdxAtual   = null;
+let _laudoLeitoAtual = null;
+let _laudoDataAtual  = null;
+
+/* — Abre modal de laudo ———————————————————————————————————————————————————— */
+async function abrirModalLaudo(idx){
+  _laudoIdxAtual   = idx;
+  _laudoLeitoAtual = gf('f-leito') || leitoAtual;
+  _laudoDataAtual  = gf('f-data')  || hoje();
+
+  const item = _imgExameBuffer[idx] || {};
+  const meta  = item.laudo || null;
+
+  const elTit = $('laudo-titulo');
+  if(elTit) elTit.textContent = 'Laudo — ' + (item.legenda || `Imagem ${idx+1}`);
+
+  const elMeta = $('laudo-meta');
+  if(elMeta){
+    if(meta){
+      const dt = meta.dataAnexo ? new Date(meta.dataAnexo).toLocaleString('pt-BR') : '—';
+      const sz = meta.tamanho ? (meta.tamanho/1024).toFixed(0)+' KB' : '';
+      elMeta.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.12em;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5" stroke="#2e7d32"/></svg> <b>${meta.nome||'Laudo'}</b> \xb7 ${sz} \xb7 anexado em ${dt}`;
+      elMeta.style.color = '#2e7d32';
+    } else {
+      elMeta.textContent = 'Nenhum laudo anexado ainda.';
+      elMeta.style.color = 'var(--muted)';
+    }
+  }
+
+  await _laudoCarregarVisualizacao();
+  $('modal-laudo').classList.add('show');
+}
+
+/* — Carrega binário do IDB e exibe no iframe ——————————————————————————————— */
+async function _laudoCarregarVisualizacao(){
+  const chave     = _chaveLaudo(_laudoLeitoAtual, _laudoDataAtual, _laudoIdxAtual);
+  const elViewer  = $('laudo-viewer');
+  const elAviso   = $('laudo-aviso-local');
+  const elBtnDl   = $('laudo-btn-download');
+  const elBtnRem  = $('laudo-btn-remover');
+  const item = _imgExameBuffer[_laudoIdxAtual] || {};
+  const meta  = item.laudo || null;
+
+  if(elViewer) { elViewer.src = 'about:blank'; elViewer.style.display='none'; }
+  if(elAviso)  elAviso.style.display = 'none';
+  if(elBtnDl)  elBtnDl.style.display = 'none';
+  if(elBtnRem) elBtnRem.style.display = 'none';
+
+  try {
+    const blob = await _idbLer(chave);
+    if(blob){
+      const url = URL.createObjectURL(blob);
+      if(elViewer){ elViewer.src = url; elViewer.style.display = ''; }
+      if(elBtnDl){
+        elBtnDl.style.display = '';
+        elBtnDl.onclick = () => {
+          const a = document.createElement('a');
+          a.href = url; a.download = (meta && meta.nome) || 'laudo.pdf'; a.click();
+        };
+      }
+      if(elBtnRem) elBtnRem.style.display = '';
+    } else if(meta){
+      if(elAviso){
+        elAviso.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg>
+          Laudo <b>${meta.nome||''}</b> foi anexado em outro computador. O arquivo n\xe3o est\xe1 dispon\xedvel neste navegador.`;
+        elAviso.style.display = '';
+      }
+    }
+  } catch(e){ console.warn('_laudoCarregarVisualizacao:', e); }
+}
+
+/* — Upload do laudo ———————————————————————————————————————————————————————— */
+async function _laudoUpload(input){
+  const file = input && input.files && input.files[0];
+  if(!file) return;
+  const permitidos = ['application/pdf','image/jpeg','image/png','image/tiff','image/webp'];
+  if(!permitidos.includes(file.type)){ toast('Formato n\xe3o suportado. Use PDF, JPG, PNG ou TIFF.', true); return; }
+  if(file.size > 20*1024*1024){ toast('Arquivo muito grande (m\xe1ximo 20 MB).', true); return; }
+
+  showLoading('Salvando laudo...');
+  try {
+    const chave = _chaveLaudo(_laudoLeitoAtual, _laudoDataAtual, _laudoIdxAtual);
+    await _idbSalvar(chave, file);
+
+    if(_imgExameBuffer[_laudoIdxAtual]){
+      _imgExameBuffer[_laudoIdxAtual].laudo = {
+        nome: file.name, tamanho: file.size, tipo: file.type,
+        dataAnexo: new Date().toISOString()
+      };
+    }
+    await _salvarImgsExame(_laudoLeitoAtual, _laudoDataAtual);
+
+    hideLoading();
+    toast('\u2713 Laudo salvo localmente.');
+    if(input) input.value = '';
+    await _laudoCarregarVisualizacao();
+    _renderImgGrid();
+
+    const meta = (_imgExameBuffer[_laudoIdxAtual]||{}).laudo;
+    const elMeta = $('laudo-meta');
+    if(elMeta && meta){
+      const dt = new Date(meta.dataAnexo).toLocaleString('pt-BR');
+      const sz = (meta.tamanho/1024).toFixed(0)+' KB';
+      elMeta.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.12em;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5" stroke="#2e7d32"/></svg> <b>${meta.nome}</b> \xb7 ${sz} \xb7 anexado em ${dt}`;
+      elMeta.style.color = '#2e7d32';
+    }
+  } catch(e){
+    hideLoading(); console.error('_laudoUpload:', e);
+    toast('Erro ao salvar laudo: '+e.message, true);
+  }
+}
+
+/* — Remove laudo ——————————————————————————————————————————————————————————— */
+async function _laudoRemover(){
+  if(!confirm('Remover o laudo deste exame? O arquivo ser\xe1 apagado deste navegador.')) return;
+  showLoading('Removendo laudo...');
+  try {
+    const chave = _chaveLaudo(_laudoLeitoAtual, _laudoDataAtual, _laudoIdxAtual);
+    await _idbRemover(chave);
+    if(_imgExameBuffer[_laudoIdxAtual]) delete _imgExameBuffer[_laudoIdxAtual].laudo;
+    await _salvarImgsExame(_laudoLeitoAtual, _laudoDataAtual);
+    hideLoading();
+    toast('Laudo removido.');
+    await _laudoCarregarVisualizacao();
+    _renderImgGrid();
+    const elMeta = $('laudo-meta');
+    if(elMeta){ elMeta.textContent = 'Nenhum laudo anexado ainda.'; elMeta.style.color = 'var(--muted)'; }
+  } catch(e){
+    hideLoading(); toast('Erro ao remover: '+e.message, true);
+  }
+}
+
+function fecharModalLaudo(){
+  $('modal-laudo').classList.remove('show');
+  const v = $('laudo-viewer');
+  if(v){ URL.revokeObjectURL(v.src); v.src='about:blank'; }
+  _laudoIdxAtual = null;
 }
 
 function mostrarTela(id){
