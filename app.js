@@ -5309,45 +5309,68 @@ function imprimirReceituario(){
 
   const ehEspecial = _recTipo === 'especial';
   const titulo = ehEspecial ? 'RECEITUÁRIO CONTROLE ESPECIAL' : 'RECEITUÁRIO';
-  const corTopo = ehEspecial ? '#1d4ed8' : '#7a1020';
+  const corTopo = '#7a1020';
 
   const tituloOrig = document.title;
   document.title = `${titulo} — ${pac.split(' ').slice(0,2).join(' ')} — ${_fmtDataCurta(data)}`;
 
-  // HTML de UMA via
-  const umaVia = () => `
+  // CSS comum às duas versões
+  const cssComum = `
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Times New Roman',Times,serif;font-size:11pt;color:#111;}
+    .cab{display:flex;align-items:center;gap:8px;border-bottom:2px solid ${corTopo};padding-bottom:4px;margin-bottom:4px;}
+    .cab img{height:38px;width:auto;}
+    .cab-c{flex:1;line-height:1.15;}
+    .cab-titulo{font-size:10.5pt;font-weight:800;color:${corTopo};}
+    .cab-sub{font-size:7pt;color:#444;}
+    .titulo-rec{text-align:center;font-size:12pt;font-weight:800;color:${corTopo};letter-spacing:.08em;border:2px solid ${corTopo};padding:3px 8px;border-radius:18px;margin:5px auto;display:inline-block;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .titulo-wrap{text-align:center;margin:4px 0 6px;}
+    .box-id{border:1px solid #333;margin:5px 0;border-radius:2px;}
+    .box-id-t{background:#eee;font-size:7.5pt;font-weight:700;text-align:center;padding:2px;border-bottom:1px solid #333;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .box-id-c{padding:4px 7px;font-size:8.5pt;line-height:1.5;}
+    .dados{font-size:9.5pt;line-height:1.65;margin:5px 0;padding:0 3px;}
+    .dados b{font-weight:700;}
+    .prescricao-area{white-space:pre-wrap;font-family:'Courier New',Courier,monospace;font-size:9.5pt;line-height:1.55;padding:6px 5px;border-top:1px solid #ddd;border-bottom:1px solid #ddd;margin:4px 0;}
+    .assin{margin-top:8px;display:flex;justify-content:center;}
+    .assin-box{border-top:1px solid #333;text-align:center;padding-top:2px;min-width:240px;font-size:9pt;font-weight:700;}
+    .box-comp{display:flex;gap:5px;margin-top:5px;}
+    .box-comp-col{flex:1;border:1px solid #333;border-radius:2px;}
+    .box-comp-t{background:#eee;font-size:7pt;font-weight:700;text-align:center;padding:2px;border-bottom:1px solid #333;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .box-comp-c{padding:4px 6px;font-size:8pt;line-height:1.65;}
+    .rodape{text-align:center;font-size:6.5pt;color:#888;margin-top:6px;border-top:1px solid #eee;padding-top:2px;}
+    .via-label{font-size:7pt;font-weight:700;text-align:right;color:${corTopo};border:1px dashed ${corTopo};padding:1px 5px;border-radius:3px;display:inline-block;float:right;}
+  `;
+
+  // HTML de UMA via (label = '1ª VIA · FARMÁCIA' ou '2ª VIA · PACIENTE')
+  const umaVia = (label) => `
     <div class="via">
       <div class="cab">
-        <div class="cab-l">
-          <img src="logo.png" alt="" onerror="this.style.display='none'">
-          <div class="cab-c">
-            <div class="cab-titulo">HOSPESC — HOSPITAL DOS PESCADORES</div>
-            <div class="cab-sub">Rua São João de Deus, 80 — Rocas — Natal/RN · CEP 59010-775</div>
-            <div class="cab-sub">Fone: (84) 3232-4592 · hospitaldospescadoresadm@gmail.com</div>
-          </div>
+        <img src="logo.png" alt="" onerror="this.style.display='none'">
+        <div class="cab-c">
+          <div class="cab-titulo">HOSPESC — HOSPITAL DOS PESCADORES</div>
+          <div class="cab-sub">Rua São João de Deus, 80 — Rocas — Natal/RN · CEP 59010-775</div>
+          <div class="cab-sub">Fone: (84) 3232-4592 · hospitaldospescadoresadm@gmail.com</div>
         </div>
-        ${ehEspecial ? `
-        <div class="cab-vias">
-          <div>1ª VIA · FARMÁCIA</div>
-          <div>2ª VIA · PACIENTE</div>
-        </div>` : ''}
+        ${label ? `<span class="via-label">${label}</span>` : ''}
       </div>
-      <div class="titulo-rec">${titulo}</div>
+      <div class="titulo-wrap"><span class="titulo-rec">${titulo}</span></div>
 
       ${ehEspecial ? `
       <div class="box-id">
         <div class="box-id-t">IDENTIFICAÇÃO DO EMITENTE</div>
         <div class="box-id-c">
-          <div><b>Nome:</b> ${medico||'_________________________'}</div>
-          <div><b>CRM:</b> ${crm||'____'} <b>UF:</b> ${crmUf||'__'}</div>
-          <div><b>Endereço/Telefone:</b> Hospital dos Pescadores · (84) 3232-4592</div>
+          <div><b>Nome Completo:</b> ${medico||'________________________________'}</div>
+          <div><b>CRM:</b> ${crm||'_______'} &nbsp; <b>UF:</b> ${crmUf||'__'}</div>
+          <div><b>Endereço e Telefone:</b> Rua São João de Deus, 80 — Rocas — (84) 3232-4592</div>
+          <div><b>Cidade:</b> Natal &nbsp; <b>UF:</b> RN</div>
         </div>
       </div>` : ''}
 
       <div class="dados">
         <div><b>Paciente:</b> ${pac||'_________________________________________'}</div>
         <div><b>Endereço:</b> ${end||'_________________________________________'}</div>
-        <div><b>Cidade:</b> ${cidade||'____________________'}  <b>Data:</b> ___/___/______</div>
+        <div><b>Cidade:</b> ${cidade||'______________________'} &nbsp;&nbsp; <b>Data:</b> ___/___/______</div>
+        <div><b>Prescrição:</b></div>
       </div>
 
       <div class="prescricao-area">${_recEscapeHTML(prescricao)}</div>
@@ -5355,7 +5378,7 @@ function imprimirReceituario(){
       <div class="assin">
         <div class="assin-box">
           ${medico||'&nbsp;'}<br>
-          <span style="font-size:8.5pt;color:#555;">CRM ${crm||'____'}/${crmUf||'__'}</span>
+          <span style="font-size:8pt;color:#555;font-weight:400;">CRM ${crm||'____'}/${crmUf||'__'}</span>
         </div>
       </div>
 
@@ -5364,68 +5387,54 @@ function imprimirReceituario(){
         <div class="box-comp-col">
           <div class="box-comp-t">IDENTIFICAÇÃO DO COMPRADOR</div>
           <div class="box-comp-c">
-            <div>Nome: __________________________________</div>
-            <div>Ident.: ____________ Órg. Emissor: _______</div>
-            <div>End.: ___________________________________</div>
-            <div>Cidade: ______________ UF: ___ Tel: ______</div>
+            <div>Nome: ________________________________</div>
+            <div>Ident.: ____________ Órg. Emissor: _____</div>
+            <div>End.: _________________________________</div>
+            <div>Cidade: ____________ UF: ___ Tel: ______</div>
           </div>
         </div>
         <div class="box-comp-col">
           <div class="box-comp-t">IDENTIFICAÇÃO DO FORNECEDOR</div>
-          <div class="box-comp-c" style="min-height:80px;">
-            <div style="margin-top:55px;border-top:1px solid #333;padding-top:3px;text-align:center;font-size:7pt;">
-              ASSINATURA DO FARMACÊUTICO · DATA: ___/___/______
+          <div class="box-comp-c" style="min-height:72px;">
+            <div style="margin-top:50px;border-top:1px solid #333;padding-top:2px;text-align:center;font-size:6.5pt;">
+              ASSINATURA DO FARMACÊUTICO &nbsp; DATA: ___/___/______
             </div>
           </div>
         </div>
-      </div>` : `
-      <div class="rodape">Receituário Comum · Hospital dos Pescadores · UTI Geral</div>
-      `}
+      </div>` : `<div class="rodape">Receituário Comum · Hospital dos Pescadores · UTI Geral</div>`}
     </div>
   `;
 
-  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
-  <title>${document.title}</title>
-  <style>
-    *{box-sizing:border-box;margin:0;padding:0;}
-    @page{size:A4 portrait;margin:.6cm;}
-    body{font-family:'Times New Roman',Times,serif;font-size:11pt;color:#111;}
-    .via{padding:6px 8px;${ehEspecial?'min-height:14cm;':''}}
-    ${ehEspecial?'.via + .via{border-top:1px dashed #999;margin-top:8px;padding-top:8px;}':''}
-    .cab{display:flex;align-items:flex-start;justify-content:space-between;border-bottom:2px solid ${corTopo};padding-bottom:4px;margin-bottom:4px;gap:8px;}
-    .cab-l{display:flex;align-items:center;gap:8px;flex:1;}
-    .cab img{height:42px;width:auto;}
-    .cab-c{line-height:1.15;}
-    .cab-titulo{font-size:11pt;font-weight:800;color:${corTopo};}
-    .cab-sub{font-size:7.5pt;color:#444;}
-    .cab-vias{font-size:7.5pt;font-weight:700;text-align:right;border:1px dashed ${corTopo};padding:3px 6px;border-radius:3px;color:${corTopo};}
-    .titulo-rec{text-align:center;font-size:12.5pt;font-weight:800;color:${corTopo};letter-spacing:.08em;border:2px solid ${corTopo};padding:4px;border-radius:18px;margin:6px auto;max-width:260px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-    .box-id{border:1px solid #333;margin:6px 0;border-radius:3px;}
-    .box-id-t{background:#eee;font-size:8pt;font-weight:700;text-align:center;padding:2px;border-bottom:1px solid #333;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-    .box-id-c{padding:5px 8px;font-size:9pt;line-height:1.5;}
-    .dados{font-size:10pt;line-height:1.7;margin:8px 0;padding:0 4px;}
-    .dados b{font-weight:700;}
-    .prescricao-area{
-      white-space:pre-wrap;
-      font-family:'Courier New',Courier,monospace;
-      font-size:10.5pt;line-height:1.6;
-      min-height:${ehEspecial?'7cm':'14cm'};
-      padding:8px 6px;
-      border-top:1px solid #ddd;border-bottom:1px solid #ddd;
-      margin:4px 0;
-    }
-    .assin{margin-top:10px;display:flex;justify-content:center;}
-    .assin-box{border-top:1px solid #333;text-align:center;padding-top:3px;min-width:280px;font-size:9.5pt;font-weight:700;}
-    .box-comp{display:flex;gap:6px;margin-top:6px;}
-    .box-comp-col{flex:1;border:1px solid #333;border-radius:3px;}
-    .box-comp-t{background:#eee;font-size:7.5pt;font-weight:700;text-align:center;padding:2px;border-bottom:1px solid #333;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-    .box-comp-c{padding:5px 8px;font-size:8.5pt;line-height:1.7;}
-    .rodape{text-align:center;font-size:7pt;color:#888;margin-top:8px;border-top:1px solid #eee;padding-top:3px;}
-  </style></head><body>
-  ${umaVia()}
-  ${ehEspecial ? umaVia() : ''}
-  <script>window.onload=()=>{window.print();window.onafterprint=()=>window.close();}<\/script>
-  </body></html>`;
+  // Layout: especial=paisagem 2 vias lado a lado; comum=retrato 1 via
+  let html;
+  if(ehEspecial){
+    html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+    <title>${document.title}</title>
+    <style>
+      ${cssComum}
+      @page{size:A4 landscape;margin:.5cm .6cm;}
+      body{display:flex;flex-direction:row;gap:0;height:100%;}
+      .via{flex:1;padding:5px 8px;overflow:hidden;}
+      .separador{width:1px;background:repeating-linear-gradient(to bottom,#999 0,#999 6px,transparent 6px,transparent 10px);margin:0 4px;align-self:stretch;flex-shrink:0;}
+      .prescricao-area{min-height:9cm;}
+    </style></head><body>
+    ${umaVia('1ª VIA · FARMÁCIA')}
+    <div class="separador"></div>
+    ${umaVia('2ª VIA · PACIENTE')}
+    <script>window.onload=()=>{window.print();window.onafterprint=()=>window.close();}<\/script>
+    </body></html>`;
+  } else {
+    html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+    <title>${document.title}</title>
+    <style>
+      ${cssComum}
+      @page{size:A4 portrait;margin:.6cm;}
+      .prescricao-area{min-height:16cm;}
+    </style></head><body>
+    ${umaVia('')}
+    <script>window.onload=()=>{window.print();window.onafterprint=()=>window.close();}<\/script>
+    </body></html>`;
+  }
 
   const w = window.open('', '_blank', 'width=900,height=900');
   if(w){ w.document.write(html); w.document.close(); }
