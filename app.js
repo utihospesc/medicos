@@ -5193,6 +5193,356 @@ function imprimirPrescricao(){
 
 
 /* ════════════════════════════════════════════════════════════════════════════
+   RECEITUÁRIO (Comum / Controle Especial)
+   ─ Abre modal, permite importar itens da prescrição atual
+   ─ Imprime sem salvar no Firestore
+   ─ Após imprimir, pergunta se quer adicionar à prescrição atual
+   ════════════════════════════════════════════════════════════════════════════ */
+let _recTipo = 'comum';  // 'comum' | 'especial'
+
+function abrirReceituario(tipo){
+  if(!leitoAtual){ toast('Abra o prontuário de um paciente.', true); return; }
+  _recTipo = tipo === 'especial' ? 'especial' : 'comum';
+  // Título e badge
+  const titulo = _recTipo === 'especial' ? 'Receituário de Controle Especial' : 'Receituário Comum';
+  const badge  = _recTipo === 'especial' ? 'AZUL · 2 VIAS' : 'BRANCO';
+  const badgeCor = _recTipo === 'especial'
+    ? 'background:#e8f0fe;color:#1d4ed8;border:1px solid #1d4ed8;'
+    : 'background:#fff;color:#333;border:1px solid #ccc;';
+  sf('rec-titulo', '');  // sf não funciona para spans; usa textContent
+  const elT = document.getElementById('rec-titulo');
+  const elB = document.getElementById('rec-tipo-badge');
+  if(elT) elT.textContent = titulo;
+  if(elB){ elB.textContent = badge; elB.style.cssText = 'font-size:.68rem;padding:2px 8px;border-radius:4px;'+badgeCor; }
+
+  // Pré-preenche dados do paciente
+  sf('rec-pac',    (gf('f-pac')||'').toUpperCase());
+  sf('rec-data',   gf('f-data') || hoje());
+  sf('rec-end',    '');
+  sf('rec-cidade', 'NATAL/RN');
+  sf('rec-prescricao', '');
+
+  // Médico do perfil
+  if(perfilUsuario){
+    sf('rec-medico', (perfilUsuario.nome||'').toUpperCase());
+    sf('rec-crm',    perfilUsuario.crm || '');
+    sf('rec-crm-uf', 'RN');
+  }
+
+  // Renderiza lista de importação da prescrição atual
+  _recRenderImportarLista();
+
+  $('modal-receituario').classList.add('show');
+  setTimeout(()=>{ _autoResizeTA($('rec-prescricao')); }, 100);
+}
+
+function fecharReceituario(){
+  $('modal-receituario').classList.remove('show');
+}
+
+function _recRenderImportarLista(){
+  const w = $('rec-importar-lista'); if(!w) return;
+  if(!_rxItens || !_rxItens.length){
+    w.innerHTML = '<div style="font-size:.72rem;color:var(--muted);padding:8px;text-align:center;">Nenhuma medicação na prescrição atual.</div>';
+    return;
+  }
+  w.innerHTML = _rxItens.map((it,i)=>{
+    if(!it.farm) return '';
+    const cat = it._cat==='ATB' ? '🦠' : it.tipo==='dieta' ? '🍽' : it.tipo==='sn' ? '⚠' : it.tipo==='cuidados' ? '✓' : '💊';
+    const dose = [it.qtd, (it.apres&&it.apres!=='—'?it.apres:''), (it.dose&&it.dose!=='—'?it.dose:'')].filter(Boolean).join(' ');
+    return `<label style="display:flex;gap:6px;align-items:flex-start;padding:6px 8px;background:white;border:1px solid var(--borda);border-radius:5px;cursor:pointer;">
+      <input type="checkbox" class="rec-imp-chk" data-idx="${i}" style="margin-top:2px;flex-shrink:0;">
+      <div style="flex:1;line-height:1.3;">
+        <div style="font-weight:600;font-size:.76rem;">${cat} ${(it.farm||'').toUpperCase()}</div>
+        <div style="font-size:.7rem;color:var(--muted);">${(dose||'').toUpperCase()} ${(it.via||'').toUpperCase()} ${(it.freq||'').toUpperCase()}</div>
+      </div>
+    </label>`;
+  }).filter(Boolean).join('');
+}
+
+function _recMarcarTodos(marcar){
+  document.querySelectorAll('.rec-imp-chk').forEach(c=>{ c.checked = !!marcar; });
+}
+
+function _recImportarSelecionados(){
+  const ta = $('rec-prescricao'); if(!ta) return;
+  const selecionados = Array.from(document.querySelectorAll('.rec-imp-chk:checked'))
+    .map(c => parseInt(c.dataset.idx,10))
+    .filter(i => !isNaN(i) && _rxItens[i]);
+  if(!selecionados.length){ toast('Marque ao menos uma medicação.', true); return; }
+
+  // Numera continuando da última linha "N-" existente
+  const atual = ta.value || '';
+  const ultNum = (atual.match(/^\s*(\d+)\s*-/gm)||[]).map(s=>parseInt(s,10)).reduce((a,b)=>Math.max(a,b),0);
+
+  const linhas = selecionados.map((idx, k)=>{
+    const it = _rxItens[idx];
+    const n = ultNum + k + 1;
+    const dose = [it.qtd, (it.apres&&it.apres!=='—'?it.apres:''), (it.dose&&it.dose!=='—'?it.dose:'')]
+      .filter(Boolean).join(' ');
+    const via = (it.via||'').toUpperCase();
+    const freq = (it.freq||'').toUpperCase();
+    const farm = (it.farm||'').toUpperCase();
+    const linha1 = `${n}- ${farm} ${dose}`.trim().replace(/\s+/g,' ');
+    const linha2 = `   ${via} ${freq}`.trim().replace(/\s+/g,' ');
+    return linha1 + '\n' + linha2;
+  });
+
+  ta.value = (atual ? atual.replace(/\s+$/,'') + '\n\n' : '') + linhas.join('\n\n') + '\n';
+  _autoResizeTA(ta);
+  // Desmarca após importar
+  _recMarcarTodos(false);
+  toast(`✓ ${selecionados.length} item(ns) importado(s).`);
+}
+
+function imprimirReceituario(){
+  const prescricao = (gf('rec-prescricao')||'').trim();
+  if(!prescricao){ toast('Digite ao menos uma medicação.', true); return; }
+
+  const pac    = (gf('rec-pac')||'').toUpperCase();
+  const data   = gf('rec-data')||hoje();
+  const end    = (gf('rec-end')||'').toUpperCase();
+  const cidade = (gf('rec-cidade')||'NATAL/RN').toUpperCase();
+  const medico = (gf('rec-medico')||'').toUpperCase();
+  const crm    = (gf('rec-crm')||'').toUpperCase();
+  const crmUf  = (gf('rec-crm-uf')||'RN').toUpperCase();
+
+  const ehEspecial = _recTipo === 'especial';
+  const titulo = ehEspecial ? 'RECEITUÁRIO CONTROLE ESPECIAL' : 'RECEITUÁRIO';
+  const corTopo = ehEspecial ? '#1d4ed8' : '#7a1020';
+
+  const tituloOrig = document.title;
+  document.title = `${titulo} — ${pac.split(' ').slice(0,2).join(' ')} — ${_fmtDataCurta(data)}`;
+
+  // HTML de UMA via
+  const umaVia = () => `
+    <div class="via">
+      <div class="cab">
+        <div class="cab-l">
+          <img src="logo.png" alt="" onerror="this.style.display='none'">
+          <div class="cab-c">
+            <div class="cab-titulo">HOSPESC — HOSPITAL DOS PESCADORES</div>
+            <div class="cab-sub">Rua São João de Deus, 80 — Rocas — Natal/RN · CEP 59010-775</div>
+            <div class="cab-sub">Fone: (84) 3232-4592 · hospitaldospescadoresadm@gmail.com</div>
+          </div>
+        </div>
+        ${ehEspecial ? `
+        <div class="cab-vias">
+          <div>1ª VIA · FARMÁCIA</div>
+          <div>2ª VIA · PACIENTE</div>
+        </div>` : ''}
+      </div>
+      <div class="titulo-rec">${titulo}</div>
+
+      ${ehEspecial ? `
+      <div class="box-id">
+        <div class="box-id-t">IDENTIFICAÇÃO DO EMITENTE</div>
+        <div class="box-id-c">
+          <div><b>Nome:</b> ${medico||'_________________________'}</div>
+          <div><b>CRM:</b> ${crm||'____'} <b>UF:</b> ${crmUf||'__'}</div>
+          <div><b>Endereço/Telefone:</b> Hospital dos Pescadores · (84) 3232-4592</div>
+        </div>
+      </div>` : ''}
+
+      <div class="dados">
+        <div><b>Paciente:</b> ${pac||'_________________________________________'}</div>
+        <div><b>Endereço:</b> ${end||'_________________________________________'}</div>
+        <div><b>Cidade:</b> ${cidade||'____________________'}  <b>Data:</b> ___/___/______</div>
+      </div>
+
+      <div class="prescricao-area">${_recEscapeHTML(prescricao)}</div>
+
+      <div class="assin">
+        <div class="assin-box">
+          ${medico||'&nbsp;'}<br>
+          <span style="font-size:8.5pt;color:#555;">CRM ${crm||'____'}/${crmUf||'__'}</span>
+        </div>
+      </div>
+
+      ${ehEspecial ? `
+      <div class="box-comp">
+        <div class="box-comp-col">
+          <div class="box-comp-t">IDENTIFICAÇÃO DO COMPRADOR</div>
+          <div class="box-comp-c">
+            <div>Nome: __________________________________</div>
+            <div>Ident.: ____________ Órg. Emissor: _______</div>
+            <div>End.: ___________________________________</div>
+            <div>Cidade: ______________ UF: ___ Tel: ______</div>
+          </div>
+        </div>
+        <div class="box-comp-col">
+          <div class="box-comp-t">IDENTIFICAÇÃO DO FORNECEDOR</div>
+          <div class="box-comp-c" style="min-height:80px;">
+            <div style="margin-top:55px;border-top:1px solid #333;padding-top:3px;text-align:center;font-size:7pt;">
+              ASSINATURA DO FARMACÊUTICO · DATA: ___/___/______
+            </div>
+          </div>
+        </div>
+      </div>` : `
+      <div class="rodape">Receituário Comum · Hospital dos Pescadores · UTI Geral</div>
+      `}
+    </div>
+  `;
+
+  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+  <title>${document.title}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    @page{size:A4 portrait;margin:.6cm;}
+    body{font-family:'Times New Roman',Times,serif;font-size:11pt;color:#111;}
+    .via{padding:6px 8px;${ehEspecial?'min-height:14cm;':''}}
+    ${ehEspecial?'.via + .via{border-top:1px dashed #999;margin-top:8px;padding-top:8px;}':''}
+    .cab{display:flex;align-items:flex-start;justify-content:space-between;border-bottom:2px solid ${corTopo};padding-bottom:4px;margin-bottom:4px;gap:8px;}
+    .cab-l{display:flex;align-items:center;gap:8px;flex:1;}
+    .cab img{height:42px;width:auto;}
+    .cab-c{line-height:1.15;}
+    .cab-titulo{font-size:11pt;font-weight:800;color:${corTopo};}
+    .cab-sub{font-size:7.5pt;color:#444;}
+    .cab-vias{font-size:7.5pt;font-weight:700;text-align:right;border:1px dashed ${corTopo};padding:3px 6px;border-radius:3px;color:${corTopo};}
+    .titulo-rec{text-align:center;font-size:12.5pt;font-weight:800;color:${corTopo};letter-spacing:.08em;border:2px solid ${corTopo};padding:4px;border-radius:18px;margin:6px auto;max-width:260px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .box-id{border:1px solid #333;margin:6px 0;border-radius:3px;}
+    .box-id-t{background:#eee;font-size:8pt;font-weight:700;text-align:center;padding:2px;border-bottom:1px solid #333;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .box-id-c{padding:5px 8px;font-size:9pt;line-height:1.5;}
+    .dados{font-size:10pt;line-height:1.7;margin:8px 0;padding:0 4px;}
+    .dados b{font-weight:700;}
+    .prescricao-area{
+      white-space:pre-wrap;
+      font-family:'Courier New',Courier,monospace;
+      font-size:10.5pt;line-height:1.6;
+      min-height:${ehEspecial?'7cm':'14cm'};
+      padding:8px 6px;
+      border-top:1px solid #ddd;border-bottom:1px solid #ddd;
+      margin:4px 0;
+    }
+    .assin{margin-top:10px;display:flex;justify-content:center;}
+    .assin-box{border-top:1px solid #333;text-align:center;padding-top:3px;min-width:280px;font-size:9.5pt;font-weight:700;}
+    .box-comp{display:flex;gap:6px;margin-top:6px;}
+    .box-comp-col{flex:1;border:1px solid #333;border-radius:3px;}
+    .box-comp-t{background:#eee;font-size:7.5pt;font-weight:700;text-align:center;padding:2px;border-bottom:1px solid #333;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .box-comp-c{padding:5px 8px;font-size:8.5pt;line-height:1.7;}
+    .rodape{text-align:center;font-size:7pt;color:#888;margin-top:8px;border-top:1px solid #eee;padding-top:3px;}
+  </style></head><body>
+  ${umaVia()}
+  ${ehEspecial ? umaVia() : ''}
+  <script>window.onload=()=>{window.print();window.onafterprint=()=>window.close();}<\/script>
+  </body></html>`;
+
+  const w = window.open('', '_blank', 'width=900,height=900');
+  if(w){ w.document.write(html); w.document.close(); }
+  else{ toast('Popup bloqueado — permita popups para imprimir.', true); return; }
+  setTimeout(()=>{ document.title = tituloOrig; }, 2000);
+
+  // Após imprimir, pergunta se quer adicionar à prescrição atual
+  setTimeout(_recPerguntarAdicionar, 800);
+}
+
+function _recEscapeHTML(s){
+  return (s||'').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+}
+
+function _recPerguntarAdicionar(){
+  const prescricao = (gf('rec-prescricao')||'').trim();
+  if(!prescricao) return;
+  // Parseia para mostrar quantos itens serão adicionados
+  const itens = _recParsearMedicacoes(prescricao);
+  if(!itens.length) return;
+
+  const lista = itens.map((it,i)=>`${i+1}. ${it.farm}${it.posologia?' — '+it.posologia:''}`).join('\n');
+  if(confirm(`Deseja adicionar as ${itens.length} medicação(ões) do receituário à prescrição atual?\n\n${lista}\n\nAs medicações serão adicionadas com a posologia indicada.`)){
+    _recAdicionarNaPrescricao(itens);
+  }
+}
+
+/**
+ * Parseia o texto livre do receituário em itens estruturados.
+ * Cada item começa com "N-" ou "N." e pode ter linhas seguintes com a posologia.
+ * Retorna: [{farm, dose, freq, via, posologia}]
+ */
+function _recParsearMedicacoes(texto){
+  if(!texto) return [];
+  const linhas = texto.split('\n');
+  const itens = [];
+  let atual = null;
+  const regexItem = /^\s*\d+\s*[-.)]\s*(.+)$/;
+
+  linhas.forEach(linhaRaw => {
+    const linha = linhaRaw.replace(/\s+$/,'');
+    if(!linha.trim()) return;
+    const m = linha.match(regexItem);
+    if(m){
+      // Novo item — fecha o anterior
+      if(atual) itens.push(_recExtrairCampos(atual));
+      atual = { farm: m[1].trim(), posologiaRaw: '' };
+    } else if(atual){
+      // Linha de posologia/continuação do item atual
+      atual.posologiaRaw += (atual.posologiaRaw?' ':'') + linha.trim();
+    }
+  });
+  if(atual) itens.push(_recExtrairCampos(atual));
+  return itens;
+}
+
+/**
+ * A partir de "1- DIPIRONA 500mg ____ 20 COMPRIMIDOS" + "TOMAR 1 COMPRIMIDO VO 6/6h"
+ * extrai: farm, dose, via, freq, posologia (texto completo).
+ */
+function _recExtrairCampos(raw){
+  // Primeira linha: nome + dose embutida tipo "DIPIRONA 500mg ____ 20 COMPRIMIDOS"
+  // Pega tudo antes de "____" ou múltiplos espaços como o nome + dose principal
+  const cabecalho = (raw.farm||'').replace(/_+/g,'').replace(/\s+/g,' ').trim();
+  // Tenta extrair primeira palavra como nome do fármaco + número logo a seguir como dose
+  const matchNomeDose = cabecalho.match(/^([A-ZÇÃÉÊÁÍÓÚÂÔÕa-zçãéêáíóúâôõ\s\-]+?)(\s+\d[\d.,]*\s*(?:mg|mcg|g|ml|UI|%)?)?(\s+.*)?$/);
+  const farm = matchNomeDose ? (matchNomeDose[1]||cabecalho).trim().toUpperCase() : cabecalho.toUpperCase();
+  const dose = matchNomeDose && matchNomeDose[2] ? matchNomeDose[2].trim() : '';
+
+  // Posologia: junta o resto da primeira linha + linhas seguintes
+  const restoCab = matchNomeDose && matchNomeDose[3] ? matchNomeDose[3].trim() : '';
+  const posologia = [restoCab, raw.posologiaRaw].filter(Boolean).join(' · ').trim();
+
+  // Tenta extrair via e freq da posologia
+  const upper = posologia.toUpperCase();
+  let via = '';
+  const vias = ['EV','VO','SC','IM','IN','SL','SNE','SNG','TOP','OFT','OT','RET','VAG','INAL','NEB','NEBULIZAÇÃO'];
+  for(const v of vias){ if(new RegExp('\\b'+v+'\\b').test(upper)){ via = v; break; } }
+
+  let freq = '';
+  const mFreq = upper.match(/\b(\d+\s*\/\s*\d+\s*(?:H|HORAS|HRS|HS))\b|\b(\d+X\s*(?:AO\s*DIA|\/DIA|D)?)\b|\bAGORA\b|\b(?:SOS|S\.O\.S\.|SE\s+DOR|SE\s+NECESS[ÁA]RIO)\b|\b1\s*VEZ\s*(?:AO\s*)?DIA\b/);
+  if(mFreq) freq = mFreq[0].replace(/\s+/g,'').toUpperCase();
+  if(/AGORA/.test(upper)) freq = 'AGORA';
+
+  return { farm, dose, via, freq, posologia };
+}
+
+/**
+ * Adiciona os itens parseados ao _rxItens (prescrição atual em memória)
+ * e re-renderiza a tabela. Não salva no Firestore — usuário precisa clicar "Salvar".
+ */
+function _recAdicionarNaPrescricao(itens){
+  if(!itens || !itens.length) return;
+  let novoId = (_rxItens||[]).reduce((m,it)=>Math.max(m, it.id||0), 0);
+  itens.forEach(it => {
+    novoId++;
+    _rxItens.push({
+      id: novoId,
+      farm: it.farm || '',
+      qtd: '',
+      apres: '',
+      dose: it.dose || '',
+      via: it.via || 'VO',
+      freq: it.freq || '',
+      hor: [],
+      obs: it.posologia || '',
+      _cat: '',
+      tipo: ''
+    });
+  });
+  _renderPrescricao();
+  toast(`✓ ${itens.length} item(ns) adicionado(s) à prescrição. Lembre-se de salvar.`);
+  fecharReceituario();
+}
+
+
+/* ════════════════════════════════════════════════════════════════════════════
    FICHA DE ANTIMICROBIANO
    ─ Estado, abertura, preenchimento automático, save/load, impressão
    ════════════════════════════════════════════════════════════════════════════ */
