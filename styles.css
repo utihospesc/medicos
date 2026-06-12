@@ -1304,6 +1304,12 @@ details[open] .sol-hist-rotina-sum::before{ content:'▼'; }
 .img-exame-del{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.55);color:#fff;
   border:none;border-radius:50%;width:18px;height:18px;font-size:.65rem;cursor:pointer;
   display:flex;align-items:center;justify-content:center;line-height:1;}
+.img-exame-laudo{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.58);color:#fff;
+  border:none;font-size:.6rem;font-weight:600;padding:3px 0;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:3px;letter-spacing:.02em;
+  transition:background .15s;}
+.img-exame-laudo:hover{background:rgba(0,0,0,.75);}
+.img-exame-laudo.tem-laudo{background:rgba(27,94,32,.78);color:#c8e6c9;}
 .img-exame-add{width:90px;height:90px;border-radius:8px;border:2px dashed var(--borda);
   display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;
   color:var(--muted);font-size:.7rem;gap:4px;flex-shrink:0;transition:border-color .15s,color .15s;}
