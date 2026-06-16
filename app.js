@@ -1745,32 +1745,67 @@ function _calcIdadeDisplay(idDN,idOut){
 /* ════════════════════════════════════════════════════════════════════════════
    EXAMES LABORATORIAIS  (registro por data + gráfico de tendência)
    ════════════════════════════════════════════════════════════════════════════ */
+
+// Conjunto de índices com accordion aberto
+const _labAbertos = new Set();
+
+function _labToggle(idx){
+  if(_labAbertos.has(idx)) _labAbertos.delete(idx);
+  else _labAbertos.add(idx);
+  _renderLabLinhas();
+}
+
 function _renderLabLinhas(){
   const wrap=$('lab-linhas'); if(!wrap) return;
-  if(!_labLinhas.length){ wrap.innerHTML='<div style="font-size:.78rem;color:var(--muted);padding:.4rem;">Nenhuma data registrada. Clique em "+ Adicionar data de exames".</div>'; return; }
+  if(!_labLinhas.length){
+    wrap.innerHTML='<div style="font-size:.78rem;color:var(--muted);padding:.4rem;">Nenhuma data registrada. Clique em "+ Adicionar data de exames".</div>';
+    return;
+  }
   wrap.innerHTML = _labLinhas.map((lin,idx)=>{
-    const campos = LAB_CAMPOS.map(c=>`
-      <div class="fl"><label>${c.l}</label><input type="number" step="any" value="${(lin.valores&&lin.valores[c.k]!=null)?lin.valores[c.k]:''}" oninput="_setLabVal(${idx},'${c.k}',this.value)"></div>`).join('');
+    const aberto = _labAbertos.has(idx);
+    // Resumo compacto: até 6 valores preenchidos
+    const preenchidos = LAB_CAMPOS.filter(c=>lin.valores&&lin.valores[c.k]!=null&&lin.valores[c.k]!=='');
+    const resumoChips = preenchidos.slice(0,6).map(c=>
+      `<span class="lab-acc-chip"><span class="lab-acc-k">${c.l}</span>${lin.valores[c.k]}</span>`
+    ).join('');
+    const maisN = preenchidos.length > 6 ? `<span class="lab-acc-mais">+${preenchidos.length-6}</span>` : '';
+    const semDados = preenchidos.length===0 && !(lin.outros||'').trim();
+    // Grid de edição (só renderiza se aberto)
+    const campos = aberto ? LAB_CAMPOS.map(c=>`
+      <div class="fl"><label>${c.l}</label><input type="number" step="any" value="${(lin.valores&&lin.valores[c.k]!=null)?lin.valores[c.k]:''}" oninput="_setLabVal(${idx},'${c.k}',this.value)"></div>`).join('') : '';
     const outrosVal = (lin.outros||'').replace(/"/g,'&quot;');
-    return `<div class="lab-linha">
-      <div class="lab-linha-head">
-        <input type="date" value="${lin.data||''}" onchange="_setLabData(${idx},this.value)">
-        <span style="font-size:.7rem;color:var(--muted);">valores deste dia</span>
-        <button class="lab-del" onclick="_delLabLinha(${idx})" title="Remover"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><polyline points="3,5 5,5 13,5"/><path d="M6 5V3.5A.5.5 0 016.5 3h3a.5.5 0 01.5.5V5"/><path d="M5 5l.7 8.5a.8.8 0 00.8.5h3a.8.8 0 00.8-.5L11 5"/><line x1="7" y1="8" x2="7" y2="12"/><line x1="9" y1="8" x2="9" y2="12"/></svg></button>
-      </div>
-      <div class="lab-grid">${campos}</div>
-      <div style="margin-top:.4rem;">
-        <div class="fl" style="margin:0;"><label style="font-size:.58rem;color:var(--muted);font-weight:700;letter-spacing:.04em;">OUTROS EXAMES (texto livre)</label>
-          <input type="text" value="${outrosVal}"
-            placeholder="Ex: Amilase 210, Lipase 380, Cortisol 18, TSH 0.9..."
-            style="font-size:.78rem;font-family:var(--font-mono);"
-            oninput="_setLabOutros(${idx},this.value)">
+    return `<div class="lab-linha lab-acc${aberto?' lab-acc-open':''}">
+      <div class="lab-acc-head" onclick="_labToggle(${idx})">
+        <span class="lab-acc-chev">${aberto?'▾':'▸'}</span>
+        <input type="date" value="${lin.data||''}" onchange="event.stopPropagation();_setLabData(${idx},this.value)" onclick="event.stopPropagation()">
+        <div class="lab-acc-resumo">
+          ${semDados
+            ? '<span style="font-size:.72rem;color:var(--muted);font-style:italic;">sem valores — clique para preencher</span>'
+            : resumoChips + maisN
+          }
         </div>
+        <button class="lab-del" onclick="event.stopPropagation();_delLabLinha(${idx})" title="Remover"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3,5 5,5 13,5"/><path d="M6 5V3.5A.5.5 0 016.5 3h3a.5.5 0 01.5.5V5"/><path d="M5 5l.7 8.5a.8.8 0 00.8.5h3a.8.8 0 00.8-.5L11 5"/></svg></button>
       </div>
+      ${aberto ? `<div class="lab-acc-body">
+        <div class="lab-grid">${campos}</div>
+        <div style="margin-top:.4rem;">
+          <div class="fl" style="margin:0;"><label style="font-size:.58rem;color:var(--muted);font-weight:700;letter-spacing:.04em;">OUTROS EXAMES (texto livre)</label>
+            <input type="text" value="${outrosVal}"
+              placeholder="Ex: Amilase 210, Lipase 380, Cortisol 18, TSH 0.9..."
+              style="font-size:.78rem;font-family:var(--font-mono);"
+              oninput="_setLabOutros(${idx},this.value)">
+          </div>
+        </div>
+      </div>` : ''}
     </div>`;
   }).join('');
 }
-function addLinhaLab(){ _labLinhas.push({data:gf('f-data')||hoje(), valores:{}}); _renderLabLinhas(); }
+function addLinhaLab(){
+  const idx = _labLinhas.length;
+  _labLinhas.push({data:gf('f-data')||hoje(), valores:{}});
+  _labAbertos.add(idx);
+  _renderLabLinhas();
+}
 function _setLabData(i,v){ if(_labLinhas[i]) _labLinhas[i].data=v; }
 function _setLabVal(i,k,v){
   if(_labLinhas[i]){
