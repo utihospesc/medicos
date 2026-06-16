@@ -6305,9 +6305,13 @@ async function _buscarCartaoSUSAuto(){
 function _atualizarStatusCartaoSUS(msg){
   const el = $('hemo-cartao-status');
   if(!el) return;
-  if(!msg){ el.style.display='none'; el.textContent=''; return; }
-  el.style.display=''; el.textContent = msg;
-  el.style.color = msg.startsWith('<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg>') ? '#0a6b3a' : msg.startsWith('<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M4 2h8M4 14h8"/><path d="M5 2v3l3 3-3 3v3"/><path d="M11 2v3L8 8l3 3v3"/></svg>') ? '#666' : '#a35200';
+  if(!msg){ el.style.display='none'; el.innerHTML=''; return; }
+  el.style.display=''; el.innerHTML = msg;
+  // Cor baseada no status: verde=encontrado, cinza=buscando, laranja=aviso/erro
+  const txt = el.textContent || '';
+  el.style.color = txt.includes('encontrado') ? '#0a6b3a'
+                 : txt.includes('Buscando')   ? '#666'
+                 : '#a35200';
 }
 
 async function rebuscarCartaoSUS(){ await _buscarCartaoSUSAuto(); }
