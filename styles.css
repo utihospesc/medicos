@@ -299,7 +299,7 @@ a:hover{text-decoration:underline}
 }
 
 /* ── PREVIEW DOC (mantido clássico p/ impressão) ───────────── */
-.preview-doc{font-family:var(--font-serif);font-size:.84rem;line-height:1.6;color:#222}
+.preview-doc{font-family:'Arial',var(--font-sans);font-size:.84rem;line-height:1.6;color:#222}
 .preview-doc h1{font-size:1.05rem;text-align:center;color:var(--vinho);margin-bottom:.2rem}
 .preview-doc .pv-sub{text-align:center;font-size:.74rem;color:var(--muted);margin-bottom:1rem;font-family:var(--font-sans)}
 .preview-doc table{width:100%;border-collapse:collapse;margin:.6rem 0;font-size:.78rem}
