@@ -694,6 +694,14 @@
                   </div>
                   <div class="guia-acao">Preencher <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M3 8h10"/><path d="M9.5 4.5L13 8l-3.5 3.5"/></svg></div>
                 </div>
+                <div class="guia-card" onclick="abrirFichaAlbumina()">
+                  <div class="guia-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="12" rx="8" ry="5"/><path d="M4 12c0 3 3.6 5.5 8 5.5s8-2.5 8-5.5"/><path d="M4 12V8c0-3 3.6-5.5 8-5.5S20 5 20 8v4"/></svg></div>
+                  <div class="guia-info">
+                    <div class="guia-titulo">Solicitação de Albumina Endovenosa</div>
+                    <div class="guia-sub">SMS · DLS · Impresso institucional com indicação e justificativa</div>
+                  </div>
+                  <div class="guia-acao">Preencher →</div>
+                </div>
                 <div class="guia-card" onclick="abrirModalMorteEncefalica()">
                   <div class="guia-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H15M10 3v7L5 20H19L14 10V3"/><circle cx="12" cy="14" r="2"/><path d="M12 16v2"/></svg></div>
                   <div class="guia-info">
@@ -974,6 +982,86 @@
 
 
 <!-- ══════════════ MODAL SOLICITAÇÃO DE HEMOTERÁPICOS ══════════════ -->
+<!-- ══════════════ MODAL FICHA DE ALBUMINA ══════════════ -->
+<div class="modal" id="modal-albumina-ficha">
+  <div class="modal-box modal-tall" style="max-width:760px;">
+    <div class="modal-head">
+      <h3 style="display:flex;align-items:center;gap:8px;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="12" rx="8" ry="5"/><path d="M4 12c0 3 3.6 5.5 8 5.5s8-2.5 8-5.5"/><path d="M4 12V8c0-3 3.6-5.5 8-5.5S20 5 20 8v4"/></svg> Solicitação de Albumina Endovenosa</h3>
+      <button class="modal-x" onclick="fecharFichaAlbumina()">×</button>
+    </div>
+    <div class="modal-body">
+      <!-- Cabeçalho institucional -->
+      <div style="text-align:center;border-bottom:2px solid var(--vinho);padding-bottom:10px;margin-bottom:14px;">
+        <div style="font-size:.72rem;color:var(--muted);font-weight:700;">SECRETARIA MUNICIPAL DE SAÚDE · DEPARTAMENTO DE LOGÍSTICA E SUPORTE IMEDIATO AOS SERVIÇOS DE SAÚDE – DLS</div>
+        <div style="font-weight:800;color:var(--vinho);font-size:1rem;margin:4px 0;">IMPRESSO DE SOLICITAÇÃO DE ALBUMINA ENDOVENOSA</div>
+      </div>
+
+      <!-- Identificação -->
+      <div class="secao">
+        <div class="secao-t">Identificação do Paciente</div>
+        <div class="secao-c">
+          <div class="dc">
+            <div class="fl" style="flex:3"><label>Paciente</label><input type="text" id="falb-pac" style="text-transform:uppercase;"></div>
+            <div class="fl"><label>Idade</label><input type="text" id="falb-idade" placeholder="anos"></div>
+            <div class="fl"><label>Peso (kg)</label><input type="text" id="falb-peso"></div>
+            <div class="fl"><label>Setor/Leito</label><input type="text" id="falb-leito" style="text-transform:uppercase;"></div>
+          </div>
+          <div class="dc">
+            <div class="fl" style="flex:1"><label>Diagnóstico</label><input type="text" id="falb-diag" style="text-transform:uppercase;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Posologia -->
+      <div class="secao">
+        <div class="secao-t">Posologia</div>
+        <div class="secao-c">
+          <div class="dc">
+            <div class="fl" style="flex:2"><label>Posologia</label><input type="text" id="falb-posologia" placeholder="ex: 100ml EV 8/8h" style="text-transform:uppercase;"></div>
+            <div class="fl"><label>Tempo de tratamento</label><input type="text" id="falb-tempo" placeholder="ex: 3 dias" style="text-transform:uppercase;"></div>
+          </div>
+          <div class="dc">
+            <div class="fl" style="flex:2"><label>Dosagem</label><input type="text" id="falb-dosagem" placeholder="ex: Albumina Humana 20% 100ml" style="text-transform:uppercase;"></div>
+            <div class="fl"><label>Data</label><input type="date" id="falb-data"></div>
+            <div class="fl"><label>Quantidade</label><input type="text" id="falb-qtd" placeholder="ex: 3 frascos" style="text-transform:uppercase;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Indicação -->
+      <div class="secao">
+        <div class="secao-t">Indicação para uso de albumina</div>
+        <div class="secao-c">
+          <div class="fatb-checks" style="flex-direction:column;gap:8px;">
+            <label class="check-label"><input type="checkbox" id="falb-ind-ascite"> <span>Tratamento da ascite volumosa com paracenteses repetidas</span></label>
+            <label class="check-label"><input type="checkbox" id="falb-ind-plasmaferese"> <span>Reposição volêmica em plasmaferese</span></label>
+            <label class="check-label"><input type="checkbox" id="falb-ind-shr"> <span>Síndrome hepatorrenal</span></label>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <label class="check-label" style="white-space:nowrap;"><input type="checkbox" id="falb-ind-outra"> <span>Outra:</span></label>
+              <input type="text" id="falb-ind-outra-txt" style="flex:1;padding:4px 8px;border:1.5px solid var(--borda);border-radius:6px;font-size:.84rem;text-transform:uppercase;" placeholder="especificar">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Justificativa -->
+      <div class="secao">
+        <div class="secao-t">Justificativa clínica</div>
+        <div class="secao-c">
+          <div class="fl"><textarea id="falb-justif" rows="4" style="width:100%;resize:vertical;padding:6px 8px;border:1.5px solid var(--borda);border-radius:6px;font-size:.86rem;text-transform:uppercase;" placeholder="Descreva a justificativa clínica para o uso da albumina..."></textarea></div>
+        </div>
+      </div>
+
+      <!-- Ações -->
+      <div class="form-actions" style="margin-top:0;">
+        <button class="btn btn-pri" onclick="salvarFichaAlbumina()">⌘ Salvar ficha</button>
+        <button class="btn btn-sec" onclick="imprimirFichaAlbumina()">🖨 Imprimir</button>
+        <button class="btn" onclick="fecharFichaAlbumina()">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal" id="modal-hemo-ficha">
   <div class="modal-box modal-tall" style="max-width:920px;">
     <div class="modal-head">
