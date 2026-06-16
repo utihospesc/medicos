@@ -4196,6 +4196,14 @@ function _mrxSalvar(){
   fecharModalRxItem();
   _renderPrescricao();
   toast(_mrxEditId ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> Item atualizado' : '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> Item adicionado');
+  // ── Trigger albumina: se o item prescrito é albumina humana, sugere ficha
+  if(farm.includes('ALBUMINA')){
+    setTimeout(()=>{
+      if(confirm('Albumina prescrita.\n\nDeseja preencher a Solicitação de Albumina Endovenosa (impresso DLS) agora?')){
+        abrirFichaAlbumina();
+      }
+    }, 350);
+  }
 }
 
 /* ─── AUTOCOMPLETE DO MODAL ────────────────────────────────────────────── */
@@ -5901,18 +5909,25 @@ async function _renderGuiasFichas(){
     const hemos    = await dbListByPrefix(`uti_med_hemo_ficha_${leitoAtual}_`);
     const termos   = await dbListByPrefix(`uti_med_termo_${leitoAtual}_`);
     const trilogys = await dbListByPrefix(`uti_med_trilogy_${leitoAtual}_`);
-    const mes     = await dbListByPrefix(`uti_med_me_${leitoAtual}_`);
+    const mes      = await dbListByPrefix(`uti_med_me_${leitoAtual}_`);
+    const albuminas= await dbListByPrefix(`uti_med_albumina_${leitoAtual}_`);
     const arr=[
       ...Object.entries(atbs).map(([k,v])=>({key:k,...v, _tipo:'atb'})),
       ...Object.entries(hemos).map(([k,v])=>({key:k,...v, _tipo:'hemo'})),
       ...Object.entries(termos).map(([k,v])=>({key:k,...v, _tipo:'termo'})),
       ...Object.entries(trilogys).map(([k,v])=>({key:k,...v, _tipo:'trilogy'})),
-      ...Object.entries(mes).map(([k,v])=>({key:k,...v, _tipo:'me'}))
+      ...Object.entries(mes).map(([k,v])=>({key:k,...v, _tipo:'me'})),
+      ...Object.entries(albuminas).map(([k,v])=>({key:k,...v, _tipo:'albumina'}))
     ].filter(x=>x.pac||x.nome||x.resp).sort((a,b)=>(b.salvadoEm||'').localeCompare(a.salvadoEm||''));
     if(!arr.length){ w.innerHTML='<span style="font-size:.8rem;color:var(--muted);">Nenhuma ficha salva.</span>'; return; }
     w.innerHTML=arr.map(f=>{
       let icon, titulo, edit, impr;
-      if(f._tipo==='me'){
+      if(f._tipo==='albumina'){
+        icon='<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><ellipse cx="12" cy="12" rx="8" ry="5"/><path d="M4 12c0 3 3.6 5.5 8 5.5s8-2.5 8-5.5"/><path d="M4 12V8c0-3 3.6-5.5 8-5.5S20 5 20 8v4"/></svg>';
+        titulo=`Albumina: ${(f.pac||'').split(' ').slice(0,2).join(' ')||'—'}`;
+        edit=`_abrirAlbuminaExistente('${f.key}')`;
+        impr=`_imprimirAlbuminaChave('${f.key}')`;
+      } else if(f._tipo==='me'){
         icon='<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 13.5C8 13.5 3 12 3 8a5 5 0 0110 0c0 4-5 5.5-5 5.5z"/><path d="M8 13.5V6"/><path d="M8 9c0 0-2-1-2-3"/><path d="M8 7.5c0 0 2-1 2-3"/><circle cx="6" cy="4.5" r="1.2"/><circle cx="10" cy="4" r="1.2"/></svg>';
         titulo=`Morte Encefálica: ${(f.pac||'').split(' ').slice(0,2).join(' ')||'—'}`;
         edit=`_abrirMEExistente('${f.key}')`;
@@ -6305,13 +6320,178 @@ async function _buscarCartaoSUSAuto(){
 function _atualizarStatusCartaoSUS(msg){
   const el = $('hemo-cartao-status');
   if(!el) return;
-  if(!msg){ el.style.display='none'; el.innerHTML=''; return; }
-  el.style.display=''; el.innerHTML = msg;
-  // Cor baseada no status: verde=encontrado, cinza=buscando, laranja=aviso/erro
-  const txt = el.textContent || '';
-  el.style.color = txt.includes('encontrado') ? '#0a6b3a'
-                 : txt.includes('Buscando')   ? '#666'
-                 : '#a35200';
+  if(!msg){ el.style.display='none'; el.textContent=''; return; }
+  el.style.display=''; el.textContent = msg;
+  el.style.color = msg.startsWith('<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg>') ? '#0a6b3a' : msg.startsWith('<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M4 2h8M4 14h8"/><path d="M5 2v3l3 3-3 3v3"/><path d="M11 2v3L8 8l3 3v3"/></svg>') ? '#666' : '#a35200';
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   SOLICITAÇÃO DE ALBUMINA ENDOVENOSA
+   SMS · Departamento de Logística e Suporte Imediato aos Serviços de Saúde
+   ════════════════════════════════════════════════════════════════════════════ */
+
+function abrirFichaAlbumina(dadosExistentes){
+  const f = dadosExistentes || {};
+  // Dados do paciente
+  sf('falb-pac',      f.pac  || (gf('f-pac')||'').toUpperCase());
+  sf('falb-leito',    f.leito|| (gf('f-leito')||'').toUpperCase());
+  sf('falb-diag',     f.diag || (gf('f-diag')||'').toUpperCase());
+  sf('falb-data',     f.data || hoje());
+  // Idade calculada da DN
+  const dnStr = f.dn || gf('f-dn') || '';
+  if(dnStr){
+    const dn = new Date(dnStr+'T00:00:00');
+    const anos = Math.floor((new Date() - dn) / (365.25*24*3600*1000));
+    sf('falb-idade', f.idade || (anos>0?anos+' anos':''));
+  } else {
+    sf('falb-idade', f.idade||'');
+  }
+  const peso = f.peso || gf('f-peso') || '';
+  sf('falb-peso', peso ? peso+' kg' : '');
+  // Posologia — pré-preenche se veio da prescrição
+  sf('falb-posologia', f.posologia||'');
+  sf('falb-tempo',     f.tempo||'');
+  sf('falb-dosagem',   f.dosagem||'ALBUMINA HUMANA 20%');
+  sf('falb-qtd',       f.qtd||'');
+  // Indicações
+  $('falb-ind-ascite').checked      = !!(f.indAscite);
+  $('falb-ind-plasmaferese').checked= !!(f.indPlasmaferese);
+  $('falb-ind-shr').checked         = !!(f.indSHR);
+  $('falb-ind-outra').checked       = !!(f.indOutra);
+  sf('falb-ind-outra-txt', f.indOutraTxt||'');
+  sf('falb-justif', f.justif||'');
+  $('modal-albumina-ficha')._chaveEditar = f._chave||null;
+  $('modal-albumina-ficha').classList.add('show');
+}
+
+function fecharFichaAlbumina(){
+  $('modal-albumina-ficha').classList.remove('show');
+}
+
+function _coletarFichaAlbumina(){
+  return {
+    pac:       (gf('falb-pac')||'').toUpperCase(),
+    leito:     (gf('falb-leito')||'').toUpperCase(),
+    diag:      (gf('falb-diag')||'').toUpperCase(),
+    idade:     gf('falb-idade')||'',
+    peso:      gf('falb-peso')||'',
+    data:      gf('falb-data')||'',
+    posologia: (gf('falb-posologia')||'').toUpperCase(),
+    tempo:     (gf('falb-tempo')||'').toUpperCase(),
+    dosagem:   (gf('falb-dosagem')||'').toUpperCase(),
+    qtd:       (gf('falb-qtd')||'').toUpperCase(),
+    indAscite:       $('falb-ind-ascite').checked,
+    indPlasmaferese: $('falb-ind-plasmaferese').checked,
+    indSHR:          $('falb-ind-shr').checked,
+    indOutra:        $('falb-ind-outra').checked,
+    indOutraTxt:     (gf('falb-ind-outra-txt')||'').toUpperCase(),
+    justif:    (gf('falb-justif')||'').toUpperCase(),
+    autor:     usuarioEmail,
+    autorNome: perfilUsuario?perfilUsuario.nome:'',
+    salvadoEm: new Date().toISOString(),
+    tipo:      'albumina'
+  };
+}
+
+async function salvarFichaAlbumina(){
+  if(!leitoAtual){ toast('Abra o prontuário de um paciente.',true); return; }
+  const f = _coletarFichaAlbumina();
+  if(!f.pac){ toast('Informe o nome do paciente.',true); return; }
+  showLoading('Salvando ficha...');
+  try{
+    const chave = $('modal-albumina-ficha')._chaveEditar
+      || `uti_med_albumina_${leitoAtual}_${f.data}_${Date.now()}`;
+    await dbSet(chave, f);
+    hideLoading();
+    toast('✓ Ficha de albumina salva.');
+  }catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
+}
+
+async function _abrirAlbuminaExistente(key){
+  showLoading('Carregando ficha...');
+  try{
+    const f = await dbGet(key);
+    hideLoading();
+    if(!f){ toast('Ficha não encontrada.',true); return; }
+    f._chave = key;
+    abrirFichaAlbumina(f);
+  }catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
+}
+
+async function _imprimirAlbuminaChave(key){
+  showLoading('Carregando ficha...');
+  try{
+    const f = await dbGet(key);
+    hideLoading();
+    if(!f){ toast('Ficha não encontrada.',true); return; }
+    _imprimirAlbuminaHTML(f);
+  }catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
+}
+
+function imprimirFichaAlbumina(){
+  _imprimirAlbuminaHTML(_coletarFichaAlbumina());
+}
+
+function _imprimirAlbuminaHTML(f){
+  const chk = (v) => v ? '(X)' : '( )';
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Solicitação de Albumina</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:Arial,Helvetica,sans-serif;font-size:9.5pt;color:#000;padding:12mm 14mm;}
+    .cabecalho{text-align:center;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:12px;}
+    .inst{font-size:7.5pt;text-transform:uppercase;letter-spacing:.04em;}
+    .titulo{font-size:11pt;font-weight:800;margin:4px 0 2px;}
+    table.grade{width:100%;border-collapse:collapse;margin-bottom:10px;}
+    table.grade td{border:1px solid #000;padding:4px 6px;font-size:8.5pt;vertical-align:top;}
+    .label{font-weight:700;font-size:7.5pt;}
+    .secao-t{font-size:8pt;font-weight:800;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid #000;margin:10px 0 6px;padding-bottom:2px;}
+    .indicacoes{border:1px solid #000;padding:8px 10px;margin-bottom:10px;}
+    .ind-item{margin-bottom:5px;font-size:9pt;}
+    .justif-box{border:1px solid #000;min-height:60px;padding:6px 8px;font-size:9pt;margin-bottom:10px;white-space:pre-wrap;}
+    .assin{border-top:1px solid #000;width:220px;text-align:center;padding-top:3px;font-size:8pt;display:inline-block;margin-top:20px;}
+    .assin-wrap{display:flex;gap:40px;justify-content:flex-start;margin-top:14px;}
+    @media print{body{margin:0;padding:10mm 12mm;}}
+  </style></head><body>
+  <div class="cabecalho">
+    <div class="inst">Secretaria Municipal de Saúde · Departamento de Logística e Suporte Imediato aos Serviços de Saúde – DLS</div>
+    <div class="titulo">IMPRESSO DE SOLICITAÇÃO DE ALBUMINA ENDOVENOSA</div>
+  </div>
+  <table class="grade">
+    <tr>
+      <td colspan="3"><span class="label">PACIENTE: </span>${f.pac||''}</td>
+      <td><span class="label">IDADE: </span>${f.idade||''}</td>
+      <td><span class="label">PESO: </span>${f.peso||''}</td>
+      <td><span class="label">SETOR/LEITO: </span>${f.leito||''}</td>
+    </tr>
+    <tr><td colspan="6"><span class="label">DIAGNÓSTICO: </span>${f.diag||''}</td></tr>
+    <tr>
+      <td colspan="2"><span class="label">POSOLOGIA: </span>${f.posologia||'........................................'}</td>
+      <td colspan="2"><span class="label">TEMPO DE TRATAMENTO: </span>${f.tempo||'.........................'}</td>
+      <td><span class="label">DOSAGEM: </span>${f.dosagem||'.....................'}</td>
+      <td><span class="label">DATA: </span>${f.data?_fmtDataCurta(f.data):''}</td>
+    </tr>
+    <tr><td colspan="6"><span class="label">QUANTIDADE: </span>${f.qtd||'........................................'}</td></tr>
+  </table>
+  <div class="secao-t">Indicação para uso de albumina</div>
+  <div class="indicacoes">
+    <div class="ind-item">${chk(f.indAscite)} Tratamento da ascite volumosa com paracenteses repetidas</div>
+    <div class="ind-item">${chk(f.indPlasmaferese)} Reposição volêmica em plasmaferese</div>
+    <div class="ind-item">${chk(f.indSHR)} Síndrome hepatorrenal</div>
+    <div class="ind-item">${chk(f.indOutra)} Outra: ${f.indOutraTxt||'...........................................................................'}</div>
+  </div>
+  <div class="secao-t">Justificativa</div>
+  <div class="justif-box">${f.justif||'\n\n\n'}</div>
+  <div class="assin-wrap">
+    <div><div class="assin">Assinatura e carimbo do Médico solicitante</div></div>
+    <div><div class="assin">Assinatura e carimbo do Farmacêutico</div></div>
+    <div><div class="assin">Assinatura e carimbo do Auditor/Fornecedor</div></div>
+  </div>
+  <script>window.onload=()=>{ window.print(); }<\/script>
+  </body></html>`;
+  const w = window.open('','_blank','width=860,height=700');
+  if(w){ w.document.write(html); w.document.close(); }
+  else toast('Popup bloqueado — permita popups para imprimir.',true);
 }
 
 async function rebuscarCartaoSUS(){ await _buscarCartaoSUSAuto(); }
