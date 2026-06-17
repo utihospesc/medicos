@@ -819,6 +819,117 @@ function fecharModalLaudo(){
   _laudoIdxAtual = null;
 }
 
+/* ════════════════════════════════════════════════════════════════════════════
+   LAUDO AVULSO — independente de imagem, vinculado ao leito+data
+   IDB key: laudo_avulso_<leito>_<data>
+   Metadado: uti_med_laudoavulso_<leito>_<data>  (Firestore — só metadado)
+   ════════════════════════════════════════════════════════════════════════════ */
+function _chaveLaudoAvulso(leito, data){ return `laudo_avulso_${leito}_${data}`; }
+
+function abrirLaudoAvulso(){
+  $('laudo-avulso-input').value = '';
+  $('laudo-avulso-input').click();
+}
+
+async function _laudoAvulsoUpload(input){
+  const file = input && input.files && input.files[0];
+  if(!file) return;
+  const permitidos = ['application/pdf','image/jpeg','image/png','image/tiff','image/webp'];
+  if(!permitidos.includes(file.type)){ toast('Formato não suportado. Use PDF, JPG ou PNG.', true); return; }
+  if(file.size > 20*1024*1024){ toast('Arquivo muito grande (máximo 20 MB).', true); return; }
+
+  const leito = leitoAtual;
+  const data  = gf('f-data') || hoje();
+  showLoading('Salvando laudo...');
+  try{
+    const chave = _chaveLaudoAvulso(leito, data);
+    await _idbSalvar(chave, file);
+    const meta = { nome: file.name, tamanho: file.size, tipo: file.type, dataAnexo: new Date().toISOString() };
+    await dbSet(`uti_med_laudoavulso_${leito}_${data}`, meta);
+    hideLoading();
+    toast('✓ Laudo salvo.');
+    _laudoAvulsoAtualizarUI(meta);
+    if(input) input.value = '';
+  }catch(e){ hideLoading(); toast('Erro ao salvar laudo: '+e.message, true); }
+}
+
+async function _laudoAvulsoCarregar(leito, data){
+  try{
+    const meta = await dbGet(`uti_med_laudoavulso_${leito}_${data}`);
+    _laudoAvulsoAtualizarUI(meta || null);
+  }catch(e){ _laudoAvulsoAtualizarUI(null); }
+}
+
+function _laudoAvulsoAtualizarUI(meta){
+  const btnRem  = $('btn-laudo-avulso-rem');
+  const elMeta  = $('laudo-avulso-meta');
+  const btnAnex = $('btn-laudo-avulso');
+  if(!elMeta || !btnRem || !btnAnex) return;
+  if(meta && meta.nome){
+    const sz  = (meta.tamanho/1024).toFixed(0)+' KB';
+    const dt  = meta.dataAnexo ? new Date(meta.dataAnexo).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
+    elMeta.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#15803d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> <strong>${meta.nome}</strong> · ${sz} · ${dt}`;
+    elMeta.style.color = '#15803d';
+    elMeta.style.display = '';
+    btnRem.style.display = '';
+    btnAnex.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2h6l4 4v9a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z"/><path d="M10 2v4h4"/></svg> Laudo ✓ (ver / substituir)`;
+    btnAnex.onclick = _laudoAvulsoVisualizar;
+  } else {
+    elMeta.style.display = 'none';
+    btnRem.style.display = 'none';
+    btnAnex.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2h6l4 4v9a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z"/><path d="M10 2v4h4"/></svg> Anexar laudo (PDF)`;
+    btnAnex.onclick = abrirLaudoAvulso;
+  }
+}
+
+async function _laudoAvulsoVisualizar(){
+  const leito = leitoAtual;
+  const data  = gf('f-data') || hoje();
+  const chave = _chaveLaudoAvulso(leito, data);
+  showLoading('Abrindo laudo...');
+  try{
+    const blob = await _idbLer(chave);
+    hideLoading();
+    if(!blob){ toast('Laudo não disponível neste navegador.', true); return; }
+    const url = URL.createObjectURL(blob);
+    // Reutiliza o modal de laudo existente em modo avulso
+    $('laudo-titulo').textContent = 'Laudo do Exame';
+    const meta = await dbGet(`uti_med_laudoavulso_${leito}_${data}`);
+    const elMeta = $('laudo-meta');
+    if(elMeta && meta){
+      const sz = (meta.tamanho/1024).toFixed(0)+' KB';
+      elMeta.innerHTML = `<strong>${meta.nome}</strong> · ${sz}`;
+      elMeta.style.color = '#15803d';
+    }
+    const viewer = $('laudo-viewer');
+    if(viewer){ viewer.src = url; viewer.style.display = ''; }
+    const btnDl = $('laudo-btn-download');
+    if(btnDl){ btnDl.style.display = ''; btnDl.onclick = ()=>{ const a=document.createElement('a'); a.href=url; a.download=(meta&&meta.nome)||'laudo.pdf'; a.click(); }; }
+    // Oculta botão de remover do modal (usa o da seção)
+    const btnRem = $('laudo-btn-remover');
+    if(btnRem) btnRem.style.display = 'none';
+    // Desabilita o "Anexar / Substituir laudo" do modal (não é por índice de imagem)
+    const btnAnex = document.querySelector('#modal-laudo .btn-pri');
+    if(btnAnex) btnAnex.style.display = 'none';
+    $('laudo-aviso-local').style.display = 'none';
+    $('modal-laudo').classList.add('show');
+  }catch(e){ hideLoading(); toast('Erro ao abrir laudo: '+e.message, true); }
+}
+
+async function removerLaudoAvulso(){
+  if(!confirm('Remover o laudo? O arquivo será apagado deste navegador.')) return;
+  const leito = leitoAtual;
+  const data  = gf('f-data') || hoje();
+  showLoading('Removendo...');
+  try{
+    await _idbRemover(_chaveLaudoAvulso(leito, data));
+    await dbSet(`uti_med_laudoavulso_${leito}_${data}`, null);
+    hideLoading();
+    toast('Laudo removido.');
+    _laudoAvulsoAtualizarUI(null);
+  }catch(e){ hideLoading(); toast('Erro: '+e.message, true); }
+}
+
 function mostrarTela(id){
   document.querySelectorAll('.tela').forEach(t=>{ t.classList.remove('ativa'); t.style.display='none'; });
   ['t-login','t-turno'].forEach(x=>{ const e=$(x); if(e) e.style.display='none'; });
@@ -1606,6 +1717,7 @@ async function abrirFormulario(leito){
     _aplicarModoDiarista();
     await _carregarDiarista(leito, dataT);
     await _carregarImgsExame(leito, dataT);
+    await _laudoAvulsoCarregar(leito, dataT);
     mudarAba('evolucao'); // sempre abre na aba de evolução
     hideLoading();
     mostrarTela('t-form');
