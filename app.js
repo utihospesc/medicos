@@ -66,7 +66,9 @@ function _isDiarista(){ return usuarioEmail && usuarioEmail.toLowerCase() === DI
 // ── EVOLUÇÃO DIARISTA — modal estruturado ────────────────────────────────────
 // Chave: uti_med_diarista_<leito>_<data>
 // Só diaristauti@hospesc.com edita; demais veem dropdown read-only na evolução.
-// NÃO entra em coletarDados() nem na impressão.
+// NÃO entra em coletarDados(). Na impressão, é anexada como página separada
+// ao final SOMENTE quando o plantonista que está imprimindo é do turno NOTURNO
+// (ver abrirPreview() / _montarPaginaDiaristaImpressao()).
 
 function _chaveDiarista(leito, data){ return `uti_med_diarista_${leito}_${data}`; }
 
@@ -164,35 +166,38 @@ function _toggleDiaristaDropdown(){
   }
 }
 
-function _renderDiaristaDropdown(d){
-  const body = $('diarista-dropdown-body');
-  if(!body || !d) return;
-  const GRUPOS = [
-    { titulo:'Neurologia e Analgesia', cls:'neuro', itens:[
-      {id:'dc-dor', txt:'Dor e delirium avaliados e tratados'},
-      {id:'dc-sed', txt:'Sedação avaliada, com redução ou interrupção se elegível'},
-    ]},
-    { titulo:'Ventilação Mecânica', cls:'vent', itens:[
-      {id:'dc-vm-desm', txt:'Avaliação de possibilidade de desmame e ajuste para VM protetora'},
-      {id:'dc-vm-prev', txt:'Medidas preventivas aplicadas: cabeceira elevada e higiene oral'},
-    ]},
-    { titulo:'Nutrição e Profilaxias', cls:'nut', itens:[
-      {id:'dc-nut',  txt:'Nutrição avaliada e otimizada'},
-      {id:'dc-prof', txt:'Profilaxias revisadas (TVP e HDA)'},
-    ]},
-    { titulo:'Manejo Infeccioso', cls:'inf', itens:[
-      {id:'dc-disp',   txt:'Necessidade de manutenção dos dispositivos reavaliada'},
-      {id:'dc-atb',    txt:'Antibioticoterapia em uso avaliada (ajuste ou suspensão)'},
-      {id:'dc-cult',   txt:'Culturas avaliadas'},
-      {id:'dc-novinf', txt:'Novo quadro infeccioso grave — protocolo de 1h aplicado'},
-    ]},
-    { titulo:'Plano Multidisciplinar', cls:'multi', itens:[
-      {id:'dc-riscos', txt:'Identificação correta e riscos mapeados'},
-      {id:'dc-med',    txt:'Revisão e conciliação de medicações realizadas'},
-      {id:'dc-mob',    txt:'Mobilização e fisioterapia ativa avaliadas'},
-      {id:'dc-plano',  txt:'Plano terapêutico definido e discutido com equipe'},
-    ]},
-  ];
+// Lista de grupos do checklist do diarista (compartilhada entre o dropdown e a impressão)
+const _DIARISTA_GRUPOS = [
+  { titulo:'Neurologia e Analgesia', cls:'neuro', itens:[
+    {id:'dc-dor', txt:'Dor e delirium avaliados e tratados'},
+    {id:'dc-sed', txt:'Sedação avaliada, com redução ou interrupção se elegível'},
+  ]},
+  { titulo:'Ventilação Mecânica', cls:'vent', itens:[
+    {id:'dc-vm-desm', txt:'Avaliação de possibilidade de desmame e ajuste para VM protetora'},
+    {id:'dc-vm-prev', txt:'Medidas preventivas aplicadas: cabeceira elevada e higiene oral'},
+  ]},
+  { titulo:'Nutrição e Profilaxias', cls:'nut', itens:[
+    {id:'dc-nut',  txt:'Nutrição avaliada e otimizada'},
+    {id:'dc-prof', txt:'Profilaxias revisadas (TVP e HDA)'},
+  ]},
+  { titulo:'Manejo Infeccioso', cls:'inf', itens:[
+    {id:'dc-disp',   txt:'Necessidade de manutenção dos dispositivos reavaliada'},
+    {id:'dc-atb',    txt:'Antibioticoterapia em uso avaliada (ajuste ou suspensão)'},
+    {id:'dc-cult',   txt:'Culturas avaliadas'},
+    {id:'dc-novinf', txt:'Novo quadro infeccioso grave — protocolo de 1h aplicado'},
+  ]},
+  { titulo:'Plano Multidisciplinar', cls:'multi', itens:[
+    {id:'dc-riscos', txt:'Identificação correta e riscos mapeados'},
+    {id:'dc-med',    txt:'Revisão e conciliação de medicações realizadas'},
+    {id:'dc-mob',    txt:'Mobilização e fisioterapia ativa avaliadas'},
+    {id:'dc-plano',  txt:'Plano terapêutico definido e discutido com equipe'},
+  ]},
+];
+
+// Gera o HTML do conteúdo da evolução do diarista (sem container) — usado tanto
+// no dropdown read-only quanto na página anexada à impressão do noturno.
+function _diaristaHTMLBody(d){
+  if(!d) return '';
   const cl = d.checklist || {};
   let h = '';
   if(d.diag || d.cid){
@@ -204,7 +209,7 @@ function _renderDiaristaDropdown(d){
   const algumCheck = Object.values(cl).some(Boolean);
   if(algumCheck){
     h += `<div class="dev-ro-section"><div class="dev-ro-sec-title">Check-List</div>`;
-    GRUPOS.forEach(g => {
+    _DIARISTA_GRUPOS.forEach(g => {
       const marcados = g.itens.filter(i => cl[i.id]);
       if(!marcados.length) return;
       h += `<div class="dev-ro-check-group"><div class="dev-ro-check-grp-title dev-ro-chk-hdr-${g.cls}">${g.titulo}</div>`;
@@ -228,7 +233,13 @@ function _renderDiaristaDropdown(d){
     const fmt = dt.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
     h += `<div class="dev-ro-author">Registrado por ${d.autorNome} em ${fmt}</div>`;
   }
-  body.innerHTML = h;
+  return h;
+}
+
+function _renderDiaristaDropdown(d){
+  const body = $('diarista-dropdown-body');
+  if(!body || !d) return;
+  body.innerHTML = _diaristaHTMLBody(d);
 }
 
 function _aplicarModoDiarista(){ /* sem-op — agora é modal */ }
@@ -2439,7 +2450,7 @@ function _ventTexto(v){ return ({AA:'ar ambiente',CN:'cateter nasal de O₂',CTN
 /* ════════════════════════════════════════════════════════════════════════════
    PREVIEW & IMPRESSÃO
    ════════════════════════════════════════════════════════════════════════════ */
-function abrirPreview(){
+async function abrirPreview(){
   const d=coletarDados();
   const r=_recalcSAPS();
   const idade=_idadeDeDN(d.dn);
@@ -2478,8 +2489,29 @@ function abrirPreview(){
     <div>Escore: <strong>${r.score}</strong> pontos · Mortalidade prevista (Am. do Sul): <strong>${r.temDados?(r.mortCSA*100).toFixed(1)+'%':'—'}</strong>${r.temDados?' · global: '+(r.mortGlobal*100).toFixed(1)+'%':''}</div>
     <div class="pv-secao">Condutas</div><div>${d.condutas ? d.condutas.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>`<div style="margin:2px 0;">${l}</div>`).join('') : '—'}</div>
     <div class="pv-assinatura" style="margin-top:2.5rem;"><div class="linha"></div>${assinatura}<br><span style="font-size:.68rem;color:#888;">Evolução médica · ${_fmtDataCurta(d.data)} ${agoraHora()}</span></div>
+    ${await _montarPaginaDiaristaImpressao(d.leito, d.data, d.turno)}
   `;
   $('modal-preview').classList.add('show');
+}
+
+// Anexa a evolução do diarista do dia como PÁGINA SEPARADA ao final da
+// impressão — apenas quando quem está imprimindo é o plantonista do turno
+// NOTURNO (o diarista evolui de dia; o noturno herda essa evolução impressa).
+async function _montarPaginaDiaristaImpressao(leito, data, turno){
+  if(turno !== 'NOTURNO') return '';
+  let dado = null;
+  try{ dado = await dbGet(_chaveDiarista(leito, data)); }catch(e){ console.warn('_montarPaginaDiaristaImpressao:', e); }
+  const corpo = _diaristaHTMLBody(dado);
+  if(!corpo){
+    return `<div class="pv-diarista-pagina" style="page-break-before:always;">
+      <div class="pv-secao">Evolução do Diarista</div>
+      <div style="color:#888;font-style:italic;">Sem evolução do diarista registrada para ${_fmtDataCurta(data)}.</div>
+    </div>`;
+  }
+  return `<div class="pv-diarista-pagina" style="page-break-before:always;">
+    <div class="pv-secao">Evolução do Diarista — ${_fmtDataCurta(data)}</div>
+    ${corpo}
+  </div>`;
 }
 function _labParaTabela(linhas){
   if(!linhas||!linhas.length) return '';
