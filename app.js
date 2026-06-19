@@ -249,6 +249,7 @@ const _PREFIXOS_LEITO = [
   'uti_med_me_',            // termo morte encefálica
   'uti_med_diarista_',     // evoluções diarista
   'uti_med_termo_',        // termos/consentimentos
+  'uti_med_huol_',         // solicitação de vaga HUOL/NIR
   'uti_med_adm_log_',      // log de admissão
 ];
 
@@ -6062,18 +6063,25 @@ async function _renderGuiasFichas(){
     const trilogys = await dbListByPrefix(`uti_med_trilogy_${leitoAtual}_`);
     const mes      = await dbListByPrefix(`uti_med_me_${leitoAtual}_`);
     const albuminas= await dbListByPrefix(`uti_med_albumina_${leitoAtual}_`);
+    const huols    = await dbListByPrefix(`uti_med_huol_${leitoAtual}_`);
     const arr=[
       ...Object.entries(atbs).map(([k,v])=>({key:k,...v, _tipo:'atb'})),
       ...Object.entries(hemos).map(([k,v])=>({key:k,...v, _tipo:'hemo'})),
       ...Object.entries(termos).map(([k,v])=>({key:k,...v, _tipo:'termo'})),
       ...Object.entries(trilogys).map(([k,v])=>({key:k,...v, _tipo:'trilogy'})),
       ...Object.entries(mes).map(([k,v])=>({key:k,...v, _tipo:'me'})),
-      ...Object.entries(albuminas).map(([k,v])=>({key:k,...v, _tipo:'albumina'}))
+      ...Object.entries(albuminas).map(([k,v])=>({key:k,...v, _tipo:'albumina'})),
+      ...Object.entries(huols).map(([k,v])=>({key:k,...v, _tipo:'huol'}))
     ].filter(x=>x.pac||x.nome||x.resp).sort((a,b)=>(b.salvadoEm||'').localeCompare(a.salvadoEm||''));
     if(!arr.length){ w.innerHTML='<span style="font-size:.8rem;color:var(--muted);">Nenhuma ficha salva.</span>'; return; }
     w.innerHTML=arr.map(f=>{
       let icon, titulo, edit, impr;
-      if(f._tipo==='albumina'){
+      if(f._tipo==='huol'){
+        icon='<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>';
+        titulo=`Vaga HUOL: ${(f.nome||'').split(' ').slice(0,2).join(' ')||'—'}`;
+        edit=`_abrirHUOLExistente('${f.key}')`;
+        impr=`_imprimirHUOLChave('${f.key}')`;
+      } else if(f._tipo==='albumina'){
         icon='<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><ellipse cx="12" cy="12" rx="8" ry="5"/><path d="M4 12c0 3 3.6 5.5 8 5.5s8-2.5 8-5.5"/><path d="M4 12V8c0-3 3.6-5.5 8-5.5S20 5 20 8v4"/></svg>';
         titulo=`Albumina: ${(f.pac||'').split(' ').slice(0,2).join(' ')||'—'}`;
         edit=`_abrirAlbuminaExistente('${f.key}')`;
@@ -6645,6 +6653,281 @@ function _imprimirAlbuminaHTML(f){
   <script>window.onload=()=>{ window.print(); }<\/script>
   </body></html>`;
   const w = window.open('','_blank','width=860,height=700');
+  if(w){ w.document.write(html); w.document.close(); }
+  else toast('Popup bloqueado — permita popups para imprimir.',true);
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   FICHA: SOLICITAÇÃO DE VAGA — HUOL (NIR)
+   ─ Auto-preenche com dados já registrados no prontuário; sinais vitais e
+     campos de avaliação livre (motivo, procedimento, exames) ficam em branco
+     para preenchimento manual no momento da solicitação.
+   ════════════════════════════════════════════════════════════════════════════ */
+function _huolMontarEvolucaoAtual(){
+  const partes=[];
+  const evol=(gf('f-evol')||'').trim();
+  if(evol) partes.push(evol);
+  const vent=$('f-vent')?$('f-vent').value:'';
+  const ventLabel={
+    AA:'Ar ambiente', CN:'Cateter nasal de O₂', CTNO2:'Cateter de alto fluxo (CTNO2)',
+    VM:'Máscara de O₂/Venturi', VNI:'VNI (BiPAP/CPAP)', VMI:'Ventilação mecânica invasiva (TOT/TQT)'
+  }[vent]||'';
+  const ventParam=(gf('f-vent-param')||'').trim();
+  if(ventLabel && vent!=='AA') partes.push(`Suporte ventilatório: ${ventLabel}${ventParam?' ('+ventParam+')':''}.`);
+  const acessos=(gf('f-acessos')||'').trim();
+  if(acessos) partes.push(`Acessos: ${acessos}.`);
+  const disp=(gf('f-dispositivos')||'').trim();
+  if(disp) partes.push(`Dispositivos: ${disp}.`);
+  const dva=$('f-dva')?$('f-dva').value:'';
+  const dvaQual=(gf('f-dva-qual')||'').trim();
+  if(dva && dva!=='NAO') partes.push(`Droga vasoativa: ${dvaQual||'sim'}.`);
+  return partes.join(' ');
+}
+
+function _huolMontarCulturas(){
+  if(!_culturasForm||!_culturasForm.length) return '';
+  return _culturasForm
+    .filter(c=>c.micro||c.resultado)
+    .map(c=>{
+      const nome=c.micro||c.resultado||'?';
+      const sitio=c.sitio?` (${c.sitio})`:'';
+      const dataf=c.data?' — '+_fmtDataCurta(c.data):'';
+      const sens=c.sens?`: ${c.sens.slice(0,80)}`:'';
+      return `${nome}${sitio}${dataf}${sens}`;
+    }).join('\n');
+}
+
+function abrirFichaHUOL(dadosExistentes){
+  const f = dadosExistentes || {};
+  sf('fhuol-nome',  f.nome  || (gf('f-pac')||'').toUpperCase());
+  // Idade calculada da DN
+  const dnStr = f.dn || gf('f-dn') || '';
+  if(dnStr){
+    const a=_idadeDeDN(dnStr);
+    sf('fhuol-idade', f.idade || (a!=null? a+' anos':''));
+  } else {
+    sf('fhuol-idade', f.idade||'');
+  }
+  sf('fhuol-cpf',        f.cpf||'');
+  sf('fhuol-data-entr',  f.dataEntr || gf('f-adm') || '');
+  sf('fhuol-unid-solic', f.unidSolic || 'HOSPESC — UTI ADULTO');
+  sf('fhuol-tel-unid',   f.telUnid   || '');
+  sf('fhuol-especialidade', f.especialidade || 'UTI ADULTO / INTENSIVISTA');
+  const diagAtual=(gf('f-diag')||'').trim();
+  const cidAtual=(gf('f-cid')||'').trim();
+  sf('fhuol-suspeita', f.suspeita || (diagAtual?diagAtual+(cidAtual?' (CID '+cidAtual+')':''):''));
+  sf('fhuol-procedimento', f.procedimento||'');
+  sf('fhuol-motivo',       f.motivo||'');
+  sf('fhuol-resumo',       f.resumo || (gf('f-hda')||''));
+  sf('fhuol-evolucao',     f.evolucao || (dadosExistentes? (f.evolucao||'') : _huolMontarEvolucaoAtual()));
+  // Sinais vitais — sempre em branco para preenchimento manual no momento da solicitação
+  sf('fhuol-pa',   f.pa||'');
+  sf('fhuol-fc',   f.fc||'');
+  sf('fhuol-temp', f.temp||'');
+  sf('fhuol-fr',   f.fr||'');
+  sf('fhuol-spo2', f.spo2||'');
+  sf('fhuol-glasgow', f.glasgow||'');
+  sf('fhuol-hgt',  f.hgt||'');
+  sf('fhuol-exames', f.exames||'');
+  sf('fhuol-tratamento', f.tratamento||'');
+  sf('fhuol-atb', f.atb || (gf('f-atb')||''));
+  const isol = f.isolamento||'';
+  document.querySelectorAll('input[name="fhuol-isol"]').forEach(r=>r.checked=(r.value===isol));
+  sf('fhuol-isol-tipo', f.isolTipo||'');
+  sf('fhuol-culturas', f.culturas || (dadosExistentes? (f.culturas||'') : _huolMontarCulturas()));
+  sf('fhuol-medico', f.medico || (perfilUsuario?perfilUsuario.nome:'') || '');
+  $('modal-huol-ficha')._chaveEditar = f._chave||null;
+  $('modal-huol-ficha').classList.add('show');
+}
+
+function fecharFichaHUOL(){
+  $('modal-huol-ficha').classList.remove('show');
+}
+
+function _huolReautoPreencher(){
+  sf('fhuol-evolucao', _huolMontarEvolucaoAtual());
+  sf('fhuol-culturas', _huolMontarCulturas());
+  sf('fhuol-atb', gf('f-atb')||'');
+  sf('fhuol-resumo', gf('f-hda')||'');
+  toast('✓ Campos atualizados a partir do prontuário.');
+}
+
+function _coletarFichaHUOL(){
+  const isolEl=document.querySelector('input[name="fhuol-isol"]:checked');
+  return {
+    nome:        (gf('fhuol-nome')||'').toUpperCase(),
+    idade:       gf('fhuol-idade')||'',
+    cpf:         gf('fhuol-cpf')||'',
+    dataEntr:    gf('fhuol-data-entr')||'',
+    unidSolic:   (gf('fhuol-unid-solic')||'').toUpperCase(),
+    telUnid:     gf('fhuol-tel-unid')||'',
+    especialidade: (gf('fhuol-especialidade')||'').toUpperCase(),
+    suspeita:    (gf('fhuol-suspeita')||'').toUpperCase(),
+    procedimento:(gf('fhuol-procedimento')||'').toUpperCase(),
+    motivo:      (gf('fhuol-motivo')||'').toUpperCase(),
+    resumo:      gf('fhuol-resumo')||'',
+    evolucao:    gf('fhuol-evolucao')||'',
+    pa:    gf('fhuol-pa')||'',
+    fc:    gf('fhuol-fc')||'',
+    temp:  gf('fhuol-temp')||'',
+    fr:    gf('fhuol-fr')||'',
+    spo2:  gf('fhuol-spo2')||'',
+    glasgow: gf('fhuol-glasgow')||'',
+    hgt:   gf('fhuol-hgt')||'',
+    exames:      gf('fhuol-exames')||'',
+    tratamento:  gf('fhuol-tratamento')||'',
+    atb:         (gf('fhuol-atb')||'').toUpperCase(),
+    isolamento:  isolEl?isolEl.value:'',
+    isolTipo:    (gf('fhuol-isol-tipo')||'').toUpperCase(),
+    culturas:    gf('fhuol-culturas')||'',
+    medico:      (gf('fhuol-medico')||'').toUpperCase(),
+    data:        hoje(),
+    autor:usuarioEmail, autorNome:perfilUsuario?perfilUsuario.nome:'',
+    salvadoEm: new Date().toISOString(),
+    tipo:'huol'
+  };
+}
+
+async function salvarFichaHUOL(){
+  if(!leitoAtual){ toast('Abra o prontuário de um paciente.',true); return; }
+  const f=_coletarFichaHUOL();
+  if(!f.nome){ toast('Informe o nome do paciente.',true); return; }
+  showLoading('Salvando ficha...');
+  try{
+    const chave = $('modal-huol-ficha')._chaveEditar
+      || `uti_med_huol_${leitoAtual}_${f.data}_${Date.now()}`;
+    await dbSet(chave, f);
+    hideLoading();
+    toast('✓ Solicitação de vaga HUOL salva.');
+    _renderGuiasFichas();
+  }catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
+}
+
+async function _abrirHUOLExistente(key){
+  showLoading('Carregando ficha...');
+  try{
+    const f=await dbGet(key);
+    hideLoading();
+    if(!f){ toast('Ficha não encontrada.',true); return; }
+    f._chave=key;
+    abrirFichaHUOL(f);
+  }catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
+}
+
+async function _imprimirHUOLChave(key){
+  showLoading('Carregando ficha...');
+  try{
+    const f=await dbGet(key);
+    hideLoading();
+    if(!f){ toast('Ficha não encontrada.',true); return; }
+    _imprimirHUOLHTML(f);
+  }catch(e){ hideLoading(); toast('Erro: '+(e.message||e),true); }
+}
+
+function imprimirFichaHUOL(){
+  _imprimirHUOLHTML(_coletarFichaHUOL());
+}
+
+function _imprimirHUOLHTML(f){
+  const chk=(v,val)=> v===val ? '(X)' : '( )';
+  const nl2br = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br>');
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Solicitação de Vaga — HUOL</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:Arial,Helvetica,sans-serif;font-size:9pt;color:#000;padding:10mm 12mm;}
+    .cabecalho{text-align:center;border-bottom:2px solid #000;padding-bottom:6px;margin-bottom:10px;}
+    .inst{font-size:8pt;font-weight:700;}
+    .inst2{font-size:7.5pt;}
+    .titulo{font-size:10.5pt;font-weight:800;margin:5px 0 2px;text-transform:uppercase;}
+    .contato{font-size:7pt;color:#333;margin-top:2px;}
+    table.grade{width:100%;border-collapse:collapse;margin-bottom:8px;}
+    table.grade td{border:1px solid #000;padding:3px 6px;font-size:8.5pt;vertical-align:top;}
+    .label{font-weight:700;font-size:7.3pt;display:block;}
+    .secao-t{font-size:7.8pt;font-weight:800;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid #000;margin:8px 0 4px;padding-bottom:2px;}
+    .box{border:1px solid #000;min-height:34px;padding:5px 7px;font-size:8.8pt;margin-bottom:8px;white-space:pre-wrap;}
+    .box-sm{min-height:18px;}
+    .vitais td{text-align:center;}
+    .assin{border-top:1px solid #000;width:260px;text-align:center;padding-top:3px;font-size:8pt;display:inline-block;margin-top:24px;}
+    @media print{body{margin:0;padding:8mm 10mm;}}
+  </style></head><body>
+  <div class="cabecalho">
+    <div class="inst">EMPRESA BRASILEIRA DE SERVIÇOS HOSPITALARES</div>
+    <div class="inst">HOSPITAL UNIVERSITÁRIO ONOFRE LOPES</div>
+    <div class="inst2">SETOR DE REGULAÇÃO E AVALIAÇÃO EM SAÚDE — NÚCLEO INTERNO DE REGULAÇÃO</div>
+    <div class="titulo">Solicitação de Vaga para Internamento no HUOL</div>
+    <div class="contato">E-mail NIR/HUOL: nir.huol@ebserh.gov.br &nbsp;·&nbsp; Telefone NIR/HUOL: (84) 3342-5144</div>
+  </div>
+
+  <table class="grade">
+    <tr>
+      <td colspan="3"><span class="label">NOME</span>${f.nome||''}</td>
+      <td><span class="label">IDADE</span>${f.idade||''}</td>
+    </tr>
+    <tr>
+      <td colspan="2"><span class="label">CPF</span>${f.cpf||''}</td>
+      <td colspan="2"><span class="label">DATA DE ENTRADA</span>${f.dataEntr?_fmtDataCurta(f.dataEntr):''}</td>
+    </tr>
+    <tr>
+      <td colspan="2"><span class="label">UNIDADE SOLICITANTE</span>${f.unidSolic||''}</td>
+      <td colspan="2"><span class="label">TELEFONE UNIDADE</span>${f.telUnid||''}</td>
+    </tr>
+    <tr><td colspan="4"><span class="label">ESPECIALIDADE</span>${f.especialidade||''}</td></tr>
+  </table>
+
+  <div class="secao-t">Suspeita diagnóstica</div>
+  <div class="box box-sm">${nl2br(f.suspeita)}</div>
+
+  <div class="secao-t">Procedimento/tratamento pretendido</div>
+  <div class="box box-sm">${nl2br(f.procedimento)}</div>
+
+  <div class="secao-t">Motivo da solicitação de transferência</div>
+  <div class="box box-sm">${nl2br(f.motivo)}</div>
+
+  <div class="secao-t">Resumo do quadro clínico / histórico</div>
+  <div class="box">${nl2br(f.resumo)}</div>
+
+  <div class="secao-t">Evolução clínica atual</div>
+  <div class="box">${nl2br(f.evolucao)}</div>
+
+  <table class="grade vitais">
+    <tr>
+      <td><span class="label">PA</span>${f.pa||''}</td>
+      <td><span class="label">FC</span>${f.fc||''}</td>
+      <td><span class="label">T (°C)</span>${f.temp||''}</td>
+      <td><span class="label">FR</span>${f.fr||''}</td>
+      <td><span class="label">SpO₂</span>${f.spo2||''}</td>
+      <td><span class="label">Glasgow</span>${f.glasgow||''}</td>
+      <td><span class="label">HGT</span>${f.hgt||''}</td>
+    </tr>
+  </table>
+
+  <div class="secao-t">Exames realizados (laboratoriais/imagem — anexar resultado)</div>
+  <div class="box box-sm">${nl2br(f.exames)}</div>
+
+  <div class="secao-t">Tratamento realizado</div>
+  <div class="box box-sm">${nl2br(f.tratamento)}</div>
+
+  <table class="grade">
+    <tr><td><span class="label">ANTIBIÓTICOS EM USO</span>${f.atb||''}</td></tr>
+  </table>
+
+  <table class="grade">
+    <tr>
+      <td style="width:55%;"><span class="label">NECESSITA DE ISOLAMENTO?</span>${chk(f.isolamento,'sim')} Sim &nbsp;&nbsp; ${chk(f.isolamento,'nao')} Não</td>
+      <td><span class="label">Tipo</span>${f.isolTipo||''}</td>
+    </tr>
+  </table>
+
+  <div class="secao-t">Resultado de culturas (anexar resultado)</div>
+  <div class="box">${nl2br(f.culturas)}</div>
+
+  <div style="margin-top:18px;">
+    <div class="assin">Médico responsável pela solicitação${f.medico?' — '+f.medico:''}</div>
+  </div>
+  <script>window.onload=()=>{ window.print(); }<\/script>
+  </body></html>`;
+  const w = window.open('','_blank','width=860,height=760');
   if(w){ w.document.write(html); w.document.close(); }
   else toast('Popup bloqueado — permita popups para imprimir.',true);
 }
