@@ -1745,8 +1745,12 @@ function _limparFormulario(){
 function _preencherEvolucao(ev, herdado){
   // campos do plantão — se herdado, mantém preenchido como rascunho
   sf('f-evol',ev.evol||''); sf('f-atb',ev.atb||''); sf('f-atb-prev',ev.atbPrev||'');
-  // Preenche ATBs automaticamente das prescrições (sempre que abrir o leito)
-  setTimeout(_autoPreencherATBs, 300);
+  // Auto-preenche ATBs das prescrições SOMENTE se não houver nada salvo nesses campos
+  // (evita apagar/sobrescrever o que o usuário já digitou). Preenchimento manual
+  // sempre disponível via botão "Auto".
+  if(!(ev.atb||'').trim() && !(ev.atbPrev||'').trim()){
+    setTimeout(_autoPreencherATBs, 300);
+  }
   sf('f-pam',ev.pam||''); sf('f-pas',ev.pas||''); sf('f-fc',ev.fc||''); sf('f-fr',ev.fr||'');
   sf('f-tmax',ev.tmax||''); sf('f-spo2',ev.spo2||''); sf('f-diurese',ev.diurese||'');
   sf('f-bh',ev.bh||''); sf('f-evac',ev.evac||''); sf('f-hgt',ev.hgt||'');
