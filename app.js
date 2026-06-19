@@ -7272,8 +7272,11 @@ function _fmtDNEtiq(dn){
   return dn;
 }
 
-/* Gera PDF das etiquetas sobrepostas no espaço em branco do cartão SUS.
-   Se cartaoBase64 for null, gera página avulsa com as etiquetas.
+/* Gera PDF das etiquetas, com o Cartão SUS redimensionado para o TERÇO
+   SUPERIOR de uma nova página A4 — independente do tamanho/proporção com
+   que o cartão foi salvo pelo usuário (print de tela, foto, página cheia...).
+   As etiquetas ficam sempre nos 2/3 inferiores, com espaço garantido.
+   Se cartaoBase64 for null, gera página avulsa só com as etiquetas.
    tipo = 'cultura' | 'hemo'
    materiais = array de strings (só para cultura) */
 async function _gerarEtiquetasComCartao(cartaoBase64, dadosPac, tipo, materiais){
@@ -7304,29 +7307,38 @@ async function _gerarEtiquetasComCartao(cartaoBase64, dadosPac, tipo, materiais)
       return linhas;
     }
 
-    // ── Monta o PDF final ──────────────────────────────────────────────────
-    let pdfDoc;
-    let cartaoPage = null;   // página do cartão onde vamos sobrescrever
-    let cartaoPageH = 0;     // altura da página do cartão (pts PDF)
-    let cartaoPageW = 0;
+    // ── Monta SEMPRE uma página A4 nova; o cartão (se houver) é redimensionado
+    //    e desenhado no terço superior dela ───────────────────────────────────
+    const pdfDoc = await PDFDocument.create();
+    const PAGE_W = 595.28, PAGE_H = 841.89; // A4 em pts
+    const page = pdfDoc.addPage([PAGE_W, PAGE_H]);
+
+    // Área reservada ao cartão: terço superior da página
+    const CARTAO_MARGEM = 10;
+    const cartaoAreaTop    = PAGE_H - CARTAO_MARGEM;
+    const cartaoAreaBottom = PAGE_H - (PAGE_H / 3);
+    const cartaoAreaH = cartaoAreaTop - cartaoAreaBottom;
+    const cartaoAreaW = PAGE_W - CARTAO_MARGEM * 2;
+
+    // Linha divisória entre a área do cartão e a área de etiquetas
+    const areaTop = cartaoAreaBottom - 6; // topo da área de etiquetas (com respiro)
 
     if(cartaoBase64 && window.PDFLib){
       const bin = atob(cartaoBase64);
       const bytes = new Uint8Array(bin.length);
       for(let i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
-      pdfDoc = await PDFDocument.load(bytes);
-      // Trabalhamos na ÚLTIMA página do cartão (ou única)
-      const idx = pdfDoc.getPageCount() - 1;
-      cartaoPage = pdfDoc.getPage(idx);
-      const sz = cartaoPage.getSize();
-      cartaoPageW = sz.width;
-      cartaoPageH = sz.height;
-    } else {
-      // Sem cartão — cria página A4 avulsa
-      pdfDoc = await PDFDocument.create();
-      cartaoPage = pdfDoc.addPage([595.28, 841.89]); // A4
-      cartaoPageW = 595.28;
-      cartaoPageH = 841.89;
+      const cartaoDoc = await PDFDocument.load(bytes);
+      // Usa a ÚLTIMA página do cartão (a que normalmente traz os dados do paciente)
+      const idx = cartaoDoc.getPageCount() - 1;
+      const [embeddedCartao] = await pdfDoc.embedPdf(cartaoDoc, [idx]);
+      const cw = embeddedCartao.width, ch = embeddedCartao.height;
+      // Escala para caber inteiramente dentro da área reservada (mantendo proporção)
+      const escala = Math.min(cartaoAreaW / cw, cartaoAreaH / ch);
+      const drawW = cw * escala, drawH = ch * escala;
+      // Centraliza horizontalmente; alinha ao topo da área reservada
+      const drawX = CARTAO_MARGEM + (cartaoAreaW - drawW) / 2;
+      const drawY = cartaoAreaTop - drawH;
+      page.drawPage(embeddedCartao, { x: drawX, y: drawY, width: drawW, height: drawH });
     }
 
     // Embed Times Roman (Times New Roman equivalente no PDF-lib)
@@ -7337,14 +7349,9 @@ async function _gerarEtiquetasComCartao(cartaoBase64, dadosPac, tipo, materiais)
     const FS = 6;
     // Altura de linha = 1.4 * FS
     const LH = FS * 1.4;
-    // Largura de cada etiqueta (mm<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M3 8h10"/><path d="M9.5 4.5L13 8l-3.5 3.5"/></svg>pts: 88mm × 2.835 ≈ 249 pts)
-    // Mas vamos usar um terço da largura da página para caber 2 lado a lado
-    const etiqW = (cartaoPageW - 40) / 2;  // 2 colunas com margem
-    const etiqH = _linhasEtiqueta().length * LH + 8; // altura com padding
+    // Largura de cada etiqueta — 2 colunas com margem
+    const etiqW = (PAGE_W - 40) / 2;
 
-    // Posicionamento: parte inferior da página do cartão
-    // Cartões SUS normalmente têm conteúdo na metade superior (~A5 = 420pts)
-    // Deixamos margem de 4pts do fundo
     const MARGEM_INF = 4;
     const MARGEM_ESQ = 20;
     const linhas = _linhasEtiqueta();
@@ -7354,8 +7361,7 @@ async function _gerarEtiquetasComCartao(cartaoBase64, dadosPac, tipo, materiais)
     const COLS = 2;
     const ROWS = Math.ceil(N_ETIQ / COLS);
 
-    // Calcular área disponível: do fundo até 55% da altura da página
-    const areaTop = cartaoPageH * 0.52;  // começa a ~52% da página
+    // Área de etiquetas: do fundo da página até a linha abaixo do cartão
     const areaBot = MARGEM_INF;
     const areaH   = areaTop - areaBot;
 
@@ -7374,9 +7380,9 @@ async function _gerarEtiquetasComCartao(cartaoBase64, dadosPac, tipo, materiais)
       // Borda tracejada (linha horizontal separadora no topo de cada etiqueta)
       if(i < 2){
         // linha tracejada no topo da área
-        cartaoPage.drawLine({
+        page.drawLine({
           start: { x: MARGEM_ESQ - 2, y: areaTop },
-          end:   { x: cartaoPageW - MARGEM_ESQ + 2, y: areaTop },
+          end:   { x: PAGE_W - MARGEM_ESQ + 2, y: areaTop },
           thickness: 0.3,
           color: rgb(0.4, 0.4, 0.4),
           dashArray: [3, 2],
@@ -7384,9 +7390,9 @@ async function _gerarEtiquetasComCartao(cartaoBase64, dadosPac, tipo, materiais)
       }
       if(row > 0 && col === 0){
         // separador horizontal entre linhas
-        cartaoPage.drawLine({
+        page.drawLine({
           start: { x: MARGEM_ESQ - 2, y: yBloco },
-          end:   { x: cartaoPageW - MARGEM_ESQ + 2, y: yBloco },
+          end:   { x: PAGE_W - MARGEM_ESQ + 2, y: yBloco },
           thickness: 0.3,
           color: rgb(0.5, 0.5, 0.5),
           dashArray: [3, 2],
@@ -7398,7 +7404,7 @@ async function _gerarEtiquetasComCartao(cartaoBase64, dadosPac, tipo, materiais)
         const y = yBloco - LH * (li + 1);
         if(y < areaBot) return; // não sai da área
         const isBold = li === 0; // primeira linha em negrito
-        cartaoPage.drawText(txt, {
+        page.drawText(txt, {
           x: xBase,
           y,
           size: FS,
@@ -7546,26 +7552,36 @@ async function _gerarHemoCompleto(htmlFicha, f){
     const [fichaPg] = await merged.copyPages(fichaDoc, [0]);
     merged.addPage(fichaPg);
 
-    // Pág. 2 — Cartão SUS (pág. 0) ou A4 em branco como fallback
-    let cartaoPage, pgW, pgH;
+    // Pág. 2 — nova página A4 com o Cartão SUS redimensionado ao TERÇO SUPERIOR
+    //   (independente do tamanho/proporção com que o cartão foi salvo) e a
+    //   etiqueta de prova cruzada nos 2/3 inferiores, sempre com espaço garantido.
+    const PAGE_W = 595.28, PAGE_H = 841.89; // A4 em pts
+    const cartaoPage = merged.addPage([PAGE_W, PAGE_H]);
+    const pgW = PAGE_W, pgH = PAGE_H;
+
+    const CARTAO_MARGEM = 10;
+    const cartaoAreaTop    = pgH - CARTAO_MARGEM;
+    const cartaoAreaBottom = pgH - (pgH / 3);
+    const cartaoAreaH = cartaoAreaTop - cartaoAreaBottom;
+    const cartaoAreaW = pgW - CARTAO_MARGEM * 2;
+
     if(_cartaoSUSPDF){
       const bin  = atob(_cartaoSUSPDF);
       const cbytes = new Uint8Array(bin.length);
       for(let i=0;i<bin.length;i++) cbytes[i] = bin.charCodeAt(i);
       const cartaoDoc = await PDFDocument.load(cbytes);
       // Sempre usa pág. 0 (a que contém os dados do paciente)
-      const [cpg] = await merged.copyPages(cartaoDoc, [0]);
-      merged.addPage(cpg);
-      cartaoPage = merged.getPage(1);
-    } else {
-      cartaoPage = merged.addPage([595.28, 841.89]);
+      const [embeddedCartao] = await merged.embedPdf(cartaoDoc, [0]);
+      const cw = embeddedCartao.width, ch = embeddedCartao.height;
+      const escala = Math.min(cartaoAreaW / cw, cartaoAreaH / ch);
+      const drawW = cw * escala, drawH = ch * escala;
+      const drawX = CARTAO_MARGEM + (cartaoAreaW - drawW) / 2;
+      const drawY = cartaoAreaTop - drawH;
+      cartaoPage.drawPage(embeddedCartao, { x: drawX, y: drawY, width: drawW, height: drawH });
     }
-    const sz = cartaoPage.getSize();
-    pgW = sz.width; pgH = sz.height;   // pts  (A4 ≈ 595 × 842)
 
-    // ── 4. Etiqueta de prova cruzada centrada no espaço em branco ─────────────
-    //   O Cartão SUS ocupa visualmente a metade SUPERIOR da página.
-    //   Em pdf-lib y=0 é o FUNDO <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M3 8h10"/><path d="M9.5 4.5L13 8l-3.5 3.5"/></svg> espaço em branco fica em y ∈ [0, pgH*0.48]
+    // ── 4. Etiqueta de prova cruzada — sempre nos 2/3 inferiores da página,
+    //   abaixo da área reservada ao cartão (espaço garantido) ─────────────────
     const font     = await merged.embedFont(StandardFonts.TimesRoman);
     const fontBold = await merged.embedFont(StandardFonts.TimesRomanBold);
     const FS = 8;          // 8pt — legibilidade em 1 etiqueta
@@ -7589,8 +7605,9 @@ async function _gerarHemoCompleto(htmlFicha, f){
     const etiqH  = linhas.length * LH + PAD*2; // altura total da caixa
     const etiqX  = (pgW - etiqW) / 2;          // centrado horizontalmente
 
-    // Centro vertical do espaço em branco (y=0 fundo, pgH*0.48 = limite superior)
-    const blankMid = pgH * 0.24;              // ~¼ da página a partir do fundo
+    // Centro vertical do espaço disponível abaixo do cartão (y=0 fundo até cartaoAreaBottom)
+    const areaLivreTop = cartaoAreaBottom - 6; // pequeno respiro abaixo do cartão
+    const blankMid = areaLivreTop / 2;
     const boxY  = blankMid - etiqH / 2;       // y do canto inferior da caixa
 
     // Caixa com borda
