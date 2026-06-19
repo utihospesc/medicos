@@ -5380,8 +5380,11 @@ async function _carregarPrescricao(leito){
   const key  = `uti_med_rx_${leito}_${data}`;
   let saved  = await dbGet(key);
 
-  // Se não há prescrição para hoje, carrega a última disponível (mais recente)
-  if(!saved || !saved.itens || !saved.itens.length){
+  // Só herda a prescrição mais recente se NÃO houver registro salvo para hoje.
+  // Importante: se já existe um documento salvo hoje com itens:[] (ex.: o médico
+  // suspendeu todos os itens e salvou), isso é uma decisão clínica intencional —
+  // NÃO deve herdar a prescrição antiga de volta.
+  if(!saved){
     try{
       const todas = await dbListByPrefix(`uti_med_rx_${leito}_`);
       const ordenadas = Object.values(todas)
