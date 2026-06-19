@@ -446,6 +446,18 @@ a:hover{text-decoration:underline}
   /* Evita quebras desnecessárias */
   #preview-conteudo > *{ page-break-inside:avoid; }
 
+  /* Página anexa da evolução do diarista (impressão do plantonista noturno):
+     força nova página, mas permite que o conteúdo interno quebre se for longo */
+  #preview-conteudo .pv-diarista-pagina{ page-break-before:always !important;
+    page-break-inside:auto !important; }
+  #preview-conteudo .dev-ro-section,
+  #preview-conteudo .dev-ro-check-group{ page-break-inside:avoid; font-size:7pt !important; }
+  #preview-conteudo .dev-ro-sec-title{ font-size:6.5pt !important; }
+  #preview-conteudo .dev-ro-item,
+  #preview-conteudo .dev-ro-diag,
+  #preview-conteudo .dev-ro-livre{ font-size:7pt !important; }
+  #preview-conteudo .dev-ro-author{ font-size:6.5pt !important; }
+
   html{ height:auto !important; background:#fff !important; }
   body{ height:auto !important; min-height:unset !important; background:#fff !important; overflow:visible !important; }
 
