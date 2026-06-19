@@ -6741,6 +6741,18 @@ function abrirFichaHUOL(dadosExistentes){
   sf('fhuol-medico', f.medico || (perfilUsuario?perfilUsuario.nome:'') || '');
   $('modal-huol-ficha')._chaveEditar = f._chave||null;
   $('modal-huol-ficha').classList.add('show');
+  _resizeModalTextareas('modal-huol-ficha');
+  _ativarAutoResizeHUOL();
+}
+
+// Ajusta a altura dos textareas da ficha HUOL conforme o conteúdo digitado
+// (sem forçar caixa alta — alguns campos do HUOL mantêm digitação livre).
+function _ativarAutoResizeHUOL(){
+  document.querySelectorAll('#modal-huol-ficha textarea').forEach(el=>{
+    if(el.dataset.autoResizeBound) return;
+    el.dataset.autoResizeBound='1';
+    el.addEventListener('input',()=>_autoResizeTA(el));
+  });
 }
 
 function fecharFichaHUOL(){
