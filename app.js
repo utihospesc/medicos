@@ -999,10 +999,31 @@ async function dbGet(key){
     return snap.exists ? snap.data().value : null;
   }catch(e){ const v=localStorage.getItem(key); return v?JSON.parse(v):null; }
 }
+// Remove recursivamente chaves com valor `undefined` (Firestore rejeita
+// `.set()`/`.update()` com qualquer undefined em qualquer profundidade,
+// lançando invalid-argument). Tratamos arrays separadamente para preservar
+// o índice sem converter o item ausente em null.
+function _limparUndefined(obj){
+  if(obj===undefined) return null; // item de array indefinido → null (Firestore não aceita "buraco")
+  if(Array.isArray(obj)) return obj.map(_limparUndefined);
+  if(obj && typeof obj==='object' && !(obj instanceof Date)){
+    const out={};
+    for(const k in obj){
+      const v=obj[k];
+      if(v===undefined) continue; // remove a chave inteira
+      out[k]=_limparUndefined(v);
+    }
+    return out;
+  }
+  return obj;
+}
 async function dbSet(key,value){
   localStorage.setItem(key, JSON.stringify(value)); // cache local sempre
   if(_modoOffline || !db) return;
-  try{ await db.collection('uti_med_kv').doc(key).set({value, updatedAt:new Date().toISOString()}); }
+  try{
+    const valorLimpo = _limparUndefined(value);
+    await db.collection('uti_med_kv').doc(key).set({value:valorLimpo, updatedAt:new Date().toISOString()});
+  }
   catch(e){ console.warn('dbSet falhou (mantido local):',key,e&&e.code); }
 }
 async function dbDelete(key){
