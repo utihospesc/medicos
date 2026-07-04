@@ -414,6 +414,15 @@ async function confirmarSaidaLeito(){
       registradoEm: new Date().toISOString()
     });
 
+    // Envia a evolução médica em PDF para o Drive — SOMENTE na alta da UTI
+    // para a enfermaria/setor (nunca em alta hospitalar, óbito, transferência
+    // externa ou transferência interna de leito). Roda antes de apagar os
+    // dados clínicos do leito, pois a última evolução ainda precisa existir.
+    if(tipo === 'alta_uti'){
+      showLoading('Registrando saída e enviando evolução...');
+      await _enviarEvolucaoParaEnfermaria(leito, L, data);
+    }
+
     // Libera o leito
     ld[leito] = { ocupado:false };
     await dbSet('uti_leitos', ld);
@@ -2550,6 +2559,112 @@ function _labParaTabela(linhas){
   });
   return h+'</table>';
 }
+/* ════════════════════════════════════════════════════════════════════════════
+   ENVIO DA EVOLUÇÃO MÉDICA (PDF) PARA O DRIVE — SOMENTE NA ALTA DA UTI
+   PARA A ENFERMARIA
+   ────────────────────────────────────────────────────────────────────────────
+   Reaproveita o mesmo layout do preview (#preview-conteudo) usando a ÚLTIMA
+   evolução salva do leito (independente do formulário estar aberto ou não,
+   já que "Gestão do leito" pode ser acionada direto da grade de leitos).
+   Gera o PDF com html2canvas + jsPDF e envia em base64 para o Apps Script
+   (action: 'enviar_evolucao_pdf'), que salva na pasta fixa configurada lá.
+   Chamado apenas por confirmarSaidaLeito() quando tipo === 'alta_uti'.
+   ════════════════════════════════════════════════════════════════════════════ */
+async function _gerarPDFEvolucaoAltaBase64(leito, L){
+  const d = await _ultimaEvolucao(leito) || {};
+  if(!d.pac && !(L&&L.pac)) return null; // nada para gerar (leito sem evolução registrada)
+
+  const idade = _idadeDeDN(d.dn || (L&&L.dn));
+  const cult = d.culturas && d.culturas.length
+    ? d.culturas.map(c=>`${c.micro||c.resultado}${c.sitio?' ('+c.sitio+')':''}`).join('; ') : '—';
+  const labTab = _labParaTabela(d.labLinhas);
+  const assinatura = perfilUsuario ? `${perfilUsuario.nome}${perfilUsuario.crm?' · CRM '+perfilUsuario.crm:''}` : (usuarioEmail||'');
+  const diagShow = d.diag || (L&&L.diag) || '';
+  const cidShow  = d.cid  || (L&&L.cid)  || '';
+
+  const html = `
+    <div style="text-align:center;margin-bottom:.4rem;"><img src="logo.png" alt="" style="max-height:64px;width:auto;" onerror="this.style.display='none'"></div>
+    <h1>EVOLUÇÃO MÉDICA — UTI GERAL (ALTA PARA ENFERMARIA)</h1>
+    <div class="pv-sub">Hospital dos Pescadores · ${d.turno||''} · ${_fmtDataCurta(d.data||hoje())}</div>
+    <table>
+      <tr><th>Paciente</th><td>${d.pac||(L&&L.pac)||'—'}</td><th>Idade/DN</th><td>${idade!=null?idade+'a':''} ${d.dn?'· '+_fmtDataCurta(d.dn):''}</td></tr>
+      <tr><th>Leito</th><td>${pad(leito)}</td><th>Adm. UTI</th><td>${_fmtDataCurta(d.adm||(L&&L.adm))||'—'}</td></tr>
+      <tr><th>Hipóteses</th><td colspan="3">${diagShow||'—'} ${cidShow?'('+cidShow+')':''}</td></tr>
+      <tr><th>Comorbidades</th><td colspan="3">${d.comor||(L&&L.comor)||'—'}</td></tr>
+      <tr><th>Alergias</th><td>${d.alergia||(L&&L.alergia)||'—'}</td><th>ATB</th><td>${d.atb||'—'}</td></tr>
+    </table>
+    ${d.hda?`<div class="pv-secao">HDA</div><div>${d.hda}</div>`:''}
+    ${d.admDesc?`<div class="pv-secao">Admissão na UTI</div><div>${d.admDesc}</div>`:''}
+    <div class="pv-secao">Última Evolução do Plantão</div><div>${d.evol||'—'}</div>
+    <div class="pv-secao">Controles 24h</div>
+    <table>
+      <tr><th>PAM</th><td>${d.pam||'—'}</td><th>FC</th><td>${d.fc||'—'}</td><th>FR</th><td>${d.fr||'—'}</td></tr>
+      <tr><th>Tmáx</th><td>${d.tmax||'—'}</td><th>SpO₂</th><td>${d.spo2||'—'}</td><th>HGT</th><td>${d.hgt||'—'}</td></tr>
+      <tr><th>BH 24h</th><td>${d.bh||'—'}</td><th>Diurese</th><td>${d.diurese||'—'}</td><th>Evac.</th><td>${d.evac||'—'}</td></tr>
+    </table>
+    <div class="pv-secao">Exame Físico</div>
+    <div>${[['Ecto',d.ecto],['Neuro',d.neuro],['Pupilas',d.pupilas],['ACV',d.acv],['AR',d.ar],['ABD',d.abd],['EXT',d.ext],['Pele',d.pele]].filter(x=>x[1]).map(x=>`<strong>${x[0]}:</strong> ${x[1]}`).join(' · ')||'—'}</div>
+    <div class="pv-secao">Dispositivos & Suporte</div>
+    <div>Acessos: ${d.acessos||'—'} · Dispositivos: ${d.dispositivos||'—'} · Dieta: ${d.dieta||'—'} · DVA: ${d.dva==='SIM'?'Sim'+(d.dvaQual?' ('+d.dvaQual+')':''):'Não'} · Ventilação: ${_ventTexto(d.vent)||d.vent||'—'}${d.ventParam?' ('+d.ventParam+')':''}</div>
+    ${d.gaso?`<div class="pv-secao">Gasometria</div><div>${d.gaso}</div>`:''}
+    <div class="pv-secao">Culturas</div><div>${cult}</div>
+    ${labTab?`<div class="pv-secao">Exames Laboratoriais</div>${labTab}`:''}
+    ${d.imagem?`<div class="pv-secao">Exames de Imagem</div><div>${d.imagem}</div>`:''}
+    ${(L&&L.saps3!=null)?`<div class="pv-secao">SAPS 3</div><div>Escore: <strong>${L.saps3}</strong> pontos (última evolução registrada)</div>`:''}
+    <div class="pv-secao">Condutas</div><div>${d.condutas ? d.condutas.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>`<div style="margin:2px 0;">${l}</div>`).join('') : '—'}</div>
+    <div class="pv-assinatura" style="margin-top:2.5rem;"><div class="linha"></div>${assinatura}<br><span style="font-size:.68rem;color:#888;">Evolução médica na alta da UTI para a enfermaria · ${_fmtDataCurta(d.data||hoje())} ${agoraHora()}</span></div>
+  `;
+
+  const container = document.createElement('div');
+  container.className = 'preview-doc';
+  container.style.cssText = 'position:fixed;left:-99999px;top:0;width:794px;background:#fff;color:#000;padding:10mm 12mm;';
+  container.innerHTML = html;
+  document.body.appendChild(container);
+  try{
+    await new Promise(r=>setTimeout(r,150));
+    const canvas = await html2canvas(container, { scale:2, backgroundColor:'#ffffff', useCORS:true });
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p','mm','a4');
+    const pdfW = pdf.internal.pageSize.getWidth();
+    const pdfH = pdf.internal.pageSize.getHeight();
+    const imgH = canvas.height * pdfW / canvas.width;
+    const dataURL = canvas.toDataURL('image/jpeg', 0.92);
+    if(imgH <= pdfH){
+      pdf.addImage(dataURL,'JPEG',0,0,pdfW,imgH);
+    } else {
+      let restante = imgH, yOffset = 0;
+      while(restante > 0){
+        pdf.addImage(dataURL,'JPEG',0, yOffset===0?0:-yOffset, pdfW, imgH);
+        restante -= pdfH; yOffset += pdfH;
+        if(restante > 0) pdf.addPage();
+      }
+    }
+    return pdf.output('datauristring').split(',')[1]; // base64 puro, sem o prefixo data:
+  } finally {
+    if(container.parentNode) container.parentNode.removeChild(container);
+  }
+}
+
+// Envia a evolução em PDF para o Apps Script. Falha silenciosamente (apenas
+// console.warn) para NUNCA travar o fluxo de alta do paciente — o registro
+// da alta no sistema é sempre a prioridade.
+async function _enviarEvolucaoParaEnfermaria(leito, L, dataAlta){
+  if(!APPS_SCRIPT_URL) return;
+  try{
+    const pdfBase64 = await _gerarPDFEvolucaoAltaBase64(leito, L);
+    if(!pdfBase64) return;
+    const resp = await fetch(APPS_SCRIPT_URL, {
+      method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({
+        action:'enviar_evolucao_pdf',
+        pdfBase64, leito, paciente:(L&&L.pac)||'', data: dataAlta||hoje()
+      })
+    });
+    const j = await resp.json().catch(()=>({}));
+    if(j.status!=='ok') console.warn('[Evolução→Enfermaria] falha ao enviar PDF:', j.msg||j);
+  } catch(e){ console.warn('[Evolução→Enfermaria] erro ao gerar/enviar PDF:', e); }
+}
+
 function imprimirEvolucao(){
   // garante que o modal esteja visível e renderizado antes de imprimir
   const modal = $('modal-preview');
