@@ -133,11 +133,25 @@ async function salvarEvolucaoDiaristaModal(){
   }
 }
 
+// Busca a última evolução diarista salva para o leito, independente da data
+// (mesma lógica de "herança" já usada em _ultimaEvolucao para a evolução médica).
+async function _ultimaEvolucaoDiarista(leito){
+  const all = await dbListByPrefix(`uti_med_diarista_${leito}_`);
+  const arr = Object.entries(all).map(([k,v])=>({k,v})).filter(x=>x.v && x.v.data);
+  if(!arr.length) return null;
+  arr.sort((a,b)=>(b.v.data||'').localeCompare(a.v.data||'') || (b.v.registradoEm||'').localeCompare(a.v.registradoEm||''));
+  return arr[0].v;
+}
+
 async function _carregarDiarista(leito, data){
   const painel = $('secao-diarista-dropdown');
   const metaEl = $('diarista-dropdown-meta');
   if(!painel) return;
-  const dado = await dbGet(_chaveDiarista(leito, data));
+  // 1) tenta a evolução diarista exatamente da data do turno aberto
+  let dado = await dbGet(_chaveDiarista(leito, data));
+  // 2) se não houver, cai para a última evolução diarista salva do leito
+  //    (ex.: plantão sendo aberto antes do diarista evoluir hoje)
+  if(!dado) dado = await _ultimaEvolucaoDiarista(leito);
   if(!dado || (!dado.diag && !dado.livre && !dado.metas?.length &&
       !Object.values(dado.checklist||{}).some(Boolean))){
     painel.style.display = 'none'; return;
@@ -148,8 +162,12 @@ async function _carregarDiarista(leito, data){
     const fmt = dt ? dt.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
     metaEl.textContent = `${dado.autorNome||'Diarista'} — ${fmt}`;
   }
+  // A última evolução diarista salva fica sempre visível, com o dropdown já aberto
   const body = $('diarista-dropdown-body');
-  if(body && body.style.display !== 'none') _renderDiaristaDropdown(dado);
+  const chev = $('diarista-dropdown-chev');
+  if(body) body.style.display = '';
+  if(chev) chev.classList.add('open');
+  _renderDiaristaDropdown(dado);
 }
 
 function _toggleDiaristaDropdown(){
