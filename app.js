@@ -1449,6 +1449,8 @@ function _sapsBadge(score){
   return `<span class="leito-tag ${cls}">${m.toFixed(0)}% óbito</span>`;
 }
 function _fmtDataCurta(d){ if(!d) return ''; const p=d.split('-'); return p.length===3?`${p[2]}/${p[1]}`:d; }
+// Igual a _fmtDataCurta, mas inclui o ano completo (DD/MM/AAAA). Usada onde o ano de nascimento precisa aparecer.
+function _fmtDataAno2(d){ if(!d) return ''; const p=d.split('-'); return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:d; }
 
 
 /* ════════════════════════════════════════════════════════════════════════════
@@ -7263,7 +7265,7 @@ function _imprimirFichaHemoObj(f){
       <td colspan="6"><span class="label-cel">NOME DA MÃE: </span>${(f.mae||'').toUpperCase()}</td>
     </tr>
     <tr>
-      <td colspan="2"><span class="label-cel">DATA DE NASC: </span>${f.dn?_fmtDataCurta(f.dn):'________'}</td>
+      <td colspan="2"><span class="label-cel">DATA DE NASC: </span>${f.dn?_fmtDataAno2(f.dn):'________'}</td>
       <td colspan="2"><span class="label-cel">Nº CARTÃO SUS: </span><strong>${f.cns||''}</strong></td>
       <td colspan="2"><span class="label-cel">NATURALIDADE: </span>${(f.natur||'NATAL - RN').toUpperCase()}</td>
     </tr>
@@ -7351,7 +7353,7 @@ function _imprimirFichaHemoObj(f){
     </tr>
     <tr>
       <td colspan="4"><span class="label-cel">Paciente (legível): </span><strong>${(f.nome||'').toUpperCase()}</strong></td>
-      <td colspan="2"><span class="label-cel">Data Nasc.: </span>${f.dn?_fmtDataCurta(f.dn):''}</td>
+      <td colspan="2"><span class="label-cel">Data Nasc.: </span>${f.dn?_fmtDataAno2(f.dn):''}</td>
     </tr>
     <tr>
       <td class="th-pedido" style="width:28%;">Produto</td>
