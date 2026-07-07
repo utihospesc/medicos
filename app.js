@@ -1104,6 +1104,7 @@ function _atualizarBadgeUser(){
   const b=$('badge-turno-leitos'); if(b&&perfilUsuario) b.textContent=perfilUsuario.nome||usuarioEmail;
   const g=$('btn-gerenciar-usuarios'); if(g) g.style.display=_isAdmin()?'inline-block':'none';
   const ed=$('btn-enviar-evolucoes-diarista'); if(ed) ed.style.display=_isDiarista()?'inline-block':'none';
+  const eh=$('btn-enviar-historico-diarista'); if(eh) eh.style.display=_isDiarista()?'inline-block':'none';
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
@@ -2589,17 +2590,20 @@ function _labParaTabela(linhas){
    (action: 'enviar_evolucao_pdf'), que salva na pasta fixa configurada lá.
    Chamado apenas por confirmarSaidaLeito() quando tipo === 'alta_uti'.
    ════════════════════════════════════════════════════════════════════════════ */
-async function _gerarPDFEvolucaoAltaBase64(leito, L, subtituloExtra){
-  const d = await _ultimaEvolucao(leito) || {};
-  if(!d.pac && !(L&&L.pac)) return null; // nada para gerar (leito sem evolução registrada)
+// Gera o PDF a partir de um registro de evolução JÁ CARREGADO (não busca no
+// banco). Reaproveitado tanto por _gerarPDFEvolucaoAltaBase64 (última
+// evolução do leito) quanto pelo envio de TODO o histórico do Firestore.
+async function _gerarPDFDeRegistroEvolucao(d, leito, L, subtituloExtra){
+  d = d || {}; L = L || {};
+  if(!d.pac && !L.pac) return null; // nada para gerar
 
-  const idade = _idadeDeDN(d.dn || (L&&L.dn));
+  const idade = _idadeDeDN(d.dn || L.dn);
   const cult = d.culturas && d.culturas.length
     ? d.culturas.map(c=>`${c.micro||c.resultado}${c.sitio?' ('+c.sitio+')':''}`).join('; ') : '—';
   const labTab = _labParaTabela(d.labLinhas);
   const assinatura = perfilUsuario ? `${perfilUsuario.nome}${perfilUsuario.crm?' · CRM '+perfilUsuario.crm:''}` : (usuarioEmail||'');
-  const diagShow = d.diag || (L&&L.diag) || '';
-  const cidShow  = d.cid  || (L&&L.cid)  || '';
+  const diagShow = d.diag || L.diag || '';
+  const cidShow  = d.cid  || L.cid  || '';
   const tit = subtituloExtra===undefined ? 'ALTA PARA ENFERMARIA' : subtituloExtra;
 
   const html = `
@@ -2607,11 +2611,11 @@ async function _gerarPDFEvolucaoAltaBase64(leito, L, subtituloExtra){
     <h1>EVOLUÇÃO MÉDICA — UTI GERAL${tit?` (${tit})`:''}</h1>
     <div class="pv-sub">Hospital dos Pescadores · ${d.turno||''} · ${_fmtDataCurta(d.data||hoje())}</div>
     <table>
-      <tr><th>Paciente</th><td>${d.pac||(L&&L.pac)||'—'}</td><th>Idade/DN</th><td>${idade!=null?idade+'a':''} ${d.dn?'· '+_fmtDataCurta(d.dn):''}</td></tr>
-      <tr><th>Leito</th><td>${pad(leito)}</td><th>Adm. UTI</th><td>${_fmtDataCurta(d.adm||(L&&L.adm))||'—'}</td></tr>
+      <tr><th>Paciente</th><td>${d.pac||L.pac||'—'}</td><th>Idade/DN</th><td>${idade!=null?idade+'a':''} ${d.dn?'· '+_fmtDataCurta(d.dn):''}</td></tr>
+      <tr><th>Leito</th><td>${pad(leito)}</td><th>Adm. UTI</th><td>${_fmtDataCurta(d.adm||L.adm)||'—'}</td></tr>
       <tr><th>Hipóteses</th><td colspan="3">${diagShow||'—'} ${cidShow?'('+cidShow+')':''}</td></tr>
-      <tr><th>Comorbidades</th><td colspan="3">${d.comor||(L&&L.comor)||'—'}</td></tr>
-      <tr><th>Alergias</th><td>${d.alergia||(L&&L.alergia)||'—'}</td><th>ATB</th><td>${d.atb||'—'}</td></tr>
+      <tr><th>Comorbidades</th><td colspan="3">${d.comor||L.comor||'—'}</td></tr>
+      <tr><th>Alergias</th><td>${d.alergia||L.alergia||'—'}</td><th>ATB</th><td>${d.atb||'—'}</td></tr>
     </table>
     ${d.hda?`<div class="pv-secao">HDA</div><div>${d.hda}</div>`:''}
     ${d.admDesc?`<div class="pv-secao">Admissão na UTI</div><div>${d.admDesc}</div>`:''}
@@ -2630,9 +2634,9 @@ async function _gerarPDFEvolucaoAltaBase64(leito, L, subtituloExtra){
     <div class="pv-secao">Culturas</div><div>${cult}</div>
     ${labTab?`<div class="pv-secao">Exames Laboratoriais</div>${labTab}`:''}
     ${d.imagem?`<div class="pv-secao">Exames de Imagem</div><div>${d.imagem}</div>`:''}
-    ${(L&&L.saps3!=null)?`<div class="pv-secao">SAPS 3</div><div>Escore: <strong>${L.saps3}</strong> pontos (última evolução registrada)</div>`:''}
+    ${L.saps3!=null?`<div class="pv-secao">SAPS 3</div><div>Escore: <strong>${L.saps3}</strong> pontos (última evolução registrada)</div>`:''}
     <div class="pv-secao">Condutas</div><div>${d.condutas ? d.condutas.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>`<div style="margin:2px 0;">${l}</div>`).join('') : '—'}</div>
-    <div class="pv-assinatura" style="margin-top:2.5rem;"><div class="linha"></div>${assinatura}<br><span style="font-size:.68rem;color:#888;">Evolução médica na alta da UTI para a enfermaria · ${_fmtDataCurta(d.data||hoje())} ${agoraHora()}</span></div>
+    <div class="pv-assinatura" style="margin-top:2.5rem;"><div class="linha"></div>${assinatura}<br><span style="font-size:.68rem;color:#888;">Evolução médica · ${_fmtDataCurta(d.data||hoje())} ${agoraHora()}</span></div>
   `;
 
   const container = document.createElement('div');
@@ -2663,6 +2667,12 @@ async function _gerarPDFEvolucaoAltaBase64(leito, L, subtituloExtra){
   } finally {
     if(container.parentNode) container.parentNode.removeChild(container);
   }
+}
+
+// Wrapper: gera o PDF a partir da ÚLTIMA evolução salva do leito (busca no banco).
+async function _gerarPDFEvolucaoAltaBase64(leito, L, subtituloExtra){
+  const d = await _ultimaEvolucao(leito) || {};
+  return _gerarPDFDeRegistroEvolucao(d, leito, L, subtituloExtra);
 }
 
 // Envia a evolução em PDF para o Apps Script. Retorna true/false (sucesso).
@@ -2718,6 +2728,64 @@ async function enviarTodasEvolucoesParaEnfermaria(){
   let msg = `Envio concluído: ${enviados} evolução(ões) enviada(s) ao Drive.`;
   if(semEvolucao) msg += ` ${semEvolucao} leito(s) sem evolução registrada.`;
   if(falhas) msg += ` ${falhas} falha(s) no envio.`;
+  toast(msg, falhas>0);
+}
+
+// Envia para o Drive TODAS as evoluções já salvas no Firestore — uma por
+// leito+turno+data (chave uti_med_ev_<leito>_<turno>_<data>), não apenas a
+// última de cada leito. Cobre, portanto, o histórico completo, inclusive de
+// pacientes já com alta cujos registros ainda não tenham sido apagados.
+async function enviarTodoHistoricoEvolucoesFirestore(){
+  if(!_isDiarista()){ toast('Acesso exclusivo do médico diarista.', true); return; }
+  if(!APPS_SCRIPT_URL){ toast('Backend (Apps Script) não configurado.', true); return; }
+
+  showLoading('Buscando evoluções salvas no Firestore...');
+  let todas;
+  try{ todas = await dbListByPrefix('uti_med_ev_'); }
+  catch(e){ hideLoading(); toast('Erro ao listar evoluções: '+(e.message||e), true); return; }
+  const chaves = Object.keys(todas).filter(k => todas[k]);
+  hideLoading();
+
+  if(!chaves.length){ toast('Nenhuma evolução encontrada no banco.', true); return; }
+  if(!confirm(`Foram encontradas ${chaves.length} evolução(ões) salva(s) no Firestore (todos os leitos e datas). Enviar TODAS para a pasta do Drive? Isso pode levar alguns minutos.`)) return;
+
+  const ld = await _getLeitos();
+  let enviados = 0, falhas = 0;
+  for(let i=0; i<chaves.length; i++){
+    const chave = chaves[i];
+    showLoading(`Enviando histórico ao Drive… (${i+1}/${chaves.length})`);
+    try{
+      const d = todas[chave];
+      // Formato da chave: uti_med_ev_<leito>_<turno>_<data>
+      const partes = chave.split('_');
+      const leito  = parseInt(partes[3], 10) || 0;
+      const turno  = partes[4] || d.turno || '';
+      const dataEv = partes[5] || d.data  || '';
+      const L = ld[leito] || {};
+
+      const pdfBase64 = await _gerarPDFDeRegistroEvolucao(d, leito, L, 'HISTÓRICO COMPLETO');
+      if(!pdfBase64) continue;
+
+      const nomeSeguro = (d.pac||L.pac||'PACIENTE').toString().replace(/[\\/:*?"<>|]/g,'').trim() || 'PACIENTE';
+      const nomeArquivo = `Evolucao_Leito${String(leito).padStart(2,'0')}_${nomeSeguro}_${dataEv||hoje()}_${turno}`;
+
+      const resp = await fetch(APPS_SCRIPT_URL, {
+        method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body: JSON.stringify({
+          action:'enviar_evolucao_pdf', pdfBase64, leito,
+          paciente: d.pac||L.pac||'', data: dataEv||hoje(), nomeArquivo
+        })
+      });
+      const j = await resp.json().catch(()=>({}));
+      if(j.status==='ok') enviados++;
+      else { falhas++; console.warn('[Histórico Firestore] '+chave+':', j.msg||j); }
+    } catch(e){
+      falhas++; console.warn('[Histórico Firestore] '+chave+':', e);
+    }
+  }
+  hideLoading();
+  let msg = `Histórico enviado: ${enviados} de ${chaves.length} evolução(ões) enviada(s) ao Drive.`;
+  if(falhas) msg += ` ${falhas} falha(s).`;
   toast(msg, falhas>0);
 }
 
