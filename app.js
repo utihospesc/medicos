@@ -1450,7 +1450,7 @@ function _sapsBadge(score){
   const cls = m>=50?'saps-hi':(m>=20?'saps-md':'saps-lo');
   return `<span class="leito-tag ${cls}">${m.toFixed(0)}% óbito</span>`;
 }
-function _fmtDataCurta(d){ if(!d) return ''; const p=d.split('-'); return p.length===3?`${p[2]}/${p[1]}`:d; }
+function _fmtDataCurta(d){ if(!d) return ''; const p=d.split('-'); return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:d; }
 
 
 /* ════════════════════════════════════════════════════════════════════════════
