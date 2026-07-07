@@ -1103,6 +1103,7 @@ function _registrarCachePerfil(p){ if(p&&p.email) _cachePerfis[p.email.toLowerCa
 function _atualizarBadgeUser(){
   const b=$('badge-turno-leitos'); if(b&&perfilUsuario) b.textContent=perfilUsuario.nome||usuarioEmail;
   const g=$('btn-gerenciar-usuarios'); if(g) g.style.display=_isAdmin()?'inline-block':'none';
+  const ed=$('btn-enviar-evolucoes-diarista'); if(ed) ed.style.display=_isDiarista()?'inline-block':'none';
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
@@ -1449,8 +1450,6 @@ function _sapsBadge(score){
   return `<span class="leito-tag ${cls}">${m.toFixed(0)}% óbito</span>`;
 }
 function _fmtDataCurta(d){ if(!d) return ''; const p=d.split('-'); return p.length===3?`${p[2]}/${p[1]}`:d; }
-// Igual a _fmtDataCurta, mas inclui o ano completo (DD/MM/AAAA). Usada onde o ano de nascimento precisa aparecer.
-function _fmtDataAno2(d){ if(!d) return ''; const p=d.split('-'); return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:d; }
 
 
 /* ════════════════════════════════════════════════════════════════════════════
@@ -2590,7 +2589,7 @@ function _labParaTabela(linhas){
    (action: 'enviar_evolucao_pdf'), que salva na pasta fixa configurada lá.
    Chamado apenas por confirmarSaidaLeito() quando tipo === 'alta_uti'.
    ════════════════════════════════════════════════════════════════════════════ */
-async function _gerarPDFEvolucaoAltaBase64(leito, L){
+async function _gerarPDFEvolucaoAltaBase64(leito, L, subtituloExtra){
   const d = await _ultimaEvolucao(leito) || {};
   if(!d.pac && !(L&&L.pac)) return null; // nada para gerar (leito sem evolução registrada)
 
@@ -2601,10 +2600,11 @@ async function _gerarPDFEvolucaoAltaBase64(leito, L){
   const assinatura = perfilUsuario ? `${perfilUsuario.nome}${perfilUsuario.crm?' · CRM '+perfilUsuario.crm:''}` : (usuarioEmail||'');
   const diagShow = d.diag || (L&&L.diag) || '';
   const cidShow  = d.cid  || (L&&L.cid)  || '';
+  const tit = subtituloExtra===undefined ? 'ALTA PARA ENFERMARIA' : subtituloExtra;
 
   const html = `
     <div style="text-align:center;margin-bottom:.4rem;"><img src="logo.png" alt="" style="max-height:64px;width:auto;" onerror="this.style.display='none'"></div>
-    <h1>EVOLUÇÃO MÉDICA — UTI GERAL (ALTA PARA ENFERMARIA)</h1>
+    <h1>EVOLUÇÃO MÉDICA — UTI GERAL${tit?` (${tit})`:''}</h1>
     <div class="pv-sub">Hospital dos Pescadores · ${d.turno||''} · ${_fmtDataCurta(d.data||hoje())}</div>
     <table>
       <tr><th>Paciente</th><td>${d.pac||(L&&L.pac)||'—'}</td><th>Idade/DN</th><td>${idade!=null?idade+'a':''} ${d.dn?'· '+_fmtDataCurta(d.dn):''}</td></tr>
@@ -2665,14 +2665,14 @@ async function _gerarPDFEvolucaoAltaBase64(leito, L){
   }
 }
 
-// Envia a evolução em PDF para o Apps Script. Falha silenciosamente (apenas
-// console.warn) para NUNCA travar o fluxo de alta do paciente — o registro
-// da alta no sistema é sempre a prioridade.
-async function _enviarEvolucaoParaEnfermaria(leito, L, dataAlta){
-  if(!APPS_SCRIPT_URL) return;
+// Envia a evolução em PDF para o Apps Script. Retorna true/false (sucesso).
+// No fluxo automático de alta (confirmarSaidaLeito), a falha é apenas
+// registrada em console — NUNCA trava o registro da alta do paciente.
+async function _enviarEvolucaoParaEnfermaria(leito, L, dataAlta, subtituloExtra){
+  if(!APPS_SCRIPT_URL) return false;
   try{
-    const pdfBase64 = await _gerarPDFEvolucaoAltaBase64(leito, L);
-    if(!pdfBase64) return;
+    const pdfBase64 = await _gerarPDFEvolucaoAltaBase64(leito, L, subtituloExtra);
+    if(!pdfBase64) return false;
     const resp = await fetch(APPS_SCRIPT_URL, {
       method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
       body: JSON.stringify({
@@ -2681,8 +2681,44 @@ async function _enviarEvolucaoParaEnfermaria(leito, L, dataAlta){
       })
     });
     const j = await resp.json().catch(()=>({}));
-    if(j.status!=='ok') console.warn('[Evolução→Enfermaria] falha ao enviar PDF:', j.msg||j);
-  } catch(e){ console.warn('[Evolução→Enfermaria] erro ao gerar/enviar PDF:', e); }
+    if(j.status!=='ok'){ console.warn('[Evolução→Enfermaria] falha ao enviar PDF:', j.msg||j); return false; }
+    return true;
+  } catch(e){ console.warn('[Evolução→Enfermaria] erro ao gerar/enviar PDF:', e); return false; }
+}
+
+// ── ENVIO EM LOTE (SOMENTE DIARISTA) ─────────────────────────────────────────
+// Envia a última evolução salva de TODOS os leitos (1..TOTAL_LEITOS) para a
+// pasta do Drive — inclusive de leitos já vazios/pacientes de alta, desde
+// que ainda exista alguma evolução registrada para aquele leito no banco.
+async function enviarTodasEvolucoesParaEnfermaria(){
+  if(!_isDiarista()){ toast('Acesso exclusivo do médico diarista.', true); return; }
+  if(!APPS_SCRIPT_URL){ toast('Backend (Apps Script) não configurado.', true); return; }
+  if(!confirm(`Enviar a última evolução salva de todos os ${TOTAL_LEITOS} leitos (inclusive de pacientes já com alta) para a pasta do Drive?`)) return;
+
+  const ld = await _getLeitos();
+  let enviados = 0, semEvolucao = 0, falhas = 0;
+  for(let leito=1; leito<=TOTAL_LEITOS; leito++){
+    showLoading(`Enviando evoluções ao Drive… (${leito}/${TOTAL_LEITOS})`);
+    try{
+      const L = ld[leito] || {};
+      const pdfBase64 = await _gerarPDFEvolucaoAltaBase64(leito, L, 'ENVIO EM LOTE');
+      if(!pdfBase64){ semEvolucao++; continue; }
+      const resp = await fetch(APPS_SCRIPT_URL, {
+        method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body: JSON.stringify({ action:'enviar_evolucao_pdf', pdfBase64, leito, paciente:L.pac||'', data:hoje() })
+      });
+      const j = await resp.json().catch(()=>({}));
+      if(j.status==='ok') enviados++;
+      else { falhas++; console.warn('[Envio em lote] leito '+leito+':', j.msg||j); }
+    } catch(e){
+      falhas++; console.warn('[Envio em lote] leito '+leito+':', e);
+    }
+  }
+  hideLoading();
+  let msg = `Envio concluído: ${enviados} evolução(ões) enviada(s) ao Drive.`;
+  if(semEvolucao) msg += ` ${semEvolucao} leito(s) sem evolução registrada.`;
+  if(falhas) msg += ` ${falhas} falha(s) no envio.`;
+  toast(msg, falhas>0);
 }
 
 function imprimirEvolucao(){
@@ -7265,7 +7301,7 @@ function _imprimirFichaHemoObj(f){
       <td colspan="6"><span class="label-cel">NOME DA MÃE: </span>${(f.mae||'').toUpperCase()}</td>
     </tr>
     <tr>
-      <td colspan="2"><span class="label-cel">DATA DE NASC: </span>${f.dn?_fmtDataAno2(f.dn):'________'}</td>
+      <td colspan="2"><span class="label-cel">DATA DE NASC: </span>${f.dn?_fmtDataCurta(f.dn):'________'}</td>
       <td colspan="2"><span class="label-cel">Nº CARTÃO SUS: </span><strong>${f.cns||''}</strong></td>
       <td colspan="2"><span class="label-cel">NATURALIDADE: </span>${(f.natur||'NATAL - RN').toUpperCase()}</td>
     </tr>
@@ -7353,7 +7389,7 @@ function _imprimirFichaHemoObj(f){
     </tr>
     <tr>
       <td colspan="4"><span class="label-cel">Paciente (legível): </span><strong>${(f.nome||'').toUpperCase()}</strong></td>
-      <td colspan="2"><span class="label-cel">Data Nasc.: </span>${f.dn?_fmtDataAno2(f.dn):''}</td>
+      <td colspan="2"><span class="label-cel">Data Nasc.: </span>${f.dn?_fmtDataCurta(f.dn):''}</td>
     </tr>
     <tr>
       <td class="th-pedido" style="width:28%;">Produto</td>
