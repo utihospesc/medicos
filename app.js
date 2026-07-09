@@ -7798,6 +7798,37 @@ async function _gerarPDFMescladoHemo(htmlFicha, cartaoBase64){
   }
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+// Desenha o Cartão SUS redimensionado para caber numa área reservada no topo
+// da página (fração `fracaoTopo` da altura), garantindo SEMPRE espaço livre
+// abaixo para as etiquetas — mesmo quando o usuário salvou o cartão em
+// zoom/página cheia (nesse caso, sem este ajuste, o cartão ocupava a página
+// inteira e não sobrava espaço nenhum para as etiquetas). Nunca amplia o
+// cartão além do tamanho original, para não perder qualidade em cartões já
+// pequenos. Retorna o Y (coordenada pdf-lib, 0 = base da página) onde termina
+// o desenho do cartão, para as etiquetas serem posicionadas a partir daí.
+// Usada tanto na solicitação de hemoterápicos quanto na de culturas, para
+// manter o mesmo padrão de tamanho entre as duas.
+// ════════════════════════════════════════════════════════════════════════════
+async function _desenharCartaoRedimensionado(pdfDocAlvo, page, cartaoBytes, pgW, pgH, fracaoTopo){
+  const PDFDocument = window.PDFLib.PDFDocument;
+  const MARGEM = 10;
+  const areaTop    = pgH - MARGEM;
+  const areaBottom = pgH * (1 - fracaoTopo);
+  const areaH = areaTop - areaBottom;
+  const areaW = pgW - MARGEM * 2;
+
+  const cartaoDoc = await PDFDocument.load(cartaoBytes);
+  const [embeddedCartao] = await pdfDocAlvo.embedPdf(cartaoDoc, [0]);
+  const cw = embeddedCartao.width, ch = embeddedCartao.height;
+  const escala = Math.min(1, areaW / cw, areaH / ch); // nunca amplia (evita perda de qualidade)
+  const drawW = cw * escala, drawH = ch * escala;
+  const drawX = MARGEM + (areaW - drawW) / 2;
+  const drawY = areaTop - drawH;
+  page.drawPage(embeddedCartao, { x: drawX, y: drawY, width: drawW, height: drawH });
+  return drawY;
+}
+
 /* ════════════════════════════════════════════════════════════════════════════
    PDF UNIFICADO DE HEMOTERÁPICOS
    Pág. 1 — Ficha HEMONORTE forçada em 1 A4 (comprime levemente se necessário)
@@ -7844,30 +7875,28 @@ async function _gerarHemoCompleto(htmlFicha, f){
     const [fichaPg] = await merged.copyPages(fichaDoc, [0]);
     merged.addPage(fichaPg);
 
-    // Pág. 2 — Cartão SUS em tamanho ORIGINAL (mesmo padrão da solicitação de
-    //   culturas — antes era redimensionado/encolhido ao terço superior, o
-    //   que o deixava bem menor que o da cultura) + 1 etiqueta de prova
-    //   cruzada no espaço em branco da metade inferior do cartão.
-    let cartaoPage, pgW, pgH;
+    // Pág. 2 — Cartão SUS redimensionado para caber numa área reservada no
+    //   topo da página (FRACAO_CARTAO), garantindo SEMPRE espaço livre abaixo
+    //   para a etiqueta — mesmo quando o usuário salvou o cartão em zoom ou
+    //   página cheia (nesse caso, usar o tamanho original tomaria a página
+    //   toda e não sobraria espaço nenhum). Mesma proporção usada na
+    //   solicitação de culturas, para manter os dois com tamanho parecido.
+    const PAGE_W = 595.28, PAGE_H = 841.89; // A4 em pts
+    const cartaoPage = merged.addPage([PAGE_W, PAGE_H]);
+    const pgW = PAGE_W, pgH = PAGE_H;
+    const FRACAO_CARTAO = 0.55; // área reservada ao cartão (55% do topo)
+
+    let drawY = pgH * (1 - FRACAO_CARTAO); // fallback se não houver cartão
     if(_cartaoSUSPDF){
       const bin  = atob(_cartaoSUSPDF);
       const cbytes = new Uint8Array(bin.length);
       for(let i=0;i<bin.length;i++) cbytes[i] = bin.charCodeAt(i);
-      const cartaoDoc = await PDFDocument.load(cbytes);
-      // Sempre usa pág. 0 (a que contém os dados do paciente)
-      const [cpg] = await merged.copyPages(cartaoDoc, [0]);
-      merged.addPage(cpg);
-      cartaoPage = merged.getPage(1);
-    } else {
-      cartaoPage = merged.addPage([595.28, 841.89]);
+      drawY = await _desenharCartaoRedimensionado(merged, cartaoPage, cbytes, pgW, pgH, FRACAO_CARTAO);
     }
-    const sz = cartaoPage.getSize();
-    pgW = sz.width;
-    pgH = sz.height;
 
-    // ── 4. Etiqueta de prova cruzada — no espaço em branco da metade inferior
-    //   do Cartão SUS, com o MESMO tamanho de fonte/margens/posição usado nas
-    //   etiquetas da solicitação de culturas, para manter o padrão visual. ───
+    // ── 4. Etiqueta de prova cruzada — no espaço em branco abaixo do cartão
+    //   desenhado, com o MESMO tamanho de fonte/margens usado nas etiquetas
+    //   da solicitação de culturas, para manter o padrão visual. ─────────────
     const font     = await merged.embedFont(StandardFonts.TimesRoman);
     const fontBold = await merged.embedFont(StandardFonts.TimesRomanBold);
     const FS = 6.5;         // mesmo tamanho usado nas etiquetas de cultura
@@ -7891,9 +7920,10 @@ async function _gerarHemoCompleto(htmlFicha, f){
     const etiqW    = pgW - MARG_ESQ - MARG_DIR;
     const etiqH    = linhas.length * LH + PAD * 2;
 
-    // Espaço em branco do Cartão SUS: de y=0 (fundo) até y≈pgH*0.49
-    // (mesmo corte usado na solicitação de culturas)
-    const blankTop = pgH * 0.49;
+    // Espaço em branco: calculado a partir de onde o cartão REALMENTE termina
+    // (drawY), garantindo que nunca sobreponha a etiqueta, mesmo em cartões
+    // grandes/zoom.
+    const blankTop = drawY - 6; // pequeno respiro abaixo do cartão
     const areaH    = blankTop - MARG_INF;
     const boxY     = MARG_INF + (areaH - etiqH) / 2; // centraliza na área em branco
 
@@ -10240,28 +10270,30 @@ async function _gerarCulturaCompleto(htmlFicha, c){
     const [fichaPg] = await merged.copyPages(fichaDoc, [0]);
     merged.addPage(fichaPg);
 
-    // Pág. 2 — Cartão SUS ou A4 em branco
-    let cartaoPage, pgW, pgH2;
+    // Pág. 2 — Cartão SUS redimensionado para caber numa área reservada no
+    //   topo da página (FRACAO_CARTAO), garantindo SEMPRE espaço livre abaixo
+    //   para as etiquetas — mesmo quando o usuário salvou o cartão em zoom ou
+    //   página cheia (nesse caso, usar o tamanho original tomaria a página
+    //   toda e não sobraria espaço nenhum). Mesma proporção usada na
+    //   solicitação de hemoterápicos, para manter os dois com tamanho parecido.
+    const PAGE_W = 595.28, PAGE_H = 841.89; // A4 em pts
+    const cartaoPage = merged.addPage([PAGE_W, PAGE_H]);
+    const pgW = PAGE_W, pgH2 = PAGE_H;
+    const FRACAO_CARTAO = 0.55; // área reservada ao cartão (55% do topo)
+
     const pac = c.pac || gf('f-pac') || '';
     const cns = gf('f-cns') || '';
     showLoading('Buscando cartão SUS...');
     const cartaoB64 = await _buscarCartaoSUSGenerico(pac, cns);
     hideLoading();
 
+    let drawY = pgH2 * (1 - FRACAO_CARTAO); // fallback se não houver cartão
     if(cartaoB64){
       const bin = atob(cartaoB64);
       const cb  = new Uint8Array(bin.length);
       for(let i=0;i<bin.length;i++) cb[i] = bin.charCodeAt(i);
-      const cartaoDoc = await PDFDocument.load(cb);
-      const [cpg] = await merged.copyPages(cartaoDoc, [0]);
-      merged.addPage(cpg);
-      cartaoPage = merged.getPage(1);
-    } else {
-      cartaoPage = merged.addPage([595.28, 841.89]);
+      drawY = await _desenharCartaoRedimensionado(merged, cartaoPage, cb, pgW, pgH2, FRACAO_CARTAO);
     }
-    const sz = cartaoPage.getSize();
-    pgW  = sz.width;
-    pgH2 = sz.height;
 
     // ── 4. Etiquetas: 1 por material, grid 2 colunas ──────────────────────────
     const font     = await merged.embedFont(StandardFonts.TimesRoman);
@@ -10287,8 +10319,10 @@ async function _gerarCulturaCompleto(htmlFicha, c){
     const ENTRE_COL = 10;
     const etiqW = (pgW - MARG_ESQ - MARG_DIR - ENTRE_COL) / COLS;
 
-    // Espaço em branco do Cartão SUS: de y=0 (fundo) até y≈pgH2*0.49 (pdf-lib: y=0 é fundo)
-    const blankTop  = pgH2 * 0.49;
+    // Espaço em branco: calculado a partir de onde o cartão REALMENTE termina
+    // (drawY), garantindo que nunca sobreponha as etiquetas, mesmo em
+    // cartões grandes/zoom.
+    const blankTop  = drawY - 6; // pequeno respiro abaixo do cartão
     const MARG_INF  = 6;
     const areaH     = blankTop - MARG_INF;
     const blocoH    = areaH / ROWS;
