@@ -7844,40 +7844,34 @@ async function _gerarHemoCompleto(htmlFicha, f){
     const [fichaPg] = await merged.copyPages(fichaDoc, [0]);
     merged.addPage(fichaPg);
 
-    // Pág. 2 — nova página A4 com o Cartão SUS redimensionado ao TERÇO SUPERIOR
-    //   (independente do tamanho/proporção com que o cartão foi salvo) e a
-    //   etiqueta de prova cruzada nos 2/3 inferiores, sempre com espaço garantido.
-    const PAGE_W = 595.28, PAGE_H = 841.89; // A4 em pts
-    const cartaoPage = merged.addPage([PAGE_W, PAGE_H]);
-    const pgW = PAGE_W, pgH = PAGE_H;
-
-    const CARTAO_MARGEM = 10;
-    const cartaoAreaTop    = pgH - CARTAO_MARGEM;
-    const cartaoAreaBottom = pgH - (pgH / 3);
-    const cartaoAreaH = cartaoAreaTop - cartaoAreaBottom;
-    const cartaoAreaW = pgW - CARTAO_MARGEM * 2;
-
+    // Pág. 2 — Cartão SUS em tamanho ORIGINAL (mesmo padrão da solicitação de
+    //   culturas — antes era redimensionado/encolhido ao terço superior, o
+    //   que o deixava bem menor que o da cultura) + 1 etiqueta de prova
+    //   cruzada no espaço em branco da metade inferior do cartão.
+    let cartaoPage, pgW, pgH;
     if(_cartaoSUSPDF){
       const bin  = atob(_cartaoSUSPDF);
       const cbytes = new Uint8Array(bin.length);
       for(let i=0;i<bin.length;i++) cbytes[i] = bin.charCodeAt(i);
       const cartaoDoc = await PDFDocument.load(cbytes);
       // Sempre usa pág. 0 (a que contém os dados do paciente)
-      const [embeddedCartao] = await merged.embedPdf(cartaoDoc, [0]);
-      const cw = embeddedCartao.width, ch = embeddedCartao.height;
-      const escala = Math.min(cartaoAreaW / cw, cartaoAreaH / ch);
-      const drawW = cw * escala, drawH = ch * escala;
-      const drawX = CARTAO_MARGEM + (cartaoAreaW - drawW) / 2;
-      const drawY = cartaoAreaTop - drawH;
-      cartaoPage.drawPage(embeddedCartao, { x: drawX, y: drawY, width: drawW, height: drawH });
+      const [cpg] = await merged.copyPages(cartaoDoc, [0]);
+      merged.addPage(cpg);
+      cartaoPage = merged.getPage(1);
+    } else {
+      cartaoPage = merged.addPage([595.28, 841.89]);
     }
+    const sz = cartaoPage.getSize();
+    pgW = sz.width;
+    pgH = sz.height;
 
-    // ── 4. Etiqueta de prova cruzada — sempre nos 2/3 inferiores da página,
-    //   abaixo da área reservada ao cartão (espaço garantido) ─────────────────
+    // ── 4. Etiqueta de prova cruzada — no espaço em branco da metade inferior
+    //   do Cartão SUS, com o MESMO tamanho de fonte/margens/posição usado nas
+    //   etiquetas da solicitação de culturas, para manter o padrão visual. ───
     const font     = await merged.embedFont(StandardFonts.TimesRoman);
     const fontBold = await merged.embedFont(StandardFonts.TimesRomanBold);
-    const FS = 8;          // 8pt — legibilidade em 1 etiqueta
-    const LH = FS * 1.55;  // altura de linha
+    const FS = 6.5;         // mesmo tamanho usado nas etiquetas de cultura
+    const LH = FS * 1.55;   // altura de linha
 
     const leito = (f.leito || gf('f-leito') || '').toString().padStart(2,'0');
     const nome  = (f.nome  || gf('f-pac')  || '').toUpperCase();
@@ -7892,20 +7886,30 @@ async function _gerarHemoCompleto(htmlFicha, f){
       `COLETADO POR: ________________________`,
     ];
 
-    const PAD    = 6;                          // padding interno (pts)
-    const etiqW  = pgW * 0.65;                 // 65% da largura
-    const etiqH  = linhas.length * LH + PAD*2; // altura total da caixa
-    const etiqX  = (pgW - etiqW) / 2;          // centrado horizontalmente
+    const PAD      = 4;
+    const MARG_ESQ = 16, MARG_DIR = 16, MARG_INF = 6;
+    const etiqW    = pgW - MARG_ESQ - MARG_DIR;
+    const etiqH    = linhas.length * LH + PAD * 2;
 
-    // Centro vertical do espaço disponível abaixo do cartão (y=0 fundo até cartaoAreaBottom)
-    const areaLivreTop = cartaoAreaBottom - 6; // pequeno respiro abaixo do cartão
-    const blankMid = areaLivreTop / 2;
-    const boxY  = blankMid - etiqH / 2;       // y do canto inferior da caixa
+    // Espaço em branco do Cartão SUS: de y=0 (fundo) até y≈pgH*0.49
+    // (mesmo corte usado na solicitação de culturas)
+    const blankTop = pgH * 0.49;
+    const areaH    = blankTop - MARG_INF;
+    const boxY     = MARG_INF + (areaH - etiqH) / 2; // centraliza na área em branco
+
+    // Linha separadora tracejada no topo do espaço em branco
+    cartaoPage.drawLine({
+      start: { x: MARG_ESQ, y: blankTop },
+      end:   { x: pgW - MARG_DIR, y: blankTop },
+      thickness: 0.4,
+      color: rgb(0.5,0.5,0.5),
+      dashArray: [4, 3],
+    });
 
     // Caixa com borda
     cartaoPage.drawRectangle({
-      x: etiqX - PAD, y: boxY,
-      width: etiqW + PAD*2, height: etiqH,
+      x: MARG_ESQ - 2, y: boxY,
+      width: etiqW + 4, height: etiqH,
       borderColor: rgb(0,0,0), borderWidth: 0.7,
       color: rgb(1,1,1),
     });
@@ -7914,8 +7918,8 @@ async function _gerarHemoCompleto(htmlFicha, f){
     linhas.forEach((txt, li) => {
       const isBold = li === 0 || li === 3; // cabeçalho e "PROVA CRUZADA" em negrito
       cartaoPage.drawText(txt, {
-        x: etiqX,
-        y: boxY + etiqH - PAD - LH*(li+1) + FS*0.3,
+        x: MARG_ESQ,
+        y: boxY + etiqH - PAD - LH*(li+1) + FS*0.25,
         size: FS,
         font: isBold ? fontBold : font,
         color: rgb(0,0,0),
