@@ -1630,6 +1630,12 @@ async function salvarAdmissao(){
     const leito=modalLeito;
     const pac=gf('m-pac').trim();
     if(!pac){ toast('Informe o nome do paciente.',true); return; }
+    if(gf('m-medcont').trim().length < 4){
+      const el=$('m-medcont'); if(el&&el.closest('.fl')) el.closest('.fl').classList.add('field-invalid');
+      toast('Medicamentos de uso contínuo: preencha com pelo menos 4 caracteres. Se o paciente não usa, informe "NEGA uso de medicamentos contínuos".', true);
+      if(el) el.scrollIntoView({behavior:'smooth',block:'center'});
+      return;
+    }
     showLoading('Salvando admissão...');
     _itensSAPS = _coletarItensSAPSdoModal();
 
@@ -1874,6 +1880,14 @@ async function salvarEvolucao(){
     vazios.forEach(r=>{ const el=$(r.id); if(el&&el.closest('.fl')) el.closest('.fl').classList.add('field-invalid'); });
     toast('<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> Preencha: ' + vazios.map(r=>r.label).join(', '), true);
     const primeiro = $(vazios[0].id); if(primeiro) primeiro.scrollIntoView({behavior:'smooth',block:'center'});
+    return;
+  }
+  // Medicamentos de uso contínuo: exige ao menos 4 caracteres (evita respostas
+  // vagas tipo "-", "n/a"); orienta a registrar explicitamente a negação.
+  if(gf('f-medcont').trim().length < 4){
+    const el=$('f-medcont'); if(el&&el.closest('.fl')) el.closest('.fl').classList.add('field-invalid');
+    toast('<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M8 3L1.5 13.5h13L8 3z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="currentColor" stroke="none"/></svg> Medicamentos de uso contínuo: preencha com pelo menos 4 caracteres. Se o paciente não usa, informe "NEGA uso de medicamentos contínuos".', true);
+    if(el) el.scrollIntoView({behavior:'smooth',block:'center'});
     return;
   }
   // ────────────────────────────────────────────────────────────────────
