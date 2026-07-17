@@ -2517,6 +2517,7 @@ async function abrirPreview(){
       <tr><th>Hipóteses</th><td colspan="3">${d.diag||'—'} ${d.cid?'('+d.cid+')':''}</td></tr>
       <tr><th>Comorbidades</th><td colspan="3">${d.comor||'—'}</td></tr>
       <tr><th>Alergias</th><td>${d.alergia||'—'}</td><th>ATB</th><td>${d.atb||'—'}</td></tr>
+      <tr><th>Uso contínuo</th><td colspan="3">${(d.medcont||'').split('|').map(s=>s.trim()).filter(Boolean).join(', ')||'—'}</td></tr>
     </table>
     ${d.hda?`<div class="pv-secao">HDA</div><div>${d.hda}</div>`:''}
     ${d.admDesc?`<div class="pv-secao">Admissão na UTI</div><div>${d.admDesc}</div>`:''}
@@ -2616,6 +2617,7 @@ async function _gerarPDFDeRegistroEvolucao(d, leito, L, subtituloExtra){
       <tr><th>Hipóteses</th><td colspan="3">${diagShow||'—'} ${cidShow?'('+cidShow+')':''}</td></tr>
       <tr><th>Comorbidades</th><td colspan="3">${d.comor||L.comor||'—'}</td></tr>
       <tr><th>Alergias</th><td>${d.alergia||L.alergia||'—'}</td><th>ATB</th><td>${d.atb||'—'}</td></tr>
+      <tr><th>Uso contínuo</th><td colspan="3">${(d.medcont||L.medcont||'').split('|').map(s=>s.trim()).filter(Boolean).join(', ')||'—'}</td></tr>
     </table>
     ${d.hda?`<div class="pv-secao">HDA</div><div>${d.hda}</div>`:''}
     ${d.admDesc?`<div class="pv-secao">Admissão na UTI</div><div>${d.admDesc}</div>`:''}
