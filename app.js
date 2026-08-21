@@ -9684,9 +9684,10 @@ function abrirModalMorteEncefalica(){
   sf('me-cid1', (gf('f-cid') ||'').toUpperCase());
   sf('me-diag2','');
   sf('me-cid2', '');
-  // Data padrão = hoje para os exames
+  // Data padrão = hoje apenas para o 1º exame e o teste de apneia
+  // (2º exame e exame complementar ficam em branco até o usuário preencher)
   const hj = hoje();
-  ['me-e1-data','me-e2-data','me-ap-data','me-ec-data'].forEach(id=>sf(id,hj));
+  ['me-e1-data','me-ap-data'].forEach(id=>sf(id,hj));
   $('modal-me').classList.add('show');
   _resizeModalTextareas('modal-me');
 }
@@ -9887,7 +9888,7 @@ function _imprimirMEObj(m){
   <div style="font-size:9pt;margin-bottom:3px;">Coma não perceptivo? ${_sn(m.e1Coma)}</div>
   <div style="font-weight:700;font-size:8.5pt;margin-bottom:3px;">EXAME NEUROLÓGICO (exame dos reflexos):</div>
   <table class="refl"><thead><tr><th style="text-align:left;">Reflexo</th><th>Direito</th><th>Esquerdo</th></tr></thead><tbody>
-    <tr><td>Pupila fixa e arreativa</td><td>${m.e1PupD==='SIM'?'SIM(X) NÃO( )':'SIM( ) NÃO(X)'}</td><td>${m.e1PupE==='SIM'?'SIM(X) NÃO( )':'SIM( ) NÃO(X)'}</td></tr>
+    <tr><td>Pupila fixa e arreativa</td><td>${_sn(m.e1PupD)}</td><td>${_sn(m.e1PupE)}</td></tr>
     <tr><td>Ausência de reflexo córneo-palpebral</td><td>${_ref(m.e1CorD,null,true).split('|')[0]}</td><td>${_ref(null,m.e1CorE,true).split('|')[1]||''}</td></tr>
     <tr><td>Ausência de reflexo óculo-cefálico</td><td>${_ref(m.e1OcD,null,true).split('|')[0]}</td><td>${_ref(null,m.e1OcE,true).split('|')[1]||''}</td></tr>
     <tr><td>Ausência de reflexo vestíbulo-calórico</td><td>${_ref(m.e1VestD,null,true).split('|')[0]}</td><td>${_ref(null,m.e1VestE,true).split('|')[1]||''}</td></tr>
@@ -9950,7 +9951,7 @@ function _imprimirMEObj(m){
   <div style="font-size:9pt;margin-bottom:3px;">Coma não perceptivo? ${_sn(m.e2Coma)}</div>
   <div style="font-weight:700;font-size:8.5pt;margin-bottom:3px;">EXAME NEUROLÓGICO (exame dos reflexos):</div>
   <table class="refl"><thead><tr><th style="text-align:left;">Reflexo</th><th>Direito</th><th>Esquerdo</th></tr></thead><tbody>
-    <tr><td>Pupila fixa e arreativa</td><td>${m.e2PupD==='SIM'?'SIM(X) NÃO( )':'SIM( ) NÃO(X)'}</td><td>${m.e2PupE==='SIM'?'SIM(X) NÃO( )':'SIM( ) NÃO(X)'}</td></tr>
+    <tr><td>Pupila fixa e arreativa</td><td>${_sn(m.e2PupD)}</td><td>${_sn(m.e2PupE)}</td></tr>
     <tr><td>Ausência de reflexo córneo-palpebral</td><td>${_ref(m.e2CorD,null,true).split('|')[0]}</td><td>${_ref(null,m.e2CorE,true).split('|')[1]||''}</td></tr>
     <tr><td>Ausência de reflexo óculo-cefálico</td><td>${_ref(m.e2OcD,null,true).split('|')[0]}</td><td>${_ref(null,m.e2OcE,true).split('|')[1]||''}</td></tr>
     <tr><td>Ausência de reflexo vestíbulo-calórico</td><td>${_ref(m.e2VestD,null,true).split('|')[0]}</td><td>${_ref(null,m.e2VestE,true).split('|')[1]||''}</td></tr>
