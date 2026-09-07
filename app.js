@@ -1964,7 +1964,7 @@ function _renderLabLinhas(){
     const semDados = preenchidos.length===0 && !(lin.outros||'').trim();
     // Grid de edição (só renderiza se aberto)
     const campos = aberto ? LAB_CAMPOS.map(c=>`
-      <div class="fl"><label>${c.l}</label><input type="number" step="any" value="${(lin.valores&&lin.valores[c.k]!=null)?lin.valores[c.k]:''}" oninput="_setLabVal(${idx},'${c.k}',this.value)"></div>`).join('') : '';
+      <div class="fl"><label>${c.l}</label><input type="number" step="any" class="lab-input" value="${(lin.valores&&lin.valores[c.k]!=null)?lin.valores[c.k]:''}" oninput="_setLabVal(${idx},'${c.k}',this.value)" onkeydown="_labEnterProximo(event,this)"></div>`).join('') : '';
     const outrosVal = (lin.outros||'').replace(/"/g,'&quot;');
     return `<div class="lab-linha lab-acc${aberto?' lab-acc-open':''}">
       <div class="lab-acc-head" onclick="_labToggle(${idx})">
@@ -1982,10 +1982,10 @@ function _renderLabLinhas(){
         <div class="lab-grid">${campos}</div>
         <div style="margin-top:.4rem;">
           <div class="fl" style="margin:0;"><label style="font-size:.58rem;color:var(--muted);font-weight:700;letter-spacing:.04em;">OUTROS EXAMES (texto livre)</label>
-            <input type="text" value="${outrosVal}"
+            <input type="text" class="lab-input" value="${outrosVal}"
               placeholder="Ex: Amilase 210, Lipase 380, Cortisol 18, TSH 0.9..."
               style="font-size:.78rem;font-family:var(--font-mono);"
-              oninput="_setLabOutros(${idx},this.value)">
+              oninput="_setLabOutros(${idx},this.value)" onkeydown="_labEnterProximo(event,this)">
           </div>
         </div>
       </div>` : ''}
@@ -2010,6 +2010,23 @@ function _setLabVal(i,k,v){
 function _delLabLinha(i){ _labLinhas.splice(i,1); _renderLabLinhas(); }
 function _setLabOutros(i,v){
   if(_labLinhas[i]) _labLinhas[i].outros = v;
+}
+
+// Ao pressionar Enter em um campo de exame laboratorial, move o foco para o próximo campo
+// (evita submit do formulário e navega na ordem visual dos inputs .lab-input do accordion aberto)
+function _labEnterProximo(ev, el){
+  if(ev.key !== 'Enter') return;
+  ev.preventDefault();
+  const corpo = el.closest('.lab-acc-body');
+  if(!corpo) return;
+  const campos = Array.from(corpo.querySelectorAll('.lab-input'));
+  const i = campos.indexOf(el);
+  if(i > -1 && i < campos.length - 1){
+    campos[i+1].focus();
+    campos[i+1].select && campos[i+1].select();
+  } else {
+    el.blur();
+  }
 }
 
 /* ── Aba Solicitações: renderiza histórico de solicitações + exames read-only ── */
