@@ -1813,20 +1813,18 @@ function _limparFormulario(){
 function _preencherEvolucao(ev, herdado){
   // campos do plantão — se herdado, mantém preenchido como rascunho
   sf('f-evol',ev.evol||''); sf('f-atb',ev.atb||''); sf('f-atb-prev',ev.atbPrev||'');
-  // Auto-preenche cada campo de ATB SOMENTE se estiver vazio (evita apagar/
-  // sobrescrever o que o usuário já digitou). Preenchimento manual sempre
-  // disponível via botão "Auto" de cada campo.
-  // "Em uso" vem das prescrições salvas; "Anteriores" vem do histórico do que
-  // já foi digitado em "Em uso" nas evoluções salvas deste leito.
-  const precisaAtb = !(ev.atb||'').trim(), precisaAtbPrev = !(ev.atbPrev||'').trim();
-  if(precisaAtb || precisaAtbPrev){
-    setTimeout(async()=>{
-      // Em uso" primeiro (define o texto atual), só então "Anteriores" —
-      // assim "Anteriores" já sabe qual texto excluir por ser o ATB corrente.
-      if(precisaAtb) await _autoPreencherATBs();
-      if(precisaAtbPrev) await _autoPreencherATBAnteriores();
-    }, 300);
-  }
+  // "Em uso": auto-preenche das prescrições SOMENTE se estiver vazio (não
+  // sobrescreve o que o usuário já digitou). Botão "Auto" sempre disponível.
+  // "ATB anteriores": SEMPRE recalculado automaticamente a partir do
+  // histórico do que já foi digitado em "Em uso" nas evoluções salvas deste
+  // leito — não depende de clique no botão nem de o campo estar vazio.
+  const precisaAtb = !(ev.atb||'').trim();
+  setTimeout(async()=>{
+    // "Em uso" primeiro (define o texto atual), só então "Anteriores" —
+    // assim "Anteriores" já sabe qual texto excluir por ser o ATB corrente.
+    if(precisaAtb) await _autoPreencherATBs();
+    await _autoPreencherATBAnteriores();
+  }, 300);
   sf('f-pam',ev.pam||''); sf('f-pas',ev.pas||''); sf('f-fc',ev.fc||''); sf('f-fr',ev.fr||'');
   sf('f-tmax',ev.tmax||''); sf('f-spo2',ev.spo2||''); sf('f-diurese',ev.diurese||'');
   sf('f-bh',ev.bh||''); sf('f-evac',ev.evac||''); sf('f-hgt',ev.hgt||'');
