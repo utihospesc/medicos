@@ -1813,11 +1813,19 @@ function _limparFormulario(){
 function _preencherEvolucao(ev, herdado){
   // campos do plantão — se herdado, mantém preenchido como rascunho
   sf('f-evol',ev.evol||''); sf('f-atb',ev.atb||''); sf('f-atb-prev',ev.atbPrev||'');
-  // Auto-preenche ATBs das prescrições SOMENTE se não houver nada salvo nesses campos
-  // (evita apagar/sobrescrever o que o usuário já digitou). Preenchimento manual
-  // sempre disponível via botão "Auto".
-  if(!(ev.atb||'').trim() && !(ev.atbPrev||'').trim()){
-    setTimeout(_autoPreencherATBs, 300);
+  // Auto-preenche cada campo de ATB SOMENTE se estiver vazio (evita apagar/
+  // sobrescrever o que o usuário já digitou). Preenchimento manual sempre
+  // disponível via botão "Auto" de cada campo.
+  // "Em uso" vem das prescrições salvas; "Anteriores" vem do histórico do que
+  // já foi digitado em "Em uso" nas evoluções salvas deste leito.
+  const precisaAtb = !(ev.atb||'').trim(), precisaAtbPrev = !(ev.atbPrev||'').trim();
+  if(precisaAtb || precisaAtbPrev){
+    setTimeout(async()=>{
+      // Em uso" primeiro (define o texto atual), só então "Anteriores" —
+      // assim "Anteriores" já sabe qual texto excluir por ser o ATB corrente.
+      if(precisaAtb) await _autoPreencherATBs();
+      if(precisaAtbPrev) await _autoPreencherATBAnteriores();
+    }, 300);
   }
   sf('f-pam',ev.pam||''); sf('f-pas',ev.pas||''); sf('f-fc',ev.fc||''); sf('f-fr',ev.fr||'');
   sf('f-tmax',ev.tmax||''); sf('f-spo2',ev.spo2||''); sf('f-diurese',ev.diurese||'');
@@ -5660,42 +5668,78 @@ async function _autoPreencherATBs(){
       textoAtual='SEM ATB';
     }
 
-    // ── ATBs anteriores: estavam em alguma prescrição mas não na atual ─────
-    // Mapeia por nome: {nomeFarm: {primeiraData, ultimaData}}
-    const historicoMap={};
-    arr.forEach(rx=>{
-      (rx.itens||[]).filter(it=>it._cat==='ATB'&&it.farm).forEach(it=>{
-        const k=it.farm.toUpperCase().trim();
-        if(!historicoMap[k]) historicoMap[k]={inicio:rx.data, fim:rx.data};
-        else { historicoMap[k].fim=rx.data; }
-      });
-    });
-
-    // Nomes dos ATBs ativos agora
-    const ativosNomes=new Set(atbsAtivos.map(it=>it.farm.toUpperCase().trim()));
-
-    // ATBs que já apareceram mas não estão mais na prescrição atual
-    const anteriores=Object.entries(historicoMap)
-      .filter(([k])=>!ativosNomes.has(k))
-      .sort((a,b)=>b[1].fim.localeCompare(a[1].fim)); // mais recente primeiro
-
-    let textoAnterior='';
-    if(anteriores.length){
-      textoAnterior=anteriores.map(([nome,{inicio,fim}])=>{
-        const di=_fmtDataCurta(inicio)||inicio;
-        const df=_fmtDataCurta(fim)||fim;
-        return nome+(di===df?` (${di})`:`(${di} a ${df})`);
-      }).join(' · ');
-    } else {
-      textoAnterior='—';
-    }
-
     sf('f-atb', textoAtual);
-    sf('f-atb-prev', textoAnterior);
 
   }catch(e){
     console.warn('_autoPreencherATBs erro:', e);
     sf('f-atb','SEM ATB');
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   AUTO-PREENCHIMENTO DE "ATB ANTERIORES" — a partir do histórico do que foi
+   digitado no campo "Em uso de ATB" nas evoluções já salvas do leito.
+   ─ Nunca altera o campo "Em uso" (f-atb), somente "ATB anteriores" (f-atb-prev).
+   ─ Agrupa dias consecutivos com o mesmo texto em um único período:
+     início = 1º dia em que aquele texto foi digitado
+     fim    = último dia em que aquele texto ainda constava (dia anterior à troca)
+   ─ O período mais recente só entra na lista se o texto for diferente do que
+     está atualmente em "Em uso" (senão seria o próprio ATB atual, não um anterior).
+   ════════════════════════════════════════════════════════════════════════════ */
+async function _autoPreencherATBAnteriores(){
+  if(!leitoAtual) return;
+  try{
+    const dataAtual = gf('f-data') || hoje();
+    const textoAtualNormalizado = (gf('f-atb')||'').trim().toUpperCase();
+
+    // Busca todas as evoluções salvas do leito (qualquer turno/data)
+    const todas = await dbListByPrefix(`uti_med_ev_${leitoAtual}_`);
+    const porData = {}; // data -> {atb, registradoEm}
+    Object.values(todas).forEach(ev=>{
+      if(!ev || !ev.data) return;
+      if(ev.data===dataAtual) return; // ignora a evolução de hoje (rascunho atual)
+      const atbTxt = (ev.atb||'').trim();
+      if(!atbTxt) return;
+      const existente = porData[ev.data];
+      if(!existente || (ev.registradoEm||'') > (existente.registradoEm||'')){
+        porData[ev.data] = {atb:atbTxt, registradoEm:ev.registradoEm||''};
+      }
+    });
+
+    const datasOrdenadas = Object.keys(porData).sort(); // cronológico crescente
+
+    if(!datasOrdenadas.length){ sf('f-atb-prev','—'); return; }
+
+    // Agrupa em períodos de texto contínuo (mesmo texto = mesmo período)
+    const periodos=[];
+    datasOrdenadas.forEach(data=>{
+      const txt = porData[data].atb;
+      const txtNorm = txt.toUpperCase();
+      const ultimo = periodos[periodos.length-1];
+      if(ultimo && ultimo.txtNorm===txtNorm){
+        ultimo.fim = data; // continua o mesmo período, estende a data-fim
+      } else {
+        periodos.push({texto:txt, txtNorm, inicio:data, fim:data});
+      }
+    });
+
+    // Se o último período já é o ATB atualmente digitado em "Em uso", não é "anterior"
+    if(periodos.length && periodos[periodos.length-1].txtNorm===textoAtualNormalizado){
+      periodos.pop();
+    }
+
+    if(!periodos.length){ sf('f-atb-prev','—'); return; }
+
+    const textoAnterior = periodos.reverse().map(({texto,inicio,fim})=>{
+      const di=_fmtDataCurta(inicio)||inicio;
+      const df=_fmtDataCurta(fim)||fim;
+      return texto+(di===df?` (${di})`:` (${di} a ${df})`);
+    }).join(' · ');
+
+    sf('f-atb-prev', textoAnterior);
+
+  }catch(e){
+    console.warn('_autoPreencherATBAnteriores erro:', e);
     sf('f-atb-prev','—');
   }
 }
