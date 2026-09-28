@@ -1767,7 +1767,7 @@ async function abrirFormulario(leito){
     let herdado=false;
     if(!ev){
       // herda a evolução mais recente (qualquer turno) para pré-preencher
-      ev=await _ultimaEvolucao(leito);
+      ev=await _ultimaEvolucao(leito, _ctxPacienteAtb());
       if(ev) herdado=true;
     }
     if(ev) _preencherEvolucao(ev, herdado);
@@ -1925,9 +1925,16 @@ async function salvarEvolucao(){
   }catch(e){ hideLoading(); console.error('salvarEvolucao:',e); toast('Erro ao salvar: '+(e.message||e),true); }
 }
 
-async function _ultimaEvolucao(leito){
-  const all=await dbListByPrefix(`uti_med_ev_${leito}_`);
-  const arr=Object.entries(all).map(([k,v])=>({k,v})).filter(x=>x.v&&x.v.data);
+async function _ultimaEvolucao(leito, ctx){
+  // Com ctx (dados do paciente do leito): só herda evolução do MESMO paciente (CNS).
+  // Sem ctx: comportamento antigo (qualquer evolução do leito).
+  let arr;
+  if(ctx){
+    arr=(await _registrosDoPaciente('uti_med_ev_', ctx)).map(v=>({k:'',v})).filter(x=>x.v&&x.v.data);
+  } else {
+    const all=await dbListByPrefix(`uti_med_ev_${leito}_`);
+    arr=Object.entries(all).map(([k,v])=>({k,v})).filter(x=>x.v&&x.v.data);
+  }
   if(!arr.length) return null;
   arr.sort((a,b)=>(b.v.data||'').localeCompare(a.v.data||'') || (b.v.registradoEm||'').localeCompare(a.v.registradoEm||''));
   return arr[0].v;
@@ -4280,9 +4287,9 @@ function _rxBadgeDdia(it){
 async function _calcularDdiaATBs(){
   // Procura nas evoluções anteriores deste leito a primeira menção a cada ATB
   if(!leitoAtual) return {};
-  const all=await dbListByPrefix(`uti_med_rx_${leitoAtual}_`);
+  const all=await _registrosDoPaciente('uti_med_rx_');
   const datas={}; // {nomeATB simplificado: data primeira ocorrência}
-  Object.values(all).forEach(rx=>{
+  all.forEach(rx=>{
     if(!rx||!rx.itens||!rx.data) return;
     rx.itens.forEach(it=>{
       if(it._cat!=='ATB') return;
@@ -5602,6 +5609,7 @@ async function _salvarPrescricaoCore(){
     const data=gf('f-data')||hoje();
     const key=`uti_med_rx_${leitoAtual}_${data}`;
     await dbSet(key,{ leito:leitoAtual, data, paciente:gf('f-pac'),
+      cns:_cnsLimpo(gf('f-cns')), adm:gf('f-adm'), dn:gf('f-dn'),
       itens:_rxItens, autor:usuarioEmail, autorNome:perfilUsuario?perfilUsuario.nome:'',
       salvadoEm:new Date().toISOString() });
     await _rxGravarHistorico(_rxItens, data, perfilUsuario?perfilUsuario.nome:usuarioEmail);
@@ -5625,12 +5633,122 @@ async function salvarPrescricao(){
    ─ "Em uso": ATBs na última prescrição com D-dia
    ─ "Anteriores": ATBs que já não constam na última prescrição (com período)
    ════════════════════════════════════════════════════════════════════════════ */
+/* ── Identificação do paciente (independe do NOME) ───────────────────────────
+   Vínculo forte: CNS (15 dígitos) — vale em qualquer leito (cobre troca de leito).
+   Sem CNS utilizável: mesmo leito + mesma data de admissão na UTI (+ DN, se houver).
+   Nunca compara nome, então homônimos não se misturam. */
+function _cnsLimpo(v){ return String(v==null?'':v).replace(/\D/g,''); }
+
+function _ctxPacienteAtb(){
+  const c=_cnsLimpo(gf('f-cns'));
+  return { leito:leitoAtual, cns:c.length===15?c:'',
+           adm:(gf('f-adm')||'').trim(), dn:(gf('f-dn')||'').trim() };
+}
+
+// Devolve os registros (uti_med_ev_ / uti_med_rx_) que pertencem ao paciente do ctx.
+async function _registrosDoPaciente(base, ctx){
+  ctx = ctx || _ctxPacienteAtb();
+  const pfLeito = `${base}${ctx.leito}_`;
+  const brutos = await dbListByPrefix(ctx.cns ? base : pfLeito);
+  const out = [];
+  Object.keys(brutos).forEach(k=>{
+    const d = brutos[k];
+    if(!d || typeof d!=='object') return;
+    const noLeito = k.startsWith(pfLeito);
+    const dCns = _cnsLimpo(d.cns);
+    let ok = false;
+    if(ctx.cns && dCns===ctx.cns){
+      ok = true;                                   // mesmo CNS → mesmo paciente
+    } else if(noLeito){
+      const dAdm=String(d.adm||'').trim(), dDn=String(d.dn||'').trim();
+      if(!dCns || !ctx.cns){
+        // um dos lados sem CNS: aceita se a admissão na UTI não contradiz
+        ok = !ctx.adm || !dAdm || dAdm===ctx.adm;
+      } else {
+        // CNS diferentes (ex.: CNS corrigido depois): só aceita com adm + DN idênticas
+        ok = !!(ctx.adm && dAdm===ctx.adm && ctx.dn && dDn===ctx.dn);
+      }
+    }
+    if(ok) out.push(d);
+  });
+  return out;
+}
+
+/* ── Extração de antibióticos de texto livre ─────────────────────────────────
+   Reconhece cada fármaco (com apelidos: TAZOCIN, CEFEPIME, MERONEM, VANCO…),
+   ignorando doses, "D1: 22/09", "ATÉ 29/09" etc. Combinações vêm primeiro
+   para não contar o componente isolado (AMPICILINA + SULBACTAM). */
+const _ATB_DICT = [
+  ['PIPERACILINA + TAZOBACTAM', 'PIPERACILINA|TAZOBACTAM|TAZOCIN|\\bPIPE?\\s*\\/?\\s*TAZO\\b'],
+  ['AMPICILINA + SULBACTAM',    'AMPICILINA[^A-Z]*(?:MG|G)?[^A-Z]*SULBACTAM|SULBACTAM|UNASYN'],
+  ['AMOXICILINA + CLAVULANATO', 'AMOXICILINA[^A-Z]*(?:MG|G)?[^A-Z]*CLAVULANATO|CLAVULANATO|AUGMENTIN'],
+  ['CEFTAZIDIMA + AVIBACTAM',   'CEFTAZIDIM[AE][^A-Z]*(?:MG|G)?[^A-Z]*AVIBACTAM|AVIBACTAM|ZAVICEFTA'],
+  ['SULFAMETOXAZOL + TRIMETOPRIMA', 'SULFAMETOXAZOL|TRIMETOPRIMA|BACTRIM'],
+  ['IMIPENEM + CILASTATINA',    'IMIPENEM|CILASTATINA|TIENAM'],
+  ['AMPICILINA','\\bAMPICILINA\\b|\\bAMPI\\b'],
+  ['AMOXICILINA','AMOXICILINA|AMOXIL'],
+  ['PENICILINA','PENICILINA|BENZETACIL'],
+  ['OXACILINA','OXACILINA'],
+  ['CEFAZOLINA','CEFAZOLINA'], ['CEFALOTINA','CEFALOTINA'], ['CEFALEXINA','CEFALEXINA'],
+  ['CEFUROXIMA','CEFUROXIM[AE]'], ['CEFOXITINA','CEFOXITIN[AE]'], ['CEFOTAXIMA','CEFOTAXIM[AE]'],
+  ['CEFTRIAXONA','CEFTRIAXON[AE]|ROCEFIN'], ['CEFTAZIDIMA','CEFTAZIDIM[AE]'],
+  ['CEFEPIMA','CEFEPIM[AE]|MAXIPIME'], ['CEFTAROLINA','CEFTAROLIN[AE]'],
+  ['MEROPENEM','MEROPENEM|MERONEM'], ['ERTAPENEM','ERTAPENEM|INVANZ'], ['AZTREONAM','AZTREONAM'],
+  ['VANCOMICINA','VANCOMICINA|\\bVANCO\\b'], ['TEICOPLANINA','TEICOPLANINA|\\bTEICO\\b|TARGOCID'],
+  ['LINEZOLIDA','LINEZOLID[AE]|ZYVOX'], ['DAPTOMICINA','DAPTOMICINA'],
+  ['AMICACINA','AMICACINA|AMIKACINA|AMIKIN'], ['GENTAMICINA','GENTAMICINA'],
+  ['POLIMIXINA B','POLIMIXINA|POLIMICINA'], ['COLISTINA','COLISTINA'],
+  ['TIGECICLINA','TIGECICLINA|TIGACIL'], ['DOXICICLINA','DOXICICLINA'],
+  ['AZITROMICINA','AZITROMICINA'], ['CLARITROMICINA','CLARITROMICINA'], ['ERITROMICINA','ERITROMICINA'],
+  ['CLINDAMICINA','CLINDAMICINA'], ['METRONIDAZOL','METRONIDAZOL|FLAGYL'],
+  ['CIPROFLOXACINO','CIPROFLOXACIN[OA]|\\bCIPRO\\b'], ['LEVOFLOXACINO','LEVOFLOXACIN[OA]'],
+  ['MOXIFLOXACINO','MOXIFLOXACIN[OA]'], ['CLORANFENICOL','CLORANFENICOL'], ['RIFAMPICINA','RIFAMPICINA'],
+  ['FLUCONAZOL','FLUCONAZOL'], ['VORICONAZOL','VORICONAZOL'], ['ANFOTERICINA','ANFOTERICINA|\\bANFO\\s*B\\b'],
+  ['MICAFUNGINA','MICAFUNGINA'], ['CASPOFUNGINA','CASPOFUNGINA'], ['ANIDULAFUNGINA','ANIDULAFUNGINA'],
+  ['NISTATINA','NISTATINA'], ['ACICLOVIR','ACICLOVIR'], ['GANCICLOVIR','GANCICLOVIR'],
+  ['OSELTAMIVIR','OSELTAMIVIR'], ['IVERMECTINA','IVERMECTINA'], ['ALBENDAZOL','ALBENDAZOL']
+].map(([canon,src])=>[canon,new RegExp(src,'g')]);
+
+const _ATB_STOP = new Set(['SUSPENSO','SUSPENSA','SUSPENDER','SUSPENDIDO','SUSPENDIDA','MANTER','MANTIDO',
+  'INICIAR','INICIADO','INICIO','TROCA','TROCAR','TROCADO','ESCALONADO','DESCALONADO','DESCALONAR',
+  'EMPIRICO','EMPIRICA','DOSE','HORAS','APOS','DEPOIS','ANTES','TOTAL','SEMANA','SEMANAS','AGUARDANDO',
+  'AGUARDAR','CULTURA','HEMOCULTURA','UROCULTURA','ATUAL','PREVIO','PREVIA','NENHUM','NEGA','ANTIBIOTICO',
+  'ANTIBIOTICOS','COMPLETAR','COMPLETO','CICLO','TRATAMENTO','PROFILAXIA','DIAS']);
+
+function _atbNorm(s){ return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase(); }
+
+// Retorna Map(chaveCanônica → nome para exibir)
+function _atbExtrairDrogas(txt){
+  let t=_atbNorm(txt);
+  const achados=new Map();
+  _ATB_DICT.forEach(([canon,re])=>{
+    re.lastIndex=0;
+    t=t.replace(re,m=>{
+      if(!achados.has(canon)) achados.set(canon, canon.includes(' + ') ? canon : m.trim());
+      return ' '.repeat(m.length);
+    });
+  });
+  // fármacos fora do dicionário: segmento com dígito cuja 1ª palavra parece um nome
+  t.split(/[·\n;+,|]+/).forEach(seg=>{
+    seg=seg.trim();
+    if(!/\d/.test(seg)) return;
+    const w=(seg.match(/^[A-Z]{5,}/)||[])[0];
+    if(!w || _ATB_STOP.has(w)) return;
+    if(!achados.has(w)) achados.set(w,w);
+  });
+  return achados;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   AUTO-PREENCHIMENTO DE ATBs — lê prescrições salvas DO PACIENTE (CNS)
+   ─ "Em uso": ATBs na última prescrição com D-dia
+   ─ "Anteriores": ver _autoPreencherATBAnteriores
+   ════════════════════════════════════════════════════════════════════════════ */
 async function _autoPreencherATBs(){
   if(!leitoAtual) return;
   try{
-    // Busca todas as prescrições salvas do leito
-    const todas = await dbListByPrefix(`uti_med_rx_${leitoAtual}_`);
-    const arr = Object.values(todas)
+    // Prescrições salvas do paciente (identificado por CNS, não pelo nome)
+    const arr = (await _registrosDoPaciente('uti_med_rx_'))
       .filter(rx=>rx&&rx.itens&&rx.data)
       .sort((a,b)=>(a.data||'').localeCompare(b.data||''));
 
@@ -5643,7 +5761,6 @@ async function _autoPreencherATBs(){
     const ultima = arr[arr.length-1];
     const dataHoje = gf('f-data')||hoje();
 
-    // ── ATBs em uso (prescrição mais recente ou do dia atual) ──────────────
     // Usa a prescrição do dia atual se existir, senão a mais recente
     const prescricaoDoDia = arr.find(rx=>rx.data===dataHoje) || ultima;
     const atbsAtivos = (prescricaoDoDia.itens||[])
@@ -5675,66 +5792,56 @@ async function _autoPreencherATBs(){
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
-   AUTO-PREENCHIMENTO DE "ATB ANTERIORES" — a partir do histórico do que foi
-   digitado no campo "Em uso de ATB" nas evoluções já salvas do leito.
-   ─ Nunca altera o campo "Em uso" (f-atb), somente "ATB anteriores" (f-atb-prev).
-   ─ Agrupa dias consecutivos com o mesmo texto em um único período:
-     início = 1º dia em que aquele texto foi digitado
-     fim    = último dia em que aquele texto ainda constava (dia anterior à troca)
-   ─ O período mais recente só entra na lista se o texto for diferente do que
-     está atualmente em "Em uso" (senão seria o próprio ATB atual, não um anterior).
+   AUTO-PREENCHIMENTO DE "ATB ANTERIORES"
+   ─ Usa só evoluções do MESMO PACIENTE (CNS), nunca o nome.
+   ─ Analisa fármaco por fármaco (não o texto inteiro): lê o campo "Em uso de ATB"
+     das evoluções anteriores e monta o período (1º a último dia registrado) de cada um.
+   ─ Fármaco que ainda consta em "Em uso" NÃO aparece em "Anteriores".
+   ─ Nunca altera "Em uso" (f-atb), somente "ATB anteriores" (f-atb-prev).
    ════════════════════════════════════════════════════════════════════════════ */
 async function _autoPreencherATBAnteriores(){
   if(!leitoAtual) return;
   try{
     const dataAtual = gf('f-data') || hoje();
-    const textoAtualNormalizado = (gf('f-atb')||'').trim().toUpperCase();
+    const atuais = _atbExtrairDrogas(gf('f-atb'));   // Map: o que está em uso agora
 
-    // Busca todas as evoluções salvas do leito (qualquer turno/data)
-    const todas = await dbListByPrefix(`uti_med_ev_${leitoAtual}_`);
-    const porData = {}; // data -> {atb, registradoEm}
-    Object.values(todas).forEach(ev=>{
+    const evs = await _registrosDoPaciente('uti_med_ev_');
+    const porData = {}; // data -> {atb, registradoEm}  (evolução mais recente do dia)
+    evs.forEach(ev=>{
       if(!ev || !ev.data) return;
-      if(ev.data===dataAtual) return; // ignora a evolução de hoje (rascunho atual)
-      const atbTxt = (ev.atb||'').trim();
-      if(!atbTxt) return;
-      const existente = porData[ev.data];
-      if(!existente || (ev.registradoEm||'') > (existente.registradoEm||'')){
-        porData[ev.data] = {atb:atbTxt, registradoEm:ev.registradoEm||''};
+      if(ev.data>=dataAtual) return;          // só dias anteriores ao da evolução aberta
+      const ex = porData[ev.data];
+      if(!ex || (ev.registradoEm||'') > (ex.registradoEm||'')){
+        porData[ev.data] = {atb:(ev.atb||'').trim(), registradoEm:ev.registradoEm||''};
       }
     });
 
-    const datasOrdenadas = Object.keys(porData).sort(); // cronológico crescente
+    const datas = Object.keys(porData).sort();   // cronológico
+    if(!datas.length){ sf('f-atb-prev','—'); return; }
 
-    if(!datasOrdenadas.length){ sf('f-atb-prev','—'); return; }
-
-    // Agrupa em períodos de texto contínuo (mesmo texto = mesmo período)
-    const periodos=[];
-    datasOrdenadas.forEach(data=>{
-      const txt = porData[data].atb;
-      const txtNorm = txt.toUpperCase();
-      const ultimo = periodos[periodos.length-1];
-      if(ultimo && ultimo.txtNorm===txtNorm){
-        ultimo.fim = data; // continua o mesmo período, estende a data-fim
-      } else {
-        periodos.push({texto:txt, txtNorm, inicio:data, fim:data});
-      }
+    // Períodos por fármaco: dias consecutivos (entre evoluções registradas) formam um período
+    const abertos = new Map(), periodos = [];
+    datas.forEach((data,i)=>{
+      _atbExtrairDrogas(porData[data].atb).forEach((disp,canon)=>{
+        const p = abertos.get(canon);
+        if(p && p.idxFim===i-1){ p.fim=data; p.idxFim=i; p.disp=disp; }
+        else {
+          const np = {canon, disp, inicio:data, fim:data, idxFim:i};
+          abertos.set(canon,np); periodos.push(np);
+        }
+      });
     });
 
-    // Se o último período já é o ATB atualmente digitado em "Em uso", não é "anterior"
-    if(periodos.length && periodos[periodos.length-1].txtNorm===textoAtualNormalizado){
-      periodos.pop();
-    }
+    const lista = periodos
+      .filter(p=>!atuais.has(p.canon))                          // fármaco ainda em uso não é "anterior"
+      .sort((a,b)=>b.fim.localeCompare(a.fim) || b.inicio.localeCompare(a.inicio));
 
-    if(!periodos.length){ sf('f-atb-prev','—'); return; }
+    if(!lista.length){ sf('f-atb-prev','—'); return; }
 
-    const textoAnterior = periodos.reverse().map(({texto,inicio,fim})=>{
-      const di=_fmtDataCurta(inicio)||inicio;
-      const df=_fmtDataCurta(fim)||fim;
-      return texto+(di===df?` (${di})`:` (${di} a ${df})`);
-    }).join(' · ');
-
-    sf('f-atb-prev', textoAnterior);
+    sf('f-atb-prev', lista.map(({disp,inicio,fim})=>{
+      const di=_fmtDataCurta(inicio)||inicio, df=_fmtDataCurta(fim)||fim;
+      return disp+(di===df?` (${di})`:` (${di} a ${df})`);
+    }).join(' · '));
 
   }catch(e){
     console.warn('_autoPreencherATBAnteriores erro:', e);
@@ -5753,8 +5860,8 @@ async function _carregarPrescricao(leito){
   // NÃO deve herdar a prescrição antiga de volta.
   if(!saved){
     try{
-      const todas = await dbListByPrefix(`uti_med_rx_${leito}_`);
-      const ordenadas = Object.values(todas)
+      const todas = await _registrosDoPaciente('uti_med_rx_');
+      const ordenadas = todas
         .filter(rx => rx && rx.itens && rx.itens.length && rx.data && rx.data !== data)
         .sort((a,b) => b.data.localeCompare(a.data));
       if(ordenadas.length){
