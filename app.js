@@ -31,6 +31,7 @@ let leitoAtual = null;        // número do leito aberto no formulário
 let modalLeito = null;        // leito do modal de admissão
 let leitoParaAlta = null;
 let _culturasForm = [];       // chips de cultura do formulário atual
+let _cultBuscaSeq = 0;        // invalida buscas de cultura em andamento ao trocar de paciente
 let _labLinhas = [];          // exames laboratoriais (array de {data, valores})
 let _itensSAPS = {};          // itens de admissão do SAPS preenchidos manualmente
 let _labChart = null;         // instância Chart.js
@@ -1764,6 +1765,11 @@ async function abrirFormulario(leito){
     // 2) tenta carregar evolução já salva deste turno/data
     const evKey=`uti_med_ev_${leito}_${turnoAtual}_${dataT}`;
     let ev=await dbGet(evKey);
+    // Registro remanescente de outro paciente (limpeza da alta falhou, etc.): ignora
+    if(ev && !_regDoPaciente(ev, true, _ctxPacienteAtb())){
+      console.warn('[Evolução] registro do turno pertence a outro paciente (CNS/admissão) — ignorado:', evKey);
+      ev=null;
+    }
     let herdado=false;
     if(!ev){
       // herda a evolução mais recente (qualquer turno) para pré-preencher
@@ -1807,7 +1813,7 @@ function _limparFormulario(){
    'f-transfusao','f-vent-param','f-pao2','f-fio2','f-ph','f-gaso','f-imagem','f-condutas','f-microorg']
    .forEach(id=>sf(id,''));
   sf('f-dieta',''); sf('f-dva','NAO'); sf('f-vent','AA');
-  _culturasForm=[]; _labLinhas=[];
+  _cultBuscaSeq++; _culturasForm=[]; _labLinhas=[];
 }
 
 function _preencherEvolucao(ev, herdado){
@@ -2286,20 +2292,67 @@ function confirmarAddCulturaManual(){
 }
 
 // ── Busca automática ao abrir o formulário (silenciosa) ──────────────────────
+// Confere se uma linha da planilha é do paciente (CNS / DN, quando a planilha os traz)
+function _dnParaISO(v){
+  v=String(v||'').trim(); let m;
+  if((m=v.match(/^(\d{4})-(\d{2})-(\d{2})/))) return `${m[1]}-${m[2]}-${m[3]}`;
+  if((m=v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/))) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+  return '';
+}
+function _cultLinhaDoPaciente(r, ctx){
+  const cR=_cnsLimpo(r.cns||r.cartaoSus||r.cartao_sus);
+  if(cR.length===15 && ctx.cns && cR!==ctx.cns) return false;
+  const dR=_dnParaISO(r.dn||r.dataNascimento||r.nascimento), dP=_dnParaISO(ctx.dn);
+  if(dR && dP && dR!==dP) return false;
+  return true;
+}
+function _cultChave(c){
+  const n=x=>String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/\s+/g,' ').trim();
+  return [c.micro,c.sitio,c.data].map(n).join('|');
+}
+
 async function _buscarCulturasAuto(paciente,leito){
+  const seq=++_cultBuscaSeq;                 // qualquer busca anterior passa a ser ignorada
   const el=$('culturas-auto');
   if(!el||!paciente||!APPS_SCRIPT_URL||!CULTURAS_SHEET_ID) return;
+  const ctx=_ctxPacienteAtb();
   el.style.display='block';
-  el.innerHTML='<span style="font-size:.72rem;color:var(--muted);"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><rect x="7" y="2" width="2.5" height="6" rx=".8" transform="rotate(30 8 5)"/><line x1="8" y1="10" x2="8" y2="13"/><line x1="5" y1="13" x2="11" y2="13"/><circle cx="8" cy="7" r="1.5"/></svg> Buscando culturas...</span>';
+  el.innerHTML='<span style="font-size:.72rem;color:var(--muted);">Buscando culturas...</span>';
   try{
-    const data=await _apsFetch({action:'culturas',paciente:_normalizarNome(paciente),leito,sheetId:CULTURAS_SHEET_ID});
-    const positivos=(data.resultados||[]).filter(r=>r.microorg&&!/negativ|contaminad|pendente/i.test(r.resultado||''));
-    if(!positivos.length){ el.innerHTML=''; el.style.display='none'; return; }
+    const data=await _apsFetch({action:'culturas',paciente:_normalizarNome(paciente),leito,
+      cns:ctx.cns,dn:ctx.dn,sheetId:CULTURAS_SHEET_ID});
+    // Usuário trocou de paciente/leito enquanto a planilha respondia → descarta
+    if(seq!==_cultBuscaSeq || leito!==leitoAtual) return;
+    if(data.error) throw new Error(data.error);
+
+    // Nome devolvido pela planilha precisa ser idêntico ao do paciente do leito
+    const nomeSheet=_normalizarNome(data.pacienteEncontrado||'');
+    if(nomeSheet && nomeSheet!==_normalizarNome(paciente)){
+      el.innerHTML='<span style="font-size:.72rem;color:#b71c1c;font-weight:600;">Planilha devolveu outro nome ('+
+        String(data.pacienteEncontrado).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+') — culturas NÃO importadas. Use "Buscar na planilha" e confira.</span>';
+      return;
+    }
+
+    const positivos=(data.resultados||[])
+      .filter(r=>r.microorg&&!/negativ|contaminad|pendente/i.test(r.resultado||''))
+      .filter(r=>_cultLinhaDoPaciente(r,ctx));
+
+    // Reconcilia: chips vindos da planilha que NÃO constam no resultado deste paciente
+    // (herdados de evolução antiga/contaminada) são removidos. Chips manuais ficam.
+    const validas=new Set(positivos.map(r=>_cultChave({sitio:r.cultura,micro:r.microorg,data:r.dataResultado||r.dataRecebimento})));
+    const antes=_culturasForm.length;
+    _culturasForm=_culturasForm.filter(c=>c.fonte!=='planilha'||validas.has(_cultChave(c)));
+    const removidas=antes-_culturasForm.length;
+
     positivos.forEach(r=>_adicionarCultura(r.cultura||'',r.microorg||'',r.sensibilidade||'',
       r.dataResultado||r.dataRecebimento||'','planilha',r.antibiograma||null));
-    el.innerHTML=`<span style="font-size:.72rem;color:var(--verde);font-weight:600;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0;"><path d="M2.5 8.5l3.5 3.5 7.5-7.5"/></svg> ${positivos.length} cultura(s) positiva(s) importada(s) da planilha</span>`;
-    setTimeout(()=>{ el.style.display='none'; },4000);
-  }catch(e){ el.innerHTML=''; el.style.display='none'; console.warn('[Culturas auto]',e); }
+    _renderCulturasChips();
+
+    if(!positivos.length && !removidas){ el.innerHTML=''; el.style.display='none'; return; }
+    el.innerHTML=`<span style="font-size:.72rem;color:var(--verde);font-weight:600;">${positivos.length} cultura(s) positiva(s) da planilha`+
+      (removidas?` · ${removidas} removida(s) por não pertencerem a este paciente`:'')+`</span>`;
+    setTimeout(()=>{ el.style.display='none'; },removidas?8000:4000);
+  }catch(e){ if(seq===_cultBuscaSeq){ el.innerHTML=''; el.style.display='none'; } console.warn('[Culturas auto]',e); }
 }
 
 // ── Modal completo de busca por paciente ─────────────────────────────────────
@@ -2315,9 +2368,14 @@ async function buscarCulturas(){
   cont.innerHTML=`<div class="sae-loading"><div class="sae-spinner"></div><p>Buscando culturas de <strong>${pac}</strong>…<br><span style="font-size:.72rem;color:var(--muted);">Pode levar 30–60 s (extração de PDFs).</span></p></div>`;
   $('modal-culturas').classList.add('show');
   try{
-    const data=await _apsFetch({action:'culturas',paciente:_normalizarNome(pac),leito:leitoAtual,sheetId:CULTURAS_SHEET_ID});
+    const _c=_ctxPacienteAtb();
+    const data=await _apsFetch({action:'culturas',paciente:_normalizarNome(pac),leito:leitoAtual,cns:_c.cns,dn:_c.dn,sheetId:CULTURAS_SHEET_ID});
     if(data.error) throw new Error(data.error);
-    cont.innerHTML=_renderCulturasModal(data.resultados||[],data.pacienteEncontrado||'');
+    const _res=(data.resultados||[]).filter(r=>_cultLinhaDoPaciente(r,_c));
+    let _aviso='';
+    if(data.pacienteEncontrado && _normalizarNome(data.pacienteEncontrado)!==_normalizarNome(pac))
+      _aviso='<div class="tip d" style="margin-bottom:8px;">Atenção: o nome na planilha é diferente do paciente aberto. Confira antes de registrar.</div>';
+    cont.innerHTML=_aviso+_renderCulturasModal(_res,data.pacienteEncontrado||'');
   }catch(e){ cont.innerHTML=`<div class="tip d">Erro ao buscar: ${e.message||e}</div>`; }
 }
 
@@ -5654,24 +5712,23 @@ async function _registrosDoPaciente(base, ctx){
   Object.keys(brutos).forEach(k=>{
     const d = brutos[k];
     if(!d || typeof d!=='object') return;
-    const noLeito = k.startsWith(pfLeito);
-    const dCns = _cnsLimpo(d.cns);
-    let ok = false;
-    if(ctx.cns && dCns===ctx.cns){
-      ok = true;                                   // mesmo CNS → mesmo paciente
-    } else if(noLeito){
-      const dAdm=String(d.adm||'').trim(), dDn=String(d.dn||'').trim();
-      if(!dCns || !ctx.cns){
-        // um dos lados sem CNS: aceita se a admissão na UTI não contradiz
-        ok = !ctx.adm || !dAdm || dAdm===ctx.adm;
-      } else {
-        // CNS diferentes (ex.: CNS corrigido depois): só aceita com adm + DN idênticas
-        ok = !!(ctx.adm && dAdm===ctx.adm && ctx.dn && dDn===ctx.dn);
-      }
-    }
-    if(ok) out.push(d);
+    if(_regDoPaciente(d, k.startsWith(pfLeito), ctx)) out.push(d);
   });
   return out;
+}
+
+// Um registro salvo pertence ao paciente do ctx? (noLeito = veio do mesmo leito)
+function _regDoPaciente(d, noLeito, ctx){
+  const dCns = _cnsLimpo(d.cns);
+  if(ctx.cns && dCns===ctx.cns) return true;       // mesmo CNS → mesmo paciente
+  if(!noLeito) return false;
+  const dAdm=String(d.adm||'').trim(), dDn=String(d.dn||'').trim();
+  if(!dCns || !ctx.cns){
+    // um dos lados sem CNS: aceita se a admissão na UTI não contradiz
+    return !ctx.adm || !dAdm || dAdm===ctx.adm;
+  }
+  // CNS diferentes (ex.: CNS corrigido depois): só aceita com adm + DN idênticas
+  return !!(ctx.adm && dAdm===ctx.adm && ctx.dn && dDn===ctx.dn);
 }
 
 /* ── Extração de antibióticos de texto livre ─────────────────────────────────
