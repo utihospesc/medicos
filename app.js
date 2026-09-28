@@ -2306,6 +2306,28 @@ function _cultLinhaDoPaciente(r, ctx){
   if(dR && dP && dR!==dP) return false;
   return true;
 }
+// Coluna SETOR da planilha ("UTI L10", "CM L23", "PS L03"): unidade + leito.
+function _cultSetorLeito(setor){
+  const t=String(setor||'').replace(/\s+/g,' ').trim().toUpperCase();
+  const un=(t.match(/^[A-ZÀ-Ú]+/)||[''])[0];
+  const lm=t.match(/\bL\s*0*(\d+)\b/);
+  return { unidade:un, leito:lm?parseInt(lm[1],10):null, texto:t };
+}
+// Sem CNS na planilha, desconfia de linhas que provavelmente são de um homônimo.
+// Retorna '' (sem dúvida) ou o motivo. Linhas com dúvida NÃO são importadas sozinhas.
+function _cultDuvida(r, ctx, nomePac){
+  const sl=_cultSetorLeito(r.setor);
+  if(sl.unidade==='UTI' && sl.leito!=null && Number(ctx.leito)!==sl.leito)
+    return `planilha: ${sl.texto} — paciente está no leito ${pad(ctx.leito)}`;
+  const dr=_dnParaISO(r.dataRecebimento), ah=_dnParaISO(ctx.admHosp);
+  if(dr && ah){
+    const lim=new Date(ah+'T00:00:00'); lim.setDate(lim.getDate()-1);
+    if(new Date(dr+'T00:00:00')<lim) return `coletada em ${r.dataRecebimento}, antes da admissão hospitalar (${_fmtDataCurta(ah)})`;
+  }
+  if(!r.confirmadoPorCNS && r.nomePlanilha && nomePac && _normalizarNome(r.nomePlanilha)!==nomePac)
+    return `nome na planilha diferente: ${r.nomePlanilha}`;
+  return '';
+}
 function _cultChave(c){
   const n=x=>String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/\s+/g,' ').trim();
   return [c.micro,c.sitio,c.data].map(n).join('|');
@@ -2325,17 +2347,15 @@ async function _buscarCulturasAuto(paciente,leito){
     if(seq!==_cultBuscaSeq || leito!==leitoAtual) return;
     if(data.error) throw new Error(data.error);
 
-    // Nome devolvido pela planilha precisa ser idêntico ao do paciente do leito
-    const nomeSheet=_normalizarNome(data.pacienteEncontrado||'');
-    if(nomeSheet && nomeSheet!==_normalizarNome(paciente)){
-      el.innerHTML='<span style="font-size:.72rem;color:#b71c1c;font-weight:600;">Planilha devolveu outro nome ('+
-        String(data.pacienteEncontrado).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+') — culturas NÃO importadas. Use "Buscar na planilha" e confira.</span>';
-      return;
-    }
-
-    const positivos=(data.resultados||[])
+    // Linha confirmada por CNS (planilha) vale independente do nome. Linha sem CNS
+    // só é aceita se o nome da planilha for IDÊNTICO ao do paciente do leito.
+    const nomeP=_normalizarNome(paciente);
+    const positivosIdent=(data.resultados||[])
       .filter(r=>r.microorg&&!/negativ|contaminad|pendente/i.test(r.resultado||''))
       .filter(r=>_cultLinhaDoPaciente(r,ctx));
+    const motivo=new Map(positivosIdent.map(r=>[r,_cultDuvida(r,ctx,nomeP)]));
+    const positivos=positivosIdent.filter(r=>!motivo.get(r));
+    const divergentes=positivosIdent.filter(r=>motivo.get(r));
 
     // Reconcilia: chips vindos da planilha que NÃO constam no resultado deste paciente
     // (herdados de evolução antiga/contaminada) são removidos. Chips manuais ficam.
@@ -2348,10 +2368,14 @@ async function _buscarCulturasAuto(paciente,leito){
       r.dataResultado||r.dataRecebimento||'','planilha',r.antibiograma||null));
     _renderCulturasChips();
 
-    if(!positivos.length && !removidas){ el.innerHTML=''; el.style.display='none'; return; }
-    el.innerHTML=`<span style="font-size:.72rem;color:var(--verde);font-weight:600;">${positivos.length} cultura(s) positiva(s) da planilha`+
-      (removidas?` · ${removidas} removida(s) por não pertencerem a este paciente`:'')+`</span>`;
-    setTimeout(()=>{ el.style.display='none'; },removidas?8000:4000);
+    if(!positivos.length && !removidas && !divergentes.length){ el.innerHTML=''; el.style.display='none'; return; }
+    const _e=x=>String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    let msg='';
+    if(positivos.length||removidas) msg+=`<span style="font-size:.72rem;color:var(--verde);font-weight:600;">${positivos.length} cultura(s) positiva(s) da planilha`+
+      (removidas?` · ${removidas} removida(s) por não pertencerem a este paciente`:'')+`</span> `;
+    if(divergentes.length) msg+=`<span style="font-size:.72rem;color:#b71c1c;font-weight:600;">${divergentes.length} cultura(s) NÃO importada(s) por dúvida de identidade (${_e(motivo.get(divergentes[0]))}). Use "Buscar na planilha" e confira.</span>`;
+    el.innerHTML=msg;
+    setTimeout(()=>{ el.style.display='none'; },(removidas||divergentes.length)?10000:4000);
   }catch(e){ if(seq===_cultBuscaSeq){ el.innerHTML=''; el.style.display='none'; } console.warn('[Culturas auto]',e); }
 }
 
@@ -2373,8 +2397,10 @@ async function buscarCulturas(){
     if(data.error) throw new Error(data.error);
     const _res=(data.resultados||[]).filter(r=>_cultLinhaDoPaciente(r,_c));
     let _aviso='';
-    if(data.pacienteEncontrado && _normalizarNome(data.pacienteEncontrado)!==_normalizarNome(pac))
-      _aviso='<div class="tip d" style="margin-bottom:8px;">Atenção: o nome na planilha é diferente do paciente aberto. Confira antes de registrar.</div>';
+    const _porCNS=_res.some(r=>r.confirmadoPorCNS);
+    if(!_porCNS && data.pacienteEncontrado && _normalizarNome(data.pacienteEncontrado)!==_normalizarNome(pac))
+      _aviso='<div class="tip d" style="margin-bottom:8px;">Atenção: o nome na planilha é diferente do paciente aberto e não há CNS na linha para confirmar. Confira antes de registrar.</div>';
+    else if(_porCNS) _aviso='<div class="tip i" style="margin-bottom:8px;">Resultados confirmados pelo CNS do paciente.</div>';
     cont.innerHTML=_aviso+_renderCulturasModal(_res,data.pacienteEncontrado||'');
   }catch(e){ cont.innerHTML=`<div class="tip d">Erro ao buscar: ${e.message||e}</div>`; }
 }
@@ -2406,6 +2432,7 @@ function _renderCulturasModal(res,nomePlanilha){
           ${cls?`<span style="font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:8px;background:${corBg};color:white;">${cls}</span>`:''}
         </div>
         <div style="font-size:.74rem;color:var(--muted);margin-top:2px;">${r.cultura||'?'}${r.dataResultado?' · '+r.dataResultado:''}</div>
+        ${(()=>{ const dv=_cultDuvida(r,_ctxPacienteAtb(),_normalizarNome(gf('f-pac'))); return dv?`<div style="font-size:.72rem;margin-top:3px;color:#b71c1c;font-weight:700;">⚠ Confirme se é este paciente — ${String(dv).replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>`:''; })()}
         ${r.sensibilidade?`<div style="font-size:.72rem;margin-top:3px;">${r.sensibilidade.slice(0,120)}</div>`:''}
         ${atbHtml}
         <button class="btn btn-pri btn-sm" style="margin-top:6px;"
@@ -2420,7 +2447,7 @@ function _renderCulturasModal(res,nomePlanilha){
   return h;
 }
 function _adicionarCulturaModal(sitio,micro,sens,data,antibiograma){
-  _adicionarCultura(sitio,micro,sens,data,'planilha',antibiograma);
+  _adicionarCultura(sitio,micro,sens,data,'planilha-revisada',antibiograma);   // confirmada por você: a limpeza automática não remove
   toast('Cultura registrada.');
 }
 
@@ -5700,7 +5727,7 @@ function _cnsLimpo(v){ return String(v==null?'':v).replace(/\D/g,''); }
 function _ctxPacienteAtb(){
   const c=_cnsLimpo(gf('f-cns'));
   return { leito:leitoAtual, cns:c.length===15?c:'',
-           adm:(gf('f-adm')||'').trim(), dn:(gf('f-dn')||'').trim() };
+           adm:(gf('f-adm')||'').trim(), admHosp:(gf('f-adm-hosp')||'').trim(), dn:(gf('f-dn')||'').trim() };
 }
 
 // Devolve os registros (uti_med_ev_ / uti_med_rx_) que pertencem ao paciente do ctx.
